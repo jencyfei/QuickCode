@@ -1,0 +1,252 @@
+/* 玻璃拟态风格 - 全局样式 */
+
+/* 全局变量 */
+:root {
+  /* 背景色 */
+  --glass-bg-main: #FDF3D8;
+  --glass-gradient-1: #FDEB9E;
+  --glass-gradient-2: #F7C7E2;
+  
+  /* 玻璃效果 */
+  --glass-fill: rgba(255, 255, 255, 0.4);
+  --glass-fill-hover: rgba(255, 255, 255, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  
+  /* 文字颜色 */
+  --glass-text-primary: #333333;
+  --glass-text-secondary: #4A4A4A;
+  --glass-text-light: #FFFFFF;
+  
+  /* 强调色 */
+  --glass-accent-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --glass-accent-blue: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  
+  /* 效果参数 */
+  --glass-blur: 20px;
+  --glass-blur-light: 12px;
+  --glass-radius: 24px;
+  --glass-radius-medium: 16px;
+  --glass-radius-small: 12px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* 玻璃拟态背景 - 带渐变色块 */
+.glass-background {
+  background: var(--glass-bg-main);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.glass-background::before {
+  content: '';
+  position: fixed;
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--glass-gradient-1) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.glass-background::after {
+  content: '';
+  position: fixed;
+  bottom: -150px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--glass-gradient-2) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 玻璃面板 */
+.glass-panel {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  z-index: 1;
+}
+
+.glass-panel-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-panel-hover:hover {
+  background: var(--glass-fill-hover);
+  box-shadow: var(--glass-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* 玻璃按钮 */
+.glass-button {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-medium);
+  color: var(--glass-text-primary);
+  font-weight: 500;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.glass-button:hover {
+  background: var(--glass-fill-hover);
+  transform: translateY(-2px);
+}
+
+.glass-button:active {
+  transform: translateY(0);
+}
+
+/* 玻璃卡片 */
+.glass-card {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  padding: 24px;
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  z-index: 1;
+}
+
+/* 玻璃输入框 */
+.glass-input {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--glass-radius-medium);
+  padding: 12px 16px;
+  color: var(--glass-text-primary);
+  font-size: 14px;
+}
+
+.glass-input::placeholder {
+  color: var(--glass-text-secondary);
+  opacity: 0.7;
+}
+
+/* 玻璃导航栏 */
+.glass-navbar {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* 玻璃底部导航 */
+.glass-tabbar {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-border);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* 图标容器 */
+.glass-icon-container {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--glass-radius-medium);
+  background: var(--glass-accent-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 胶囊标签 */
+.glass-pill-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: var(--glass-radius-small);
+  background: rgba(102, 126, 234, 0.2);
+  color: var(--glass-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 浮动按钮 */
+.glass-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--glass-shadow);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.glass-fab:hover {
+  background: var(--glass-fill-hover);
+  transform: scale(1.05);
+}
+
+.glass-fab:active {
+  transform: scale(0.95);
+}
+
+/* 取件码显示框 */
+.glass-pickup-display {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--glass-radius-medium);
+  padding: 20px;
+  text-align: center;
+}
+
+.glass-pickup-code {
+  font-size: 40px;
+  font-weight: bold;
+  color: var(--glass-text-primary);
+  letter-spacing: 6px;
+  font-family: 'Courier New', monospace;
+}
+
+/* 动画 */
+@keyframes glass-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.glass-float-animation {
+  animation: glass-float 3s ease-in-out infinite;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  :root {
+    --glass-radius: 20px;
+    --glass-radius-medium: 14px;
+    --glass-radius-small: 10px;
+  }
+}

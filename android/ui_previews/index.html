@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短信助手 - UI风格预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 48px;
+        }
+        
+        .header h1 {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .card-preview {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card-preview iframe {
+            width: 375px;
+            height: 667px;
+            border: none;
+            transform: scale(0.3);
+            transform-origin: 0 0;
+            pointer-events: none;
+        }
+        
+        .card-content {
+            padding: 24px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .card-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .tag-dark {
+            background: #333;
+            color: white;
+        }
+        
+        .tag-light {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .tag-cute {
+            background: #FFE5E5;
+            color: #FF6B9D;
+        }
+        
+        .tag-glass {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .tag-3d {
+            background: rgba(138, 107, 255, 0.1);
+            color: #8A6BFF;
+        }
+        
+        .tag-minimal {
+            background: #F7F7F7;
+            color: #1A1A1A;
+        }
+        
+        .tag-volt {
+            background: #D8FF4B;
+            color: #000;
+        }
+        
+        .tag-wellness {
+            background: rgba(217, 200, 255, 0.2);
+            color: #9B7FFF;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 48px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 短信助手 UI 风格预览</h1>
+            <p>8种设计风格 · 9个页面方案 · 为您的Android应用选择最佳设计</p>
+        </div>
+        
+        <div class="grid">
+            <!-- 1. Dark Fluorescent Social -->
+            <div class="card" onclick="window.open('1_dark_fluorescent_social.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="1_dark_fluorescent_social.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">深色荧光 - 社交瀑布流</div>
+                    <div class="card-description">沉浸式深色背景，双列瀑布流布局，适合内容展示型应用</div>
+                    <div class="card-tags">
+                        <span class="tag tag-dark">深色模式</span>
+                        <span class="tag tag-dark">瀑布流</span>
+                        <span class="tag tag-dark">社交</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2. Dark Neon Community -->
+            <div class="card" onclick="window.open('2_dark_neon_community.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="2_dark_neon_community.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">深色荧光 - 社区首页</div>
+                    <div class="card-description">深色模式搭配荧光黄绿强调色，信息聚合型布局</div>
+                    <div class="card-tags">
+                        <span class="tag tag-dark">深色模式</span>
+                        <span class="tag tag-volt">荧光色</span>
+                        <span class="tag tag-dark">社区</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3. Casual Cute Game -->
+            <div class="card" onclick="window.open('3_casual_cute_game.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="3_casual_cute_game.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">可爱休闲游戏风格</div>
+                    <div class="card-description">Q版卡通风格，色彩鲜艳，木质纹理，适合轻松愉快的应用</div>
+                    <div class="card-tags">
+                        <span class="tag tag-cute">可爱</span>
+                        <span class="tag tag-cute">卡通</span>
+                        <span class="tag tag-cute">休闲</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4. Glassmorphism IoT -->
+            <div class="card" onclick="window.open('4_glassmorphism_iot.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="4_glassmorphism_iot.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">玻璃拟态 - 智能设备</div>
+                    <div class="card-description">毛玻璃效果，半透明背景模糊，柔和渐变，现代科技感</div>
+                    <div class="card-tags">
+                        <span class="tag tag-glass">玻璃拟态</span>
+                        <span class="tag tag-glass">模糊</span>
+                        <span class="tag tag-glass">渐变</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 5. Soft 3D UI -->
+            <div class="card" onclick="window.open('5_soft_3d_ui.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="5_soft_3d_ui.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">轻盈3D / 软UI风格</div>
+                    <div class="card-description">纯白背景，柔和阴影，3D插画，轻盈通透的设计语言</div>
+                    <div class="card-tags">
+                        <span class="tag tag-3d">软UI</span>
+                        <span class="tag tag-3d">3D</span>
+                        <span class="tag tag-3d">轻盈</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 6. Elegant Minimalist -->
+            <div class="card" onclick="window.open('6_elegant_minimalist.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="6_elegant_minimalist.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">优雅极简 / 编辑风格</div>
+                    <div class="card-description">大量留白，版式驱动，衬线体标题，高端奢华感</div>
+                    <div class="card-tags">
+                        <span class="tag tag-minimal">极简</span>
+                        <span class="tag tag-minimal">优雅</span>
+                        <span class="tag tag-minimal">编辑</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 7. Clean Minimalist Ecommerce -->
+            <div class="card" onclick="window.open('7_clean_minimalist_ecommerce.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="7_clean_minimalist_ecommerce.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">洁净极简 - 电商风格</div>
+                    <div class="card-description">纯白背景，柔和粉彩，产品为中心，现代电商设计</div>
+                    <div class="card-tags">
+                        <span class="tag tag-minimal">洁净</span>
+                        <span class="tag tag-minimal">极简</span>
+                        <span class="tag tag-minimal">电商</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 8. Fitness Volt -->
+            <div class="card" onclick="window.open('8_fitness_volt.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="8_fitness_volt.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">荧光高对比 - Fitness</div>
+                    <div class="card-description">纯黑背景搭配荧光黄绿，极致对比，数据驱动，运动感</div>
+                    <div class="card-tags">
+                        <span class="tag tag-volt">高对比</span>
+                        <span class="tag tag-volt">荧光</span>
+                        <span class="tag tag-volt">运动</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 9. Soft Glassmorphism Wellness -->
+            <div class="card" onclick="window.open('9_soft_glassmorphism_wellness.html', '_blank')">
+                <div class="card-preview">
+                    <iframe src="9_soft_glassmorphism_wellness.html"></iframe>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">柔和玻璃拟态 - 健康</div>
+                    <div class="card-description">粉彩渐变，毛玻璃，治愈感，适合健康冥想类应用</div>
+                    <div class="card-tags">
+                        <span class="tag tag-wellness">柔和</span>
+                        <span class="tag tag-wellness">玻璃</span>
+                        <span class="tag tag-wellness">治愈</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>点击任意卡片查看完整页面 · 所有设计均符合短信助手项目需求</p>
+            <p style="margin-top: 12px; font-size: 14px;">包含功能：快递取件码、标签管理、短信列表、设置</p>
+        </div>
+    </div>
+</body>
+</html>

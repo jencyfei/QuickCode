@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">短信助手</string>
+    
+    <!-- 通用 -->
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="delete">删除</string>
+    <string name="edit">编辑</string>
+    <string name="save">保存</string>
+    <string name="loading">加载中...</string>
+    <string name="error">错误</string>
+    <string name="success">成功</string>
+    
+    <!-- 登录注册 -->
+    <string name="login">登录</string>
+    <string name="register">注册</string>
+    <string name="email">邮箱</string>
+    <string name="password">密码</string>
+    <string name="username">用户名</string>
+    
+    <!-- 短信 -->
+    <string name="sms_list">短信列表</string>
+    <string name="all_sms">全部短信</string>
+    <string name="no_sms">暂无短信</string>
+    <string name="sync_sms">同步短信</string>
+    
+    <!-- 标签 -->
+    <string name="tags">标签</string>
+    <string name="tag_manage">标签管理</string>
+    <string name="add_tag">添加标签</string>
+    <string name="tag_name">标签名称</string>
+    
+    <!-- 权限 -->
+    <string name="permission_sms_title">短信权限</string>
+    <string name="permission_sms_desc">需要读取短信权限来管理您的短信</string>
+    <string name="permission_denied">权限被拒绝</string>
+    
+    <!-- 导航 -->
+    <string name="nav_home">首页</string>
+    <string name="nav_tags">标签</string>
+    <string name="nav_express">快递</string>
+    <string name="nav_profile">我的</string>
+</resources>

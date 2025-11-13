@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轻盈3D / 软UI风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F9F9FB;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+            position: relative;
+        }
+        
+        /* Subtle Background Gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background: linear-gradient(180deg, rgba(255,236,236,0.3) 0%, transparent 100%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 32px;
+        }
+        
+        .header-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1C1C1E;
+            margin-bottom: 8px;
+        }
+        
+        .header-subtitle {
+            font-size: 16px;
+            color: #8E8E93;
+        }
+        
+        /* Search Bar */
+        .search-bar {
+            background: #F0F2F5;
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #1C1C1E;
+            outline: none;
+        }
+        
+        .search-bar input::placeholder {
+            color: #8E8E93;
+        }
+        
+        /* Soft Card */
+        .soft-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .icon-3d {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #8A6BFF 0%, #5E5CE6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 8px 20px rgba(138, 107, 255, 0.3);
+        }
+        
+        .card-info {
+            flex: 1;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1C1C1E;
+            margin-bottom: 4px;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: #8E8E93;
+        }
+        
+        /* Pickup Code Section */
+        .pickup-section {
+            background: linear-gradient(135deg, rgba(138, 107, 255, 0.1) 0%, rgba(94, 92, 230, 0.1) 100%);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .pickup-label {
+            font-size: 14px;
+            color: #8E8E93;
+            margin-bottom: 8px;
+        }
+        
+        .pickup-code {
+            font-size: 48px;
+            font-weight: bold;
+            color: #8A6BFF;
+            letter-spacing: 8px;
+        }
+        
+        /* Info Row */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-top: 1px solid #F0F2F5;
+        }
+        
+        .info-label {
+            font-size: 14px;
+            color: #8E8E93;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1C1C1E;
+        }
+        
+        /* Pill Tag */
+        .pill-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .pill-pink {
+            background: #FFECEC;
+            color: #FF3B30;
+        }
+        
+        .pill-yellow {
+            background: #FFF5D6;
+            color: #FF9500;
+        }
+        
+        .pill-purple {
+            background: rgba(138, 107, 255, 0.1);
+            color: #8A6BFF;
+        }
+        
+        /* Button */
+        .button {
+            background: #FFA500;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 16px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 165, 0, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(255, 165, 0, 0.4);
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 440px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .nav-item.active {
+            background: rgba(138, 107, 255, 0.1);
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+        }
+        
+        .nav-label {
+            font-size: 11px;
+            color: #8E8E93;
+        }
+        
+        .nav-item.active .nav-label {
+            color: #8A6BFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">快递取件</div>
+            <div class="header-subtitle">3个待取快递</div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" placeholder="搜索快递单号或取件码">
+        </div>
+        
+        <!-- Express Cards -->
+        <div class="soft-card">
+            <div class="card-header">
+                <div class="icon-3d">📦</div>
+                <div class="card-info">
+                    <div class="card-title">顺丰速运</div>
+                    <div class="card-subtitle">刚刚送达</div>
+                </div>
+                <div class="pill-tag pill-pink">待取</div>
+            </div>
+            <div class="pickup-section">
+                <div class="pickup-label">取件码</div>
+                <div class="pickup-code">AB1234</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">取件地点</div>
+                <div class="info-value">菜鸟驿站 · XX小区店</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">送达时间</div>
+                <div class="info-value">今天 14:23</div>
+            </div>
+        </div>
+        
+        <div class="soft-card">
+            <div class="card-header">
+                <div class="icon-3d">📦</div>
+                <div class="card-info">
+                    <div class="card-title">中通快递</div>
+                    <div class="card-subtitle">10分钟前</div>
+                </div>
+                <div class="pill-tag pill-yellow">待取</div>
+            </div>
+            <div class="pickup-section">
+                <div class="pickup-label">取件码</div>
+                <div class="pickup-code">XY5678</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">取件地点</div>
+                <div class="info-value">快递柜 · XX小区3号楼</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">送达时间</div>
+                <div class="info-value">今天 14:13</div>
+            </div>
+        </div>
+        
+        <div class="soft-card">
+            <div class="card-header">
+                <div class="icon-3d">📦</div>
+                <div class="card-info">
+                    <div class="card-title">圆通速递</div>
+                    <div class="card-subtitle">2小时前</div>
+                </div>
+                <div class="pill-tag pill-purple">待取</div>
+            </div>
+            <div class="pickup-section">
+                <div class="pickup-label">取件码</div>
+                <div class="pickup-code">CD9012</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">取件地点</div>
+                <div class="info-value">XX超市快递点</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">送达时间</div>
+                <div class="info-value">今天 12:30</div>
+            </div>
+        </div>
+        
+        <button class="button">复制全部取件码</button>
+    </div>
+    
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-item">
+            <div class="nav-icon">💬</div>
+            <div class="nav-label">短信</div>
+        </div>
+        <div class="nav-item active">
+            <div class="nav-icon">📦</div>
+            <div class="nav-label">快递</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🏷️</div>
+            <div class="nav-label">标签</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">设置</div>
+        </div>
+    </div>
+</body>
+</html>

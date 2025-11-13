@@ -1,0 +1,11 @@
+{
+  "appId": "com.smsagent.app",
+  "appName": "SMS Agent",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "192.168.200.130"
+    ]
+  }
+}

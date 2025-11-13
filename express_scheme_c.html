@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递取件码 - 方案C（状态标签简化）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4c0 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding: 0 16px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .scheme-tag {
+            background: #667EEA;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .location-group {
+            margin-bottom: 24px;
+        }
+
+        .location-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 0 16px;
+        }
+
+        .location-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .location-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .location-info {
+            flex: 1;
+        }
+
+        .location-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .location-address {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .copy-all-btn {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667EEA;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .copy-all-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .express-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 16px;
+            margin-bottom: 16px;
+        }
+
+        .express-card {
+            background: white;
+            border-radius: 16px;
+            border: 1.5px solid rgba(255, 255, 255, 0.8);
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .express-card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        /* 右上角状态标签 - 简化版 */
+        .status-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1.5px solid #667EEA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #667EEA;
+        }
+
+        .status-tag.picked {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .status-tag.expired {
+            background: rgba(255, 152, 0, 0.2);
+            border-color: #FF9800;
+            color: #FF9800;
+        }
+
+        .pickup-code-section {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .pickup-code-label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .pickup-code {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .copy-button {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667EEA;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-button:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .description {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667EEA;
+            padding: 12px 16px;
+            margin: 0 16px 24px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1>快递取件码</h1>
+            <div class="scheme-tag">方案C：标签简化</div>
+        </div>
+
+        <div class="description">
+            💡 <strong>方案特点：</strong> 右上角圆形标签，使用图标表示状态。简洁紧凑，占用空间最小。
+        </div>
+
+        <!-- 菜鸟驿站 -->
+        <div class="location-group">
+            <div class="location-header">
+                <div class="location-left">
+                    <div class="location-icon">📍</div>
+                    <div class="location-info">
+                        <div class="location-name">菜鸟驿站</div>
+                        <div class="location-address">郑州市北文雅小区6号楼102取件</div>
+                    </div>
+                </div>
+                <button class="copy-all-btn">复制全部</button>
+            </div>
+
+            <div class="express-cards">
+                <!-- 快递 1 - 未取 -->
+                <div class="express-card">
+                    <div class="status-tag">⏱</div>
+
+                    <div class="pickup-code-section">
+                        <div class="pickup-code-label">PICKUP CODE</div>
+                        <div class="pickup-code">2029</div>
+                        <button class="copy-button">📋 复制</button>
+                    </div>
+
+                    <div class="card-info">
+                        <div class="info-row">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">2-4</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-11 10:35:45</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快递 2 - 未取 -->
+                <div class="express-card">
+                    <div class="status-tag">⏱</div>
+
+                    <div class="pickup-code-section">
+                        <div class="pickup-code-label">PICKUP CODE</div>
+                        <div class="pickup-code">5011</div>
+                        <button class="copy-button">📋 复制</button>
+                    </div>
+
+                    <div class="card-info">
+                        <div class="info-row">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">6-5</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-07 19:05:42</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快递 3 - 已取 -->
+                <div class="express-card">
+                    <div class="status-tag picked">✓</div>
+
+                    <div class="pickup-code-section">
+                        <div class="pickup-code-label">PICKUP CODE</div>
+                        <div class="pickup-code">5008</div>
+                        <button class="copy-button">📋 复制</button>
+                    </div>
+
+                    <div class="card-info">
+                        <div class="info-row">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">11-13</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-13 14:22:10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 顺丰速运 -->
+        <div class="location-group">
+            <div class="location-header">
+                <div class="location-left">
+                    <div class="location-icon">📍</div>
+                    <div class="location-info">
+                        <div class="location-name">顺丰速运</div>
+                        <div class="location-address">郑州市金水区自提点</div>
+                    </div>
+                </div>
+                <button class="copy-all-btn">复制全部</button>
+            </div>
+
+            <div class="express-cards">
+                <!-- 快递 4 - 已取 -->
+                <div class="express-card">
+                    <div class="status-tag picked">✓</div>
+
+                    <div class="pickup-code-section">
+                        <div class="pickup-code-label">PICKUP CODE</div>
+                        <div class="pickup-code">3028</div>
+                        <button class="copy-button">📋 复制</button>
+                    </div>
+
+                    <div class="card-info">
+                        <div class="info-row">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">11-10</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-10 08:15:30</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

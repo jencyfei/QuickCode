@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深色荧光风格 - 社区首页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif;
+            background: #1C1C1E;
+            color: #FFFFFF;
+            padding-bottom: 80px;
+        }
+        
+        /* Header */
+        .header {
+            background: #1C1C1E;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .location {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #B0B0B0;
+            font-size: 14px;
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        /* Main Banner */
+        .main-banner {
+            background: #3A7BFF;
+            margin: 16px;
+            padding: 24px;
+            border-radius: 16px;
+        }
+        
+        .banner-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        
+        .banner-subtitle {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 16px;
+        }
+        
+        .banner-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .banner-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .btn-stat {
+            background: rgba(255,255,255,0.2);
+            color: #FFFFFF;
+        }
+        
+        .btn-primary {
+            background: #D8FF4B;
+            color: #000000;
+        }
+        
+        /* Section */
+        .section {
+            padding: 0 16px;
+            margin-bottom: 24px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #2C2C2E;
+            color: #B0B0B0;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            background: #D8FF4B;
+            color: #000000;
+        }
+        
+        /* Express Card */
+        .express-card {
+            background: #2C2C2E;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .express-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .express-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .express-info {
+            flex: 1;
+        }
+        
+        .express-company {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .express-status {
+            font-size: 12px;
+            color: #B0B0B0;
+        }
+        
+        .pickup-code {
+            background: rgba(216, 255, 75, 0.1);
+            border: 2px solid #D8FF4B;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .pickup-label {
+            font-size: 12px;
+            color: #B0B0B0;
+            margin-bottom: 8px;
+        }
+        
+        .pickup-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #D8FF4B;
+            letter-spacing: 4px;
+        }
+        
+        .express-location {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #B0B0B0;
+        }
+        
+        /* Bottom Tab Bar */
+        .bottom-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #2C2C2E;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #B0B0B0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .tab-item.active {
+            color: #D8FF4B;
+        }
+        
+        .tab-icon {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <div class="location">📍 北京</div>
+            <div class="page-title">快递取件</div>
+        </div>
+        <div style="font-size: 24px; cursor: pointer;">⋮</div>
+    </div>
+    
+    <!-- Main Banner -->
+    <div class="main-banner">
+        <div class="banner-title">智能短信分类</div>
+        <div class="banner-subtitle">快递 | 验证码 | 银行 | 通知</div>
+        <div class="banner-actions">
+            <div class="banner-btn btn-stat">已分类 128条</div>
+            <div class="banner-btn btn-primary">立即查看</div>
+        </div>
+    </div>
+    
+    <!-- Express Section -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">待取快递</div>
+            <div style="color: #B0B0B0; font-size: 14px;">查看全部 →</div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">今天</div>
+            <div class="tab">昨天</div>
+            <div class="tab">本周</div>
+        </div>
+        
+        <div class="express-card">
+            <div class="express-header">
+                <div class="express-icon">📦</div>
+                <div class="express-info">
+                    <div class="express-company">顺丰速运</div>
+                    <div class="express-status">已到达 · 菜鸟驿站</div>
+                </div>
+            </div>
+            <div class="pickup-code">
+                <div class="pickup-label">取件码</div>
+                <div class="pickup-value">AB1234</div>
+            </div>
+            <div class="express-location">📍 取件地点：XX小区菜鸟驿站</div>
+        </div>
+        
+        <div class="express-card">
+            <div class="express-header">
+                <div class="express-icon">📦</div>
+                <div class="express-info">
+                    <div class="express-company">中通快递</div>
+                    <div class="express-status">派送中</div>
+                </div>
+            </div>
+            <div class="pickup-code">
+                <div class="pickup-label">取件码</div>
+                <div class="pickup-value">XY5678</div>
+            </div>
+            <div class="express-location">📍 取件地点：XX小区快递柜</div>
+        </div>
+        
+        <div class="express-card">
+            <div class="express-header">
+                <div class="express-icon">📦</div>
+                <div class="express-info">
+                    <div class="express-company">圆通速递</div>
+                    <div class="express-status">已到达 · 菜鸟驿站</div>
+                </div>
+            </div>
+            <div class="pickup-code">
+                <div class="pickup-label">取件码</div>
+                <div class="pickup-value">CD9012</div>
+            </div>
+            <div class="express-location">📍 取件地点：XX超市快递点</div>
+        </div>
+    </div>
+    
+    <!-- Bottom Tab Bar -->
+    <div class="bottom-tab-bar">
+        <div class="tab-item active">
+            <div class="tab-icon">🏠</div>
+            <div>首页</div>
+        </div>
+        <div class="tab-item">
+            <div class="tab-icon">🏷️</div>
+            <div>标签</div>
+        </div>
+        <div class="tab-item">
+            <div class="tab-icon">💡</div>
+            <div>智能</div>
+        </div>
+        <div class="tab-item">
+            <div class="tab-icon">👤</div>
+            <div>我的</div>
+        </div>
+    </div>
+</body>
+</html>

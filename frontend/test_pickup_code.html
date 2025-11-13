@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>取件码提取测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-case {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case.pass {
+            border-left: 4px solid #10b981;
+        }
+        .test-case.fail {
+            border-left: 4px solid #ef4444;
+        }
+        .status {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .pass .status {
+            color: #10b981;
+        }
+        .fail .status {
+            color: #ef4444;
+        }
+        .content {
+            color: #666;
+            margin: 5px 0;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .summary {
+            text-align: center;
+            font-size: 24px;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>取件码提取功能测试</h1>
+    <div id="results"></div>
+    <div id="summary" class="summary"></div>
+
+    <script type="module">
+        // 从 smsParser.js 复制取件码提取函数
+        function extractPickupCode(content) {
+            const patterns = [
+                /取件码[：:是为]?\s*([A-Z0-9-]{4,12})/i,
+                /提货码[：:是为]?\s*([A-Z0-9-]{4,12})/i,
+                /取货码[：:是为]?\s*([A-Z0-9-]{4,12})/i,
+                /取件号[：:是为]?\s*([A-Z0-9-]{4,12})/i,
+                /凭\s*([A-Z0-9-]{3,12})/i,
+                /code[：:is]?\s*([A-Z0-9-]{4,12})/i,
+                /到\s*(.{2,15}?)取件/,
+                /(\d+-\d+-\d+)/,
+                /(\d{4})/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = content.match(pattern);
+                if (match) {
+                    const code = match[1].trim();
+                    if (pattern.source.includes('到') && pattern.source.includes('取件')) {
+                        const cleaned = code.replace(/[^A-Z0-9-]/gi, '');
+                        if (cleaned.length >= 3) {
+                            return cleaned;
+                        }
+                    }
+                    return code;
+                }
+            }
+            
+            return null;
+        }
+
+        const testCases = [
+            {
+                content: '【菜鸟驿站】您的包裹已到站，凭7-5-3028到郑州市北文雅小区6号楼102店取件。',
+                expected: '7-5-3028'
+            },
+            {
+                content: '您的快递已到达，取件码：1234',
+                expected: '1234'
+            },
+            {
+                content: '包裹已到菜鸟驿站，提货码是A1B2',
+                expected: 'A1B2'
+            },
+            {
+                content: '快递到了，取件号5678',
+                expected: '5678'
+            },
+            {
+                content: 'Your package is ready. Code: ABC123',
+                expected: 'ABC123'
+            },
+            {
+                content: '快递已到达小区快递柜，凭取件码8-8-8888到1号柜取件',
+                expected: '8-8-8888'
+            }
+        ];
+
+        let passCount = 0;
+        const resultsDiv = document.getElementById('results');
+
+        testCases.forEach((test, index) => {
+            const result = extractPickupCode(test.content);
+            const passed = result === test.expected;
+            
+            if (passed) passCount++;
+
+            const div = document.createElement('div');
+            div.className = `test-case ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <div class="status">${passed ? '✅ 通过' : '❌ 失败'} - 测试 ${index + 1}</div>
+                <div class="content"><strong>短信内容：</strong>${test.content}</div>
+                <div class="result">
+                    <div><strong>预期取件码：</strong>${test.expected}</div>
+                    <div><strong>实际提取：</strong>${result || '未提取到'}</div>
+                </div>
+            `;
+            resultsDiv.appendChild(div);
+        });
+
+        document.getElementById('summary').innerHTML = `
+            测试结果: <strong style="color: ${passCount === testCases.length ? '#10b981' : '#ef4444'}">
+                ${passCount} / ${testCases.length} 通过
+            </strong>
+        `;
+    </script>
+</body>
+</html>
+

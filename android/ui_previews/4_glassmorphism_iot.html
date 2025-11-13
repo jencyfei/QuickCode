@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玻璃拟态风格 - 智能设备</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #FDF3D8;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Background Blobs */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, #FDEB9E 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: 0;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #F7C7E2 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Glass Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .header-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 8px;
+        }
+        
+        .header-subtitle {
+            font-size: 16px;
+            color: #4A4A4A;
+        }
+        
+        /* Express Card */
+        .express-card {
+            margin-bottom: 16px;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .card-info {
+            flex: 1;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 4px;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: #4A4A4A;
+        }
+        
+        /* Pickup Code Display */
+        .pickup-display {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .pickup-label {
+            font-size: 12px;
+            color: #4A4A4A;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .pickup-code {
+            font-size: 40px;
+            font-weight: bold;
+            color: #333333;
+            letter-spacing: 6px;
+        }
+        
+        .location-info {
+            font-size: 14px;
+            color: #4A4A4A;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* Glass Button */
+        .glass-button {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333333;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 16px;
+            transition: all 0.3s;
+        }
+        
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        /* Pill Tag */
+        .pill-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            background: rgba(102, 126, 234, 0.2);
+            color: #333333;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .nav-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .nav-button.active {
+            background: rgba(102, 126, 234, 0.3);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">快递取件</div>
+            <div class="header-subtitle">智能短信助手</div>
+        </div>
+        
+        <!-- Express Cards -->
+        <div class="glass-panel">
+            <div class="express-card">
+                <div class="card-header">
+                    <div class="card-icon">📦</div>
+                    <div class="card-info">
+                        <div class="card-title">顺丰速运</div>
+                        <div class="card-subtitle">刚刚送达</div>
+                    </div>
+                    <div class="pill-tag">待取</div>
+                </div>
+                <div class="pickup-display">
+                    <div class="pickup-label">Pickup Code</div>
+                    <div class="pickup-code">AB1234</div>
+                </div>
+                <div class="location-info">
+                    <span>📍</span>
+                    <span>菜鸟驿站 · XX小区店</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-panel">
+            <div class="express-card">
+                <div class="card-header">
+                    <div class="card-icon">📦</div>
+                    <div class="card-info">
+                        <div class="card-title">中通快递</div>
+                        <div class="card-subtitle">10分钟前</div>
+                    </div>
+                    <div class="pill-tag">待取</div>
+                </div>
+                <div class="pickup-display">
+                    <div class="pickup-label">Pickup Code</div>
+                    <div class="pickup-code">XY5678</div>
+                </div>
+                <div class="location-info">
+                    <span>📍</span>
+                    <span>快递柜 · XX小区3号楼</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-panel">
+            <div class="express-card">
+                <div class="card-header">
+                    <div class="card-icon">📦</div>
+                    <div class="card-info">
+                        <div class="card-title">圆通速递</div>
+                        <div class="card-subtitle">2小时前</div>
+                    </div>
+                    <div class="pill-tag">待取</div>
+                </div>
+                <div class="pickup-display">
+                    <div class="pickup-label">Pickup Code</div>
+                    <div class="pickup-code">CD9012</div>
+                </div>
+                <div class="location-info">
+                    <span>📍</span>
+                    <span>XX超市快递点</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-button">查看全部快递</div>
+    </div>
+    
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-button">💬</div>
+        <div class="nav-button active">📦</div>
+        <div class="nav-button">🏷️</div>
+        <div class="nav-button">⚙️</div>
+    </div>
+</body>
+</html>

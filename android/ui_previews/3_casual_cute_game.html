@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可爱休闲游戏风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', '微软雅黑', sans-serif;
+            background: linear-gradient(180deg, #A0C864 0%, #89C76F 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+        
+        /* Modal */
+        .modal {
+            background: #FDF8E8;
+            border-radius: 32px;
+            border: 4px solid #5B3A29;
+            padding: 0;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+        }
+        
+        /* Modal Header */
+        .modal-header {
+            background: linear-gradient(180deg, #D4A24E 0%, #B8904A 100%);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 4px solid #5B3A29;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        /* Modal Body */
+        .modal-body {
+            padding: 24px;
+        }
+        
+        /* Express Card */
+        .express-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            border: 3px solid #5B3A29;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+        
+        .express-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .express-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FDD451 0%, #F5A623 100%);
+            border: 3px solid #5B3A29;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+        
+        .express-info {
+            flex: 1;
+        }
+        
+        .express-company {
+            font-size: 18px;
+            font-weight: bold;
+            color: #5B3A29;
+            margin-bottom: 4px;
+        }
+        
+        .express-time {
+            font-size: 12px;
+            color: #6D5F54;
+        }
+        
+        /* Pickup Code Box */
+        .pickup-box {
+            background: linear-gradient(135deg, #FDD451 0%, #F5A623 100%);
+            border-radius: 16px;
+            border: 3px solid #5B3A29;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.5);
+        }
+        
+        .pickup-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #5B3A29;
+            margin-bottom: 8px;
+        }
+        
+        .pickup-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            letter-spacing: 4px;
+        }
+        
+        .location-text {
+            font-size: 14px;
+            color: #6D5F54;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 24px;
+            border: 3px solid #5B3A29;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(180deg, #63D369 0%, #4CAF50 100%);
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(180deg, #FDD451 0%, #F5A623 100%);
+            color: #5B3A29;
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, #D4A24E 0%, #B8904A 100%);
+            border-top: 4px solid #5B3A29;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        
+        .nav-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 3px solid #5B3A29;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        
+        .nav-item.active .nav-icon {
+            background: linear-gradient(135deg, #FDD451 0%, #F5A623 100%);
+            transform: scale(1.1);
+        }
+        
+        .nav-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Modal -->
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <span>🐱</span>
+                <span>我的快递</span>
+                <span>📦</span>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="express-card">
+                <div class="express-header">
+                    <div class="express-icon">📦</div>
+                    <div class="express-info">
+                        <div class="express-company">顺丰速运</div>
+                        <div class="express-time">刚刚送达</div>
+                    </div>
+                </div>
+                <div class="pickup-box">
+                    <div class="pickup-label">🔑 取件码</div>
+                    <div class="pickup-code">AB1234</div>
+                </div>
+                <div class="location-text">
+                    <span>📍</span>
+                    <span>菜鸟驿站 · XX小区店</span>
+                </div>
+            </div>
+            
+            <div class="express-card">
+                <div class="express-header">
+                    <div class="express-icon">📦</div>
+                    <div class="express-info">
+                        <div class="express-company">中通快递</div>
+                        <div class="express-time">10分钟前</div>
+                    </div>
+                </div>
+                <div class="pickup-box">
+                    <div class="pickup-label">🔑 取件码</div>
+                    <div class="pickup-code">XY5678</div>
+                </div>
+                <div class="location-text">
+                    <span>📍</span>
+                    <span>快递柜 · XX小区3号楼</span>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <div class="btn btn-secondary">查看全部</div>
+                <div class="btn btn-primary">复制取件码</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-item">
+            <div class="nav-icon">💬</div>
+            <div class="nav-label">短信</div>
+        </div>
+        <div class="nav-item active">
+            <div class="nav-icon">📦</div>
+            <div class="nav-label">快递</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🏷️</div>
+            <div class="nav-label">标签</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">设置</div>
+        </div>
+    </div>
+</body>
+</html>
