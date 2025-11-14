@@ -23,6 +23,7 @@ fun SettingsScreen(
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    var selectedSetting by remember { mutableStateOf<String?>(null) }
     
     GradientBackground {
         Scaffold(
@@ -78,25 +79,29 @@ fun SettingsScreen(
             SettingItem(
                 icon = Icons.Default.Notifications,
                 title = "通知设置",
-                subtitle = "管理通知权限"
+                subtitle = "管理通知权限",
+                onClick = { selectedSetting = "notifications" }
             )
             
             SettingItem(
                 icon = Icons.Default.Security,
                 title = "隐私设置",
-                subtitle = "数据安全与隐私"
+                subtitle = "数据安全与隐私",
+                onClick = { selectedSetting = "privacy" }
             )
             
             SettingItem(
                 icon = Icons.Default.Storage,
                 title = "存储管理",
-                subtitle = "管理本地数据"
+                subtitle = "管理本地数据",
+                onClick = { selectedSetting = "storage" }
             )
             
             SettingItem(
                 icon = Icons.Default.Help,
                 title = "帮助与反馈",
-                subtitle = "获取帮助或提供反馈"
+                subtitle = "获取帮助或提供反馈",
+                onClick = { selectedSetting = "help" }
             )
         }
         }
@@ -111,33 +116,39 @@ fun SettingItem(
     onClick: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null
 ) {
-    Row(
+    FrostedGlassCard(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
-            if (subtitle.isNotEmpty()) {
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge
                 )
+                if (subtitle.isNotEmpty()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
             }
+            trailing?.invoke()
         }
-        trailing?.invoke()
     }
 }

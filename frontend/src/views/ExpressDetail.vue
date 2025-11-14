@@ -123,7 +123,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { getSmsList } from '@/api/sms'
-import { extractPickupCode } from '@/utils/smsParser'
+import { extractPickupCode, extractPickupDate, extractPickupTime } from '@/utils/smsParser'
 import { shouldShowImportFeature } from '@/utils/environment'
 
 const router = useRouter()
@@ -163,6 +163,10 @@ const loadExpressList = async () => {
         const code = extractPickupCode(sms.content)
         // 提取地址
         const address = extractAddress(sms.content, sms.sender)
+        // 提取取件日期
+        const pickupDate = extractPickupDate(sms.content)
+        // 提取取件时间
+        const pickupTime = extractPickupTime(sms.content)
         
         return {
           id: sms.id,
@@ -171,6 +175,8 @@ const loadExpressList = async () => {
           content: sms.content,
           received_at: sms.received_at,
           address: address,
+          pickup_date: pickupDate,
+          pickup_time: pickupTime,
           picked: false // 默认未取
         }
       })

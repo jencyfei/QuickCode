@@ -38,22 +38,31 @@ def init_rule_templates():
                 description="匹配 '提货码: XYZ789' 格式"
             ),
             RuleTemplate(
-                name="凭XX取件格式",
+                name="凭X-X-XXXX格式（优先级高）",
+                category="快递",
+                rule_type="pickup_code",
+                pattern=r'凭\s*(\d+-\d+-\d+)',
+                extract_group=1,
+                priority=8,
+                description="匹配 '凭2-4-2029' 或 '凭6-5-5011' 格式（优先匹配数字格式）"
+            ),
+            RuleTemplate(
+                name="凭XX取件格式（其他格式）",
                 category="快递",
                 rule_type="pickup_code",
                 pattern=r'凭\s*([A-Z0-9-]{3,12})',
                 extract_group=1,
-                priority=8,
-                description="匹配 '凭7-5-3028取件' 格式"
+                priority=7,
+                description="匹配 '凭ABC123' 或其他非数字格式"
             ),
             RuleTemplate(
-                name="横杠分隔数字",
+                name="横杠分隔数字（X-X-XXXX）",
                 category="快递",
                 rule_type="pickup_code",
                 pattern=r'(\d+-\d+-\d+)',
                 extract_group=1,
-                priority=7,
-                description="匹配 '7-5-3028' 格式"
+                priority=6,
+                description="匹配 '2-4-2029' 或 '7-5-3028' 格式"
             ),
             RuleTemplate(
                 name="纯数字取件码",
@@ -61,7 +70,7 @@ def init_rule_templates():
                 rule_type="pickup_code",
                 pattern=r'(?:取件码|提货码|验证码)[：:是为]?\s*(\d{4,8})',
                 extract_group=1,
-                priority=6,
+                priority=5,
                 description="匹配纯数字取件码"
             ),
         ]

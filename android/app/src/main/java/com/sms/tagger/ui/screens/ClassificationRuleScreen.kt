@@ -35,68 +35,82 @@ import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
 
 /**
- * 规则管理页面
+ * 分类规则管理页面
+ * 用于管理对短信内容进行分类的规则
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RuleManageScreen(onBack: (() -> Unit)? = null) {
-    // 初始化内置规则
-    val initialBuiltInRules = listOf(
-        // 优先级10：标准取件码格式
+fun ClassificationRuleScreen(onBack: (() -> Unit)? = null) {
+    // 初始化分类规则
+    val initialClassificationRules = listOf(
+        // 验证码分类规则
         TagRule(
-            id = "builtin_pickup_01",
-            ruleName = "标准取件码格式",
-            tagName = "快递",
+            id = "classify_verify_01",
+            ruleName = "验证码分类",
+            tagName = "验证码",
             ruleType = RuleType.CONTENT,
-            condition = "取件码",
-            extractPosition = "取件码",
-            extractLength = 12,
+            condition = "验证码",
+            extractPosition = "验证码",
+            extractLength = 6,
             isEnabled = true,
             priority = 10,
             isBuiltIn = true
         ),
-        // 优先级9：提货码格式
+        // 快递分类规则
         TagRule(
-            id = "builtin_pickup_02",
-            ruleName = "提货码格式",
+            id = "classify_express_01",
+            ruleName = "快递分类",
             tagName = "快递",
             ruleType = RuleType.CONTENT,
-            condition = "提货码",
-            extractPosition = "提货码",
-            extractLength = 12,
+            condition = "快递",
+            extractPosition = "快递",
+            extractLength = 0,
             isEnabled = true,
             priority = 9,
             isBuiltIn = true
         ),
-        // 优先级8：凭X-X-XXXX格式（优先匹配数字格式，如"凭2-4-2029"）✅ 新增
+        // 银行分类规则
         TagRule(
-            id = "builtin_cainiao_01",
-            ruleName = "菜鸟驿站取件码（凭X-X-XXXX）",
-            tagName = "快递",
+            id = "classify_bank_01",
+            ruleName = "银行分类",
+            tagName = "银行",
             ruleType = RuleType.CONTENT,
-            condition = "【菜鸟驿站】",
-            extractPosition = "凭",
-            extractLength = 12,  // 增加长度以支持"2-4-2029"格式
+            condition = "银行",
+            extractPosition = "银行",
+            extractLength = 0,
             isEnabled = true,
             priority = 8,
             isBuiltIn = true
         ),
-        // 优先级7：凭XX其他格式
+        // 通知分类规则
         TagRule(
-            id = "builtin_cainiao_02",
-            ruleName = "菜鸟驿站取件码（其他格式）",
-            tagName = "快递",
+            id = "classify_notify_01",
+            ruleName = "通知分类",
+            tagName = "通知",
             ruleType = RuleType.CONTENT,
-            condition = "凭",
-            extractPosition = "凭",
-            extractLength = 12,
+            condition = "通知",
+            extractPosition = "通知",
+            extractLength = 0,
             isEnabled = true,
             priority = 7,
+            isBuiltIn = true
+        ),
+        // 营销分类规则
+        TagRule(
+            id = "classify_marketing_01",
+            ruleName = "营销分类",
+            tagName = "营销",
+            ruleType = RuleType.CONTENT,
+            condition = "营销",
+            extractPosition = "营销",
+            extractLength = 0,
+            isEnabled = true,
+            priority = 6,
             isBuiltIn = true
         )
     )
     
-    var rules by remember { mutableStateOf(initialBuiltInRules) }
+    var rules by remember { mutableStateOf(initialClassificationRules) }
     var showAddRuleDialog by remember { mutableStateOf(false) }
     var editingRule by remember { mutableStateOf<TagRule?>(null) }
     
@@ -105,7 +119,7 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text("自定义规则") },
+                    title = { Text("短信分类规则") },
                     navigationIcon = {
                         if (onBack != null) {
                             IconButton(onClick = onBack) {
@@ -175,11 +189,11 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                     val builtInRules = rules.filter { it.isBuiltIn }
                     val customRules = rules.filter { !it.isBuiltIn }
                     
-                    // 内置规则分组
+                    // 内置分类规则分组
                     if (builtInRules.isNotEmpty()) {
                         item {
                             Text(
-                                "📦 内置快递规则",
+                                "🏷️ 内置分类规则",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF667EEA),
@@ -187,7 +201,7 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                             )
                         }
                         items(builtInRules) { rule ->
-                            RuleCard(
+                            ClassificationRuleCard(
                                 rule = rule,
                                 isBuiltIn = true,
                                 onEdit = { 
@@ -207,7 +221,7 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                         }
                     }
                     
-                    // 自定义规则分组
+                    // 自定义分类规则分组
                     if (customRules.isNotEmpty()) {
                         item {
                             Text(
@@ -219,7 +233,7 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                             )
                         }
                         items(customRules) { rule ->
-                            RuleCard(
+                            ClassificationRuleCard(
                                 rule = rule,
                                 isBuiltIn = false,
                                 onEdit = { 
@@ -245,7 +259,7 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
     
     // 添加/编辑规则对话框
     if (showAddRuleDialog) {
-        AddRuleDialog(
+        AddClassificationRuleDialog(
             rule = editingRule,
             onSave = { newRule ->
                 if (editingRule != null) {
@@ -276,10 +290,10 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
 }
 
 /**
- * 规则卡片
+ * 分类规则卡片
  */
 @Composable
-fun RuleCard(
+fun ClassificationRuleCard(
     rule: TagRule,
     isBuiltIn: Boolean = false,
     onEdit: (() -> Unit)?,
@@ -342,11 +356,13 @@ fun RuleCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary
             )
-            Text(
-                text = "提取: ${rule.extractPosition} 后 ${rule.extractLength} 个字符",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary
-            )
+            if (rule.extractLength > 0) {
+                Text(
+                    text = "提取: ${rule.extractPosition} 后 ${rule.extractLength} 个字符",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary
+                )
+            }
             
             // 操作按钮
             Row(
@@ -406,7 +422,7 @@ fun RuleCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "📦 内置规则（可编辑）",
+                        "🏷️ 内置规则（可编辑）",
                         fontSize = 12.sp,
                         color = Color(0xFF667EEA),
                         fontWeight = FontWeight.SemiBold
@@ -418,23 +434,21 @@ fun RuleCard(
 }
 
 /**
- * 添加/编辑规则对话框
+ * 添加/编辑分类规则对话框
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddRuleDialog(
+fun AddClassificationRuleDialog(
     rule: TagRule?,
     onSave: (TagRule) -> Unit,
     onDismiss: () -> Unit
 ) {
     var ruleName by remember { mutableStateOf(rule?.ruleName ?: "") }
     var tagName by remember { mutableStateOf(rule?.tagName ?: "") }
-    var ruleType by remember { mutableStateOf(rule?.ruleType ?: RuleType.SENDER) }
-    var senderConditionType by remember { mutableStateOf("contains") }  // 发信人条件类型
-    var conditionKeyword by remember { mutableStateOf(rule?.condition?.substringAfter("|") ?: "") }  // 条件关键词
+    var ruleType by remember { mutableStateOf(rule?.ruleType ?: RuleType.CONTENT) }
+    var conditionKeyword by remember { mutableStateOf(rule?.condition ?: "") }
     var extractPosition by remember { mutableStateOf(rule?.extractPosition ?: "") }
     var extractLength by remember { mutableStateOf(rule?.extractLength?.toString() ?: "") }
-    var expandedConditionType by remember { mutableStateOf(false) }  // 下拉菜单展开状态
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -451,7 +465,7 @@ fun AddRuleDialog(
         containerColor = Color.White.copy(alpha = 0.95f),
         title = { 
             Text(
-                if (rule == null) "添加新规则" else "编辑规则",
+                if (rule == null) "添加分类规则" else "编辑分类规则",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF333333)
@@ -469,7 +483,7 @@ fun AddRuleDialog(
                 TextField(
                     value = ruleName,
                     onValueChange = { ruleName = it },
-                    placeholder = { Text("例如: 快递取件码") },
+                    placeholder = { Text("例如: 验证码分类") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -479,7 +493,7 @@ fun AddRuleDialog(
                 TextField(
                     value = tagName,
                     onValueChange = { tagName = it },
-                    placeholder = { Text("例如: 快递") },
+                    placeholder = { Text("例如: 验证码") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -512,68 +526,22 @@ fun AddRuleDialog(
                     }
                 }
                 
-                // 条件
-                if (ruleType == RuleType.SENDER) {
-                    Text("条件类型", style = MaterialTheme.typography.labelSmall)
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Button(
-                            onClick = { expandedConditionType = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFF5F5F5)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                senderConditionType,
-                                color = Color(0xFF333333),
-                                modifier = Modifier.weight(1f),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Start
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = expandedConditionType,
-                            onDismissRequest = { expandedConditionType = false },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            listOf("contains", "startsWith", "endsWith").forEach { type ->
-                                DropdownMenuItem(
-                                    text = { Text(type) },
-                                    onClick = {
-                                        senderConditionType = type
-                                        expandedConditionType = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("关键词", style = MaterialTheme.typography.labelSmall)
-                    TextField(
-                        value = conditionKeyword,
-                        onValueChange = { conditionKeyword = it },
-                        placeholder = { Text("例如: 菜鸟") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                } else {
-                    Text("条件关键词", style = MaterialTheme.typography.labelSmall)
-                    TextField(
-                        value = conditionKeyword,
-                        onValueChange = { conditionKeyword = it },
-                        placeholder = { Text("例如: 取件码") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
+                // 条件关键词
+                Text("条件关键词", style = MaterialTheme.typography.labelSmall)
+                TextField(
+                    value = conditionKeyword,
+                    onValueChange = { conditionKeyword = it },
+                    placeholder = { Text("例如: 验证码") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
                 
                 // 提取位置
                 Text("提取位置（关键词）", style = MaterialTheme.typography.labelSmall)
                 TextField(
                     value = extractPosition,
                     onValueChange = { extractPosition = it },
-                    placeholder = { Text("例如: 取件码") },
+                    placeholder = { Text("例如: 验证码") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -593,22 +561,14 @@ fun AddRuleDialog(
             Button(
                 onClick = {
                     if (ruleName.isNotBlank() && tagName.isNotBlank() && 
-                        conditionKeyword.isNotBlank() && extractPosition.isNotBlank() && 
-                        extractLength.isNotBlank()) {
-                        // 构建条件字符串
-                        val finalCondition = if (ruleType == RuleType.SENDER) {
-                            "$senderConditionType|$conditionKeyword"
-                        } else {
-                            conditionKeyword
-                        }
-                        
+                        conditionKeyword.isNotBlank()) {
                         onSave(
                             TagRule(
                                 id = rule?.id ?: "",
                                 ruleName = ruleName,
                                 tagName = tagName,
                                 ruleType = ruleType,
-                                condition = finalCondition,
+                                condition = conditionKeyword,
                                 extractPosition = extractPosition,
                                 extractLength = extractLength.toIntOrNull() ?: 0,
                                 isEnabled = rule?.isEnabled ?: true,

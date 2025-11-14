@@ -12,7 +12,8 @@ data class TagRule(
     val extractPosition: String = "",
     val extractLength: Int = 0,
     val isEnabled: Boolean = true,
-    val priority: Int = 0
+    val priority: Int = 0,
+    val isBuiltIn: Boolean = false  // 标记是否为内置规则
 )
 
 /**

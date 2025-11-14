@@ -72,17 +72,23 @@ fun SmsListScreen(
             
             android.util.Log.d("SmsListScreen", "读取到 ${allSms.size} 条短信")
             
-            // 如果有 tagFilter，按分类规则过滤短信
-            smsCreateList = if (tagFilter != null) {
-                allSms.filter { sms ->
-                    SmsClassifier.classifySms(sms.content) == tagFilter
-                }.sortedByDescending { it.receivedAt }
+            // 按标签过滤短信
+            val filteredSms = if (tagFilter != null) {
+                // 对短信进行分类
+                val classified = SmsClassifier.classifySmsList(allSms)
+                // 获取指定标签的短信
+                classified[tagFilter] ?: emptyList()
             } else {
-                allSms.sortedByDescending { it.receivedAt }
+                allSms
             }
             
+            android.util.Log.d("SmsListScreen", "过滤后 ${filteredSms.size} 条短信 (标签: $tagFilter)")
+            
+            // 显示过滤后的短信，按时间倒序排列
+            smsCreateList = filteredSms.sortedByDescending { it.receivedAt }
+            
             if (smsCreateList.isEmpty()) {
-                errorMessage = if (tagFilter != null) "该标签下暂无短信" else "暂无短信"
+                errorMessage = "暂无短信"
             }
         } catch (e: Exception) {
             e.printStackTrace()

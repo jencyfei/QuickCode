@@ -139,8 +139,9 @@ def load_default_rules(engine: RuleEngine):
     default_pickup_rules = [
         ExtractionRuleItem(0, r'取件码[：:是为]?\s*([A-Z0-9-]{4,12})', 1, 10),
         ExtractionRuleItem(0, r'提货码[：:是为]?\s*([A-Z0-9-]{4,12})', 1, 9),
-        ExtractionRuleItem(0, r'凭\s*([A-Z0-9-]{3,12})', 1, 8),
-        ExtractionRuleItem(0, r'(\d+-\d+-\d+)', 1, 7),
+        ExtractionRuleItem(0, r'凭\s*(\d+-\d+-\d+)', 1, 8),  # 优先匹配数字格式如"2-4-2029"
+        ExtractionRuleItem(0, r'凭\s*([A-Z0-9-]{3,12})', 1, 7),  # 其他格式
+        ExtractionRuleItem(0, r'(\d+-\d+-\d+)', 1, 6),  # 横杠分隔的数字
     ]
     
     # 地址默认规则（更精确的匹配，避免包含前缀）

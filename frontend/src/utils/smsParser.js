@@ -34,14 +34,20 @@ export function extractVerificationCode(content) {
  */
 export function extractPickupCode(content) {
   const patterns = [
+    // 优先级1：明确的标签格式
     /取件码[：:是为]?\s*([A-Z0-9-]{4,12})/i,  // 支持横杠，长度增加到12
     /提货码[：:是为]?\s*([A-Z0-9-]{4,12})/i,
     /取货码[：:是为]?\s*([A-Z0-9-]{4,12})/i,
     /取件号[：:是为]?\s*([A-Z0-9-]{4,12})/i,
-    /凭\s*([A-Z0-9-]{3,12})/i,  // 新增：支持"凭7-5-3028"格式
     /code[：:is]?\s*([A-Z0-9-]{4,12})/i,
-    /到\s*(.{2,15}?)取件/,  // 新增：提取"到...取件"之间的内容作为取件码
-    /(\d+-\d+-\d+)/,  // 新增：匹配横杠分隔的数字，如"7-5-3028"
+    
+    // 优先级2："凭"后的8个字符（精确匹配格式如"2-4-2029"）
+    /凭\s*(\d+-\d+-\d+)/i,  // 优先匹配"凭X-X-XXXX"格式
+    /凭\s*([A-Z0-9-]{3,12})/i,  // 其他"凭"格式
+    
+    // 优先级3：其他格式
+    /到\s*(.{2,15}?)取件/,  // 提取"到...取件"之间的内容作为取件码
+    /(\d+-\d+-\d+)/,  // 匹配横杠分隔的数字，如"7-5-3028"
     /(\d{4})/  // 4位纯数字（最后尝试）
   ]
   
@@ -58,6 +64,70 @@ export function extractPickupCode(content) {
       }
       return code
     }
+  }
+  
+  return null
+}
+
+/**
+ * 提取取件日期
+ * @param {string} content - 短信内容
+ * @returns {string|null} - 取件日期（YYYY-MM-DD格式）或null
+ */
+export function extractPickupDate(content) {
+  // 优先匹配完整的 YYYY-MM-DD 格式
+  let match = content.match(/(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (match) {
+    return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`
+  }
+  
+  // 然后匹配 MM-DD 格式（通常在时间前面，如"11-11 10:35"或短信头部"11-07 19:05"）
+  // 这个模式会匹配"日期 时间"的格式
+  match = content.match(/(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})/)
+  if (match) {
+    const month = String(match[1]).padStart(2, '0')
+    const day = String(match[2]).padStart(2, '0')
+    const currentYear = new Date().getFullYear()
+    return `${currentYear}-${month}-${day}`
+  }
+  
+  // 最后尝试单独的 MM-DD 格式，但要避免匹配取件码中的数字
+  // 查找所有的 MM-DD 模式
+  const allMatches = [...content.matchAll(/(\d{1,2})-(\d{1,2})/g)]
+  
+  for (const m of allMatches) {
+    const beforeText = content.substring(0, m.index)
+    const afterText = content.substring(m.index + m[0].length)
+    
+    // 如果在"凭"字后面且后面跟着数字，这可能是取件码的一部分，跳过
+    if (beforeText.includes('凭') && /^\d/.test(afterText)) {
+      continue
+    }
+    
+    // 找到一个有效的日期
+    const month = String(m[1]).padStart(2, '0')
+    const day = String(m[2]).padStart(2, '0')
+    const currentYear = new Date().getFullYear()
+    return `${currentYear}-${month}-${day}`
+  }
+  
+  return null
+}
+
+/**
+ * 提取取件时间
+ * @param {string} content - 短信内容
+ * @returns {string|null} - 取件时间（HH:MM格式）或null
+ */
+export function extractPickupTime(content) {
+  // 匹配 HH:MM 或 H:MM 格式
+  const pattern = /(\d{1,2}):(\d{2})/
+  const match = content.match(pattern)
+  
+  if (match) {
+    const hour = String(match[1]).padStart(2, '0')
+    const minute = match[2]
+    return `${hour}:${minute}`
   }
   
   return null

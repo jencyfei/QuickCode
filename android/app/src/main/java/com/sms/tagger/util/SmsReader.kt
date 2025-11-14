@@ -3,6 +3,9 @@ package com.sms.tagger.util
 import android.content.Context
 import android.net.Uri
 import android.provider.Telephony
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.content.pm.PackageManager
 import com.sms.tagger.data.model.SmsCreate
 import java.text.SimpleDateFormat
 import java.util.*
@@ -22,18 +25,61 @@ class SmsReader(private val context: Context) {
         
         // 日期格式
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        
+        // 分页大小
+        private const val PAGE_SIZE = 200
     }
     
     /**
      * 读取所有短信（包括收件箱和已发送）
-     * @param limit 限制数量，默认1000条
+     * 使用分页机制避免一次性加载过多数据
+     * @param limit 限制数量，默认5000条
      * @return 短信列表
      */
-    fun readAllSms(limit: Int = 1000): List<SmsCreate> {
+    fun readAllSms(limit: Int = 5000): List<SmsCreate> {
+        val smsList = mutableListOf<SmsCreate>()
+        
+        // 检查权限
+        if (!hasPermission()) {
+            android.util.Log.w(TAG, "没有短信读取权限")
+            return smsList
+        }
+        
+        try {
+            // 计算需要的页数
+            val pageCount = (limit + PAGE_SIZE - 1) / PAGE_SIZE
+            
+            for (page in 0 until pageCount) {
+                val offset = page * PAGE_SIZE
+                val pageLimit = minOf(PAGE_SIZE, limit - offset)
+                
+                val pageSms = readSmsPage(offset, pageLimit)
+                smsList.addAll(pageSms)
+                
+                // 如果返回的数据少于 pageLimit，说明已经到底了
+                if (pageSms.size < pageLimit) {
+                    break
+                }
+            }
+            
+            android.util.Log.d(TAG, "成功读取 ${smsList.size} 条短信")
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "读取短信错误", e)
+            e.printStackTrace()
+        }
+        
+        return smsList
+    }
+    
+    /**
+     * 读取单页短信
+     * @param offset 偏移量
+     * @param limit 每页数量
+     */
+    private fun readSmsPage(offset: Int, limit: Int): List<SmsCreate> {
         val smsList = mutableListOf<SmsCreate>()
         
         try {
-            // 读取所有短信（不限制类型）- 使用通用 SMS URI
             val allSmsUri = Uri.parse("content://sms")
             val cursor = context.contentResolver.query(
                 allSmsUri,
@@ -46,7 +92,7 @@ class SmsReader(private val context: Context) {
                 ),
                 null,
                 null,
-                "${Telephony.Sms.DATE} DESC LIMIT $limit"
+                "${Telephony.Sms.DATE} DESC LIMIT $limit OFFSET $offset"
             )
             
             cursor?.use {
@@ -73,6 +119,7 @@ class SmsReader(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
+            android.util.Log.e(TAG, "读取第 ${offset / PAGE_SIZE} 页短信错误", e)
             e.printStackTrace()
         }
         
@@ -147,6 +194,18 @@ class SmsReader(private val context: Context) {
      * 检查是否有短信权限
      */
     fun hasPermission(): Boolean {
+        // 1. 检查运行时权限
+        val runtimePermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+        
+        if (!runtimePermission) {
+            android.util.Log.w(TAG, "运行时权限检查失败")
+            return false
+        }
+        
+        // 2. 检查是否能访问 SMS 提供者
         return try {
             val allSmsUri = Uri.parse("content://sms")
             val cursor = context.contentResolver.query(
@@ -156,9 +215,19 @@ class SmsReader(private val context: Context) {
                 null,
                 "${Telephony.Sms.DATE} DESC LIMIT 1"
             )
+            
+            val hasData = cursor?.moveToFirst() == true
             cursor?.close()
-            true
+            
+            if (hasData) {
+                android.util.Log.d(TAG, "短信权限检查通过")
+            } else {
+                android.util.Log.w(TAG, "无法访问短信数据")
+            }
+            
+            hasData
         } catch (e: Exception) {
+            android.util.Log.e(TAG, "权限检查异常", e)
             false
         }
     }

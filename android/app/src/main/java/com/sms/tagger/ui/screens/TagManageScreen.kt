@@ -58,7 +58,7 @@ fun TagManageScreen() {
     var showAddTagDialog by remember { mutableStateOf(false) }
     var newTagName by remember { mutableStateOf("") }
     var selectedEmoji by remember { mutableStateOf("📌") }
-    var showRuleManager by remember { mutableStateOf(false) }
+    var showClassificationRuleManager by remember { mutableStateOf(false) }
     
     // 加载短信并分类
     LaunchedEffect(Unit) {
@@ -80,9 +80,9 @@ fun TagManageScreen() {
         }
     }
     
-    // 如果显示规则管理，则显示规则管理页面
-    if (showRuleManager) {
-        RuleManageScreen(onBack = { showRuleManager = false })
+    // 如果显示分类规则管理，则显示分类规则管理页面
+    if (showClassificationRuleManager) {
+        ClassificationRuleScreen(onBack = { showClassificationRuleManager = false })
         return
     }
     
@@ -102,11 +102,11 @@ fun TagManageScreen() {
                     title = { Text("标签管理") },
                     actions = {
                         IconButton(
-                            onClick = { showRuleManager = true }
+                            onClick = { showClassificationRuleManager = true }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
-                                contentDescription = "自定义规则",
+                                contentDescription = "短信分类规则",
                                 tint = Color(0xFF333333)
                             )
                         }
