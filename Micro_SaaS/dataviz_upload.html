@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 数据上传</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #F9F8FF 0%, #FAD0C4 50%, #D9C8FF 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            color: #333333;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #FAD0C4, #D9C8FF);
+            border: none;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #8A8A8A;
+            margin-bottom: 40px;
+        }
+
+        /* 主容器 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* 左侧上传区域 */
+        .upload-section {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: #333333;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #8A8A8A;
+        }
+
+        .upload-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-upload {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #FAD0C4, #D9C8FF);
+            border: none;
+            border-radius: 8px;
+            color: #333333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-example {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            color: #333333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-example:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .file-info {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 8px;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: #8A8A8A;
+            display: flex;
+            gap: 16px;
+        }
+
+        .schema-preview {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .schema-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 12px;
+        }
+
+        .schema-item {
+            font-size: 12px;
+            color: #8A8A8A;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .schema-type {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #333333;
+            font-weight: 500;
+        }
+
+        /* 右侧指标编辑区域 */
+        .metrics-section {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        .metrics-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .metric-item {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 8px;
+        }
+
+        .metric-formula {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: #8A8A8A;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+
+        .metric-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .metric-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            color: #333333;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .add-metric-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px dashed rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            color: #333333;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .add-metric-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            border-style: solid;
+        }
+
+        /* AI建议面板 */
+        .ai-suggestions {
+            background: linear-gradient(135deg, rgba(250, 208, 196, 0.3), rgba(217, 200, 255, 0.3));
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .ai-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-suggestions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ai-suggestion {
+            font-size: 12px;
+            color: #8A8A8A;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ai-suggestion:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: #333333;
+        }
+
+        /* 底部操作按钮 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            color: #333333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #FAD0C4, #D9C8FF);
+            border: none;
+            border-radius: 8px;
+            color: #333333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-secondary,
+            .btn-primary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <div class="navbar">
+            <div class="logo">
+                <span>📊</span>
+                <span>DataViz Insights</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn">← 返回</button>
+                <button class="nav-btn primary">下一步 →</button>
+            </div>
+        </div>
+
+        <!-- 页面标题 -->
+        <div class="page-title">上传数据 & 定义指标</div>
+        <div class="page-subtitle">支持CSV、JSON、Excel等格式。系统将自动分析并推荐指标</div>
+
+        <!-- 主容器 -->
+        <div class="main-grid">
+            <!-- 左侧上传区域 -->
+            <div class="upload-section">
+                <div class="section-title">
+                    <span>📁</span>
+                    <span>上传数据文件</span>
+                </div>
+
+                <div class="upload-area">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">拖拽CSV/JSON文件到此</div>
+                    <div class="upload-hint">或点击下方按钮选择</div>
+                </div>
+
+                <div class="upload-buttons">
+                    <button class="btn-upload">选择文件</button>
+                    <button class="btn-example">使用示例数据</button>
+                </div>
+
+                <div class="file-info">
+                    <div class="file-name">📄 sales_data.csv</div>
+                    <div class="file-meta">
+                        <span>2.5 MB</span>
+                        <span>1000 行</span>
+                    </div>
+                </div>
+
+                <div class="schema-preview">
+                    <div class="schema-title">表结构预览</div>
+                    <div class="schema-item">
+                        <span>•</span>
+                        <span>order_id</span>
+                        <span class="schema-type">integer</span>
+                    </div>
+                    <div class="schema-item">
+                        <span>•</span>
+                        <span>sales_amount</span>
+                        <span class="schema-type">float</span>
+                    </div>
+                    <div class="schema-item">
+                        <span>•</span>
+                        <span>date</span>
+                        <span class="schema-type">date</span>
+                    </div>
+                    <div class="schema-item">
+                        <span>•</span>
+                        <span>category</span>
+                        <span class="schema-type">string</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧指标编辑区域 -->
+            <div class="metrics-section">
+                <div class="section-title">
+                    <span>📝</span>
+                    <span>定义指标</span>
+                </div>
+
+                <div class="metrics-list">
+                    <div class="metric-item">
+                        <div>
+                            <div class="metric-label">指标1: 总销售额</div>
+                            <div class="metric-formula">SUM(sales_amount)</div>
+                        </div>
+                        <div class="metric-actions">
+                            <button class="metric-btn">✏️</button>
+                            <button class="metric-btn">🗑️</button>
+                        </div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div>
+                            <div class="metric-label">指标2: 订单数</div>
+                            <div class="metric-formula">COUNT(order_id)</div>
+                        </div>
+                        <div class="metric-actions">
+                            <button class="metric-btn">✏️</button>
+                            <button class="metric-btn">🗑️</button>
+                        </div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div>
+                            <div class="metric-label">指标3: 客单价</div>
+                            <div class="metric-formula">SUM(sales_amount) / COUNT(order_id)</div>
+                        </div>
+                        <div class="metric-actions">
+                            <button class="metric-btn">✏️</button>
+                            <button class="metric-btn">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="add-metric-btn">+ 添加指标</button>
+
+                <div class="ai-suggestions">
+                    <div class="ai-title">
+                        <span>🤖</span>
+                        <span>AI建议</span>
+                    </div>
+                    <div class="ai-suggestions-list">
+                        <div class="ai-suggestion">✓ 转化率 = COUNT(order_id) / COUNT(visitor_id)</div>
+                        <div class="ai-suggestion">✓ 平均订单金额 = SUM(sales_amount) / COUNT(order_id)</div>
+                        <div class="ai-suggestion">✓ 日均销售额 = SUM(sales_amount) / COUNT(DISTINCT date)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="action-buttons">
+            <button class="btn-secondary">预览</button>
+            <button class="btn-primary">分析</button>
+        </div>
+    </div>
+</body>
+</html>

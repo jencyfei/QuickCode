@@ -117,16 +117,9 @@ fun ExpressScreen() {
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // 页面头部
+                    // 页面头部（已删除重复的"快递取件码"标题，TopAppBar中已有）
                     item {
                         Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-                            Text(
-                                text = "快递取件码",
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF333333),
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
                             Text(
                                 text = "轻松管理您的快递",
                                 fontSize = 12.sp,

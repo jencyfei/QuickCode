@@ -123,25 +123,33 @@ object ExpressExtractor {
     
     /**
      * 【内置规则】菜鸟驿站取件码提取
-     * 规则：在"凭"之后取8个字符
-     * 示例：【菜鸟驿站】您的包裹已到站，凭12345678取件。
+     * 规则：在"凭"之后提取数字和横杠组成的取件码
+     * 示例：【菜鸟驿站】您的包裹已到站，凭6-4-1006到郑州市...取件。
      */
     private fun extractCaiNiaoPickupCode(content: String): String {
         // 查找"凭"的位置
         val bengIndex = content.indexOf("凭")
         if (bengIndex == -1) return ""
         
-        // 从"凭"之后开始取8个字符
+        // 从"凭"之后开始，提取数字和横杠组成的取件码
         val startIndex = bengIndex + 1
-        val endIndex = minOf(startIndex + 8, content.length)
+        val restContent = content.substring(startIndex)
         
-        val code = content.substring(startIndex, endIndex).trim()
+        // 匹配格式：数字-数字-数字 或 数字-数字-数字-数字 等
+        val codePattern = Pattern.compile("^\\s*([0-9]+-[0-9]+-[0-9]+(?:-[0-9]+)?)")
+        val matcher = codePattern.matcher(restContent)
         
-        // 验证提取的内容是否为数字（取件码通常是数字）
-        return if (code.all { it.isDigit() } && code.length >= 4) {
-            code
+        return if (matcher.find()) {
+            matcher.group(1)?.trim() ?: ""
         } else {
-            ""
+            // 如果没有找到X-X-XXXX格式，尝试提取纯数字（4-8位）
+            val pureNumberPattern = Pattern.compile("^\\s*([0-9]{4,8})")
+            val numberMatcher = pureNumberPattern.matcher(restContent)
+            if (numberMatcher.find()) {
+                numberMatcher.group(1)?.trim() ?: ""
+            } else {
+                ""
+            }
         }
     }
     
@@ -174,21 +182,34 @@ object ExpressExtractor {
      * 提取日期信息
      */
     private fun extractDate(content: String): String {
-        // 【菜鸟驿站特殊处理】先查找"货X-X-XXXX"格式，提取年份
-        val caiNiaoPattern = Pattern.compile("货(\\d+)-(\\d+)-(\\d+)")
+        // 【菜鸟驿站特殊处理】先查找"凭X-X-XXXX"格式，提取日期
+        // 规则：凭后面的第一个数字是月份，第二个数字是日期
+        val caiNiaoPattern = Pattern.compile("凭\\s*([0-9]+)-([0-9]+)-[0-9]+")
         val caiNiaoMatcher = caiNiaoPattern.matcher(content)
         if (caiNiaoMatcher.find()) {
-            // 格式：货2-4-2029 → 提取为 "2-4-2029"
+            // 格式：凭6-4-1006 → 提取为 "6-4"（月-日）
             val month = caiNiaoMatcher.group(1)
             val day = caiNiaoMatcher.group(2)
-            val year = caiNiaoMatcher.group(3)
-            return "$month-$day-$year"
+            // 获取当前年份
+            val currentYear = java.time.LocalDate.now().year
+            return "$currentYear-$month-$day"
+        }
+        
+        // 【备选方案】查找"货X-X-XXXX"格式（旧格式）
+        val oldCaiNiaoPattern = Pattern.compile("货(\\d+)-(\\d+)-(\\d+)")
+        val oldCaiNiaoMatcher = oldCaiNiaoPattern.matcher(content)
+        if (oldCaiNiaoMatcher.find()) {
+            // 格式：货2-4-2029 → 提取为 "2-4-2029"
+            val month = oldCaiNiaoMatcher.group(1)
+            val day = oldCaiNiaoMatcher.group(2)
+            val year = oldCaiNiaoMatcher.group(3)
+            return "$year-$month-$day"
         }
         
         // 匹配日期格式：12-24、12月24日、2025-11-13 等
         val datePatterns = listOf(
+            Pattern.compile("(\\d{4})[-年](\\d{1,2})[-月](\\d{1,2})"), // 2025-11-13 或 2025年11月13（优先匹配完整日期）
             Pattern.compile("(\\d{1,2})[-月](\\d{1,2})"),           // 12-24 或 12月24
-            Pattern.compile("(\\d{4})[-年](\\d{1,2})[-月](\\d{1,2})"), // 2025-11-13 或 2025年11月13
             Pattern.compile("(\\d{1,2})日"),                         // 24日
             Pattern.compile("(今天|明天|后天)")                       // 相对日期
         )
@@ -196,7 +217,7 @@ object ExpressExtractor {
         for (pattern in datePatterns) {
             val matcher = pattern.matcher(content)
             if (matcher.find()) {
-                return matcher.group(0)
+                return matcher.group(0) ?: ""
             }
         }
         
