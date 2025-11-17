@@ -2,7 +2,6 @@ package com.sms.tagger.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +20,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sms.tagger.util.ExpressExtractor
 import com.sms.tagger.util.ExpressInfo
 import com.sms.tagger.util.PickupStatus
@@ -32,21 +30,17 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Settings
-import com.sms.tagger.ui.viewmodel.ExpressViewModel
-import com.sms.tagger.util.ExpressGroupByDate
-import kotlinx.coroutines.flow.collectLatest
 
 /**
  * 快递信息页面
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpressScreen(viewModel: ExpressViewModel = viewModel()) {
+fun ExpressScreen() {
     val context = LocalContext.current
     var expressList by remember { mutableStateOf<List<ExpressInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showRuleManager by remember { mutableStateOf(false) }
-    val pickupStatusMap by viewModel.pickupStatusMap.collectAsState()
     
     // 如果显示规则管理，则显示规则管理页面
     if (showRuleManager) {
@@ -113,39 +107,39 @@ fun ExpressScreen(viewModel: ExpressViewModel = viewModel()) {
                     )
                 }
             } else {
-                // 按日期分组
-                val groupedByDate = expressList
-                    .groupBy { it.date }
-                    .map { (date, items) ->
-                        ExpressGroupByDate(
-                            date = date,
-                            count = items.size,
-                            expressList = items.sortedByDescending { it.receivedAt }
-                        )
-                    }
-                    // 按日期倒序排序（使用 receivedAt 进行正确的日期比较）
-                    .sortedByDescending { group ->
-                        // 从分组中的第一条快递的 receivedAt 提取日期进行排序
-                        group.expressList.firstOrNull()?.receivedAt ?: ""
-                    }
+                // 按地点分组
+                val groupedByLocation = expressList.groupBy { it.location ?: "未知地点" }
                 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // 日期分组
-                    items(groupedByDate.size) { index ->
-                        DateGroupItem(
-                            group = groupedByDate[index],
-                            viewModel = viewModel,
-                            pickupStatusMap = pickupStatusMap,
-                            onExpandChange = { expanded ->
-                                groupedByDate[index].isExpanded = expanded
-                            }
-                        )
+                    // 页面头部
+                    item {
+                        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+                            Text(
+                                text = "快递取件码",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF333333),
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Text(
+                                text = "轻松管理您的快递",
+                                fontSize = 12.sp,
+                                color = Color(0xFF8A8A8A)
+                            )
+                        }
+                    }
+                    
+                    // 地点分组
+                    groupedByLocation.forEach { (location, expressItems) ->
+                        item {
+                            LocationGroup(location, expressItems)
+                        }
                     }
                 }
             }
@@ -154,121 +148,110 @@ fun ExpressScreen(viewModel: ExpressViewModel = viewModel()) {
 }
 
 @Composable
-fun DateGroupItem(
-    group: ExpressGroupByDate,
-    viewModel: ExpressViewModel,
-    pickupStatusMap: Map<String, Boolean>,
-    onExpandChange: (Boolean) -> Unit
-) {
+fun LocationGroup(location: String, expressItems: List<ExpressInfo>) {
     val clipboardManager = LocalClipboardManager.current
-    var isExpanded by remember { mutableStateOf(group.isExpanded) }
     
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 日期分组标题
-        Card(
+        // 地点头部
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    isExpanded = !isExpanded
-                    onExpandChange(isExpanded)
-                },
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.5f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 折叠/展开箭头 + 日期 + 数量
+            Column(modifier = Modifier.weight(1f)) {
+                // 地点名称 + 快递数量
                 Row(
-                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 2.dp)
                 ) {
                     Text(
-                        text = if (isExpanded) "▼" else "▶",
-                        fontSize = 14.sp,
-                        color = Color(0xFF333333),
-                        modifier = Modifier.width(20.dp)
-                    )
-                    Text(
-                        text = group.date,
-                        fontSize = 14.sp,
+                        text = location,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF333333)
                     )
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFF667EEA).copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${expressItems.size}件",
+                            fontSize = 12.sp,
+                            color = Color(0xFF8A8A8A)
+                        )
+                    }
+                }
+                // 地址信息 - 只显示一次
+                val addressText = expressItems.firstOrNull()?.location
+                if (addressText != null && addressText != location) {
                     Text(
-                        text = "（${group.count}件）",
+                        text = addressText,
                         fontSize = 12.sp,
-                        color = Color(0xFF8A8A8A)
+                        color = Color(0xFF8A8A8A),
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+            }
+            
+            // 操作按钮
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = {
+                        // 复制所有取件码，用换行符分隔
+                        val allCodes = expressItems.map { it.pickupCode }.joinToString("\n")
+                        clipboardManager.setText(AnnotatedString(allCodes))
+                    },
+                    modifier = Modifier.height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.5f)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
+                ) {
+                    Text("📋 复制全部", fontSize = 11.sp, color = Color(0xFF333333))
+                }
                 
-                // 操作按钮
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Button(
-                        onClick = {
-                            val allCodes = group.expressList.map { it.pickupCode }.joinToString("\n")
-                            clipboardManager.setText(AnnotatedString(allCodes))
-                        },
-                        modifier = Modifier.height(32.dp),
-                        shape = RoundedCornerShape(6.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.4f)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
-                    ) {
-                        Text("📋 复制全部", fontSize = 10.sp, color = Color(0xFF333333))
-                    }
-                    
-                    Button(
-                        onClick = {
-                            group.expressList.forEach { express ->
-                                viewModel.updatePickupStatus(express.pickupCode, true)
-                            }
-                        },
-                        modifier = Modifier.height(32.dp),
-                        shape = RoundedCornerShape(6.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.4f)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
-                    ) {
-                        Text("✓ 全部已取", fontSize = 10.sp, color = Color(0xFF333333))
-                    }
+                Button(
+                    onClick = {
+                        // 标记所有快递为已取（通过状态更新）
+                        // 注：实际应用中应该保存到数据库
+                        expressItems.forEach { express ->
+                            // 这里应该更新状态，但当前实现中状态是本地的
+                        }
+                    },
+                    modifier = Modifier.height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.5f)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
+                ) {
+                    Text("✓ 全部已取", fontSize = 11.sp, color = Color(0xFF333333))
                 }
             }
         }
         
-        // 快递卡片列表（展开时显示）
-        if (isExpanded) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                group.expressList.forEach { express ->
-                    ExpressItemCard(express, viewModel, pickupStatusMap)
-                }
-            }
+        // 快递卡片列表
+        expressItems.forEach { express ->
+            ExpressItemCard(express)
         }
     }
 }
 
 @Composable
-fun ExpressItemCard(
-    express: ExpressInfo,
-    viewModel: ExpressViewModel,
-    pickupStatusMap: Map<String, Boolean>
-) {
+fun ExpressItemCard(express: ExpressInfo) {
     val clipboardManager = LocalClipboardManager.current
-    // 从 ViewModel 获取状态，如果没有则使用默认值
-    val isPicked = pickupStatusMap[express.pickupCode] ?: (express.status == PickupStatus.PICKED)
+    var isPicked by remember { mutableStateOf(express.status == PickupStatus.PICKED) }
     
     // 根据状态确定颜色
     val statusColor = when {
@@ -324,10 +307,7 @@ fun ExpressItemCard(
                     }
                     
                     Button(
-                        onClick = { 
-                            // 更新 ViewModel 中的状态
-                            viewModel.updatePickupStatus(express.pickupCode, true)
-                        },
+                        onClick = { isPicked = true },
                         enabled = !isPicked,
                         modifier = Modifier
                             .height(32.dp)

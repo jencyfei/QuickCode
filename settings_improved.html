@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - 手机优化版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 12px;
+            color: #333333;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+
+        /* 页面头部 */
+        .header {
+            margin-bottom: 24px;
+            padding: 0 4px;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        /* 设置分组 */
+        .settings-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: translateX(4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .settings-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .settings-content {
+            flex: 1;
+        }
+
+        .settings-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .settings-subtitle {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 应用信息卡片 */
+        .app-info-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 12px;
+        }
+
+        .app-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .app-version {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-item.active .nav-icon {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-label {
+            font-size: 10px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .settings-item {
+                padding: 12px;
+            }
+
+            .settings-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .settings-title {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1 class="header-title">设置</h1>
+        </div>
+
+        <!-- 应用信息 -->
+        <div class="app-info-card">
+            <div class="app-icon">ℹ️</div>
+            <div class="app-name">短信助手</div>
+            <div class="app-version">版本 1.0.0 - 本地工具</div>
+        </div>
+
+        <!-- 设置分组 -->
+        <div class="settings-group">
+            <!-- 通知设置 -->
+            <div class="settings-item">
+                <div class="settings-icon">🔔</div>
+                <div class="settings-content">
+                    <div class="settings-title">通知设置</div>
+                    <div class="settings-subtitle">管理通知权限</div>
+                </div>
+            </div>
+
+            <!-- 隐私设置 -->
+            <div class="settings-item">
+                <div class="settings-icon">🛡️</div>
+                <div class="settings-content">
+                    <div class="settings-title">隐私设置</div>
+                    <div class="settings-subtitle">数据安全与隐私</div>
+                </div>
+            </div>
+
+            <!-- 存储管理 -->
+            <div class="settings-item">
+                <div class="settings-icon">💾</div>
+                <div class="settings-content">
+                    <div class="settings-title">存储管理</div>
+                    <div class="settings-subtitle">管理本地数据库</div>
+                </div>
+            </div>
+
+            <!-- 帮助与反馈 -->
+            <div class="settings-item">
+                <div class="settings-icon">❓</div>
+                <div class="settings-content">
+                    <div class="settings-title">帮助与反馈</div>
+                    <div class="settings-subtitle">获取帮助或提供反馈</div>
+                </div>
+            </div>
+
+            <!-- 关于应用 -->
+            <div class="settings-item">
+                <div class="settings-icon">ℹ️</div>
+                <div class="settings-content">
+                    <div class="settings-title">关于应用</div>
+                    <div class="settings-subtitle">应用信息和许可证</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item">
+            <div class="nav-icon">📦</div>
+            <div class="nav-label">快递</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🏷️</div>
+            <div class="nav-label">标签</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">💬</div>
+            <div class="nav-label">短信</div>
+        </div>
+        <div class="nav-item active">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">设置</div>
+        </div>
+    </div>
+</body>
+</html>

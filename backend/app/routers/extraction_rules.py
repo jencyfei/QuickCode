@@ -37,6 +37,27 @@ def get_extraction_rules(
     return rules
 
 
+@router.post("/test", response_model=RuleTestResponse)
+def test_extraction_rule(
+    test_data: RuleTestRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """测试提取规则"""
+    engine = get_rule_engine()
+    success, extracted, error = engine.test_pattern(
+        test_data.pattern,
+        test_data.test_text,
+        test_data.extract_group
+    )
+    
+    return RuleTestResponse(
+        success=success,
+        matched=extracted is not None,
+        extracted=extracted,
+        error=error
+    )
+
+
 @router.get("/{rule_id}", response_model=ExtractionRuleResponse)
 def get_extraction_rule(
     rule_id: int,
@@ -149,27 +170,6 @@ def delete_extraction_rule(
     db.commit()
     
     return None
-
-
-@router.post("/test", response_model=RuleTestResponse)
-def test_extraction_rule(
-    test_data: RuleTestRequest,
-    current_user: User = Depends(get_current_user)
-):
-    """测试提取规则"""
-    engine = get_rule_engine()
-    success, extracted, error = engine.test_pattern(
-        test_data.pattern,
-        test_data.test_text,
-        test_data.extract_group
-    )
-    
-    return RuleTestResponse(
-        success=success,
-        matched=extracted is not None,
-        extracted=extracted,
-        error=error
-    )
 
 
 @router.get("/templates", response_model=List[RuleTemplateResponse])

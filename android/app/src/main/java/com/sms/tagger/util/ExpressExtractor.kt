@@ -31,19 +31,13 @@ object ExpressExtractor {
         "菜鸟" to "菜鸟驿站"
     )
     
-    // 取件码正则表达式（按优先级排序）
+    // 取件码正则表达式
     private val pickupCodePatterns = listOf(
-        // 优先级10：标准取件码格式
-        Pattern.compile("取件码[：:为是]?\\s*([A-Za-z0-9-]{4,12})"),
-        // 优先级9：提货码格式
-        Pattern.compile("提货码[：:为是]?\\s*([A-Za-z0-9-]{4,12})"),
-        // 优先级8：凭X-X-XXXX格式（优先匹配数字格式，如"凭2-4-2029"）✅ 新增
-        Pattern.compile("凭\\s*(\\d+-\\d+-\\d+)"),
-        // 优先级7：凭XX其他格式
-        Pattern.compile("凭\\s*([A-Za-z0-9-]{3,12})"),
-        // 优先级6：横杠分隔数字（X-X-XXXX）
-        Pattern.compile("(\\d+-\\d+-\\d+)"),
-        // 其他标准格式
+        // 菜鸟驿站格式：货2-4-2029 或 货6-5-5011 等
+        Pattern.compile("货([0-9]+-[0-9]+-[0-9]+)"),
+        // 标准取件码格式
+        Pattern.compile("取件码[：:为是]?\\s*([A-Za-z0-9]{4,8})"),
+        Pattern.compile("提货码[：:为是]?\\s*([A-Za-z0-9]{4,8})"),
         Pattern.compile("验证码[：:为是]?\\s*([A-Za-z0-9]{4,8})"),
         Pattern.compile("取货码[：:为是]?\\s*([A-Za-z0-9]{4,8})"),
         Pattern.compile("取件\\s*[码号][：:为是]?\\s*([A-Za-z0-9]{4,8})"),
@@ -68,8 +62,8 @@ object ExpressExtractor {
         // 提取地址信息（如果有）
         val location = extractLocation(content)
         
-        // 提取日期信息（优先从短信内容提取，如果失败则从接收时间提取）
-        val date = extractDate(content, sms.receivedAt)
+        // 提取日期信息
+        val date = extractDate(content)
         
         // 检测取件状态
         val status = detectPickupStatus(content)
@@ -178,10 +172,8 @@ object ExpressExtractor {
     
     /**
      * 提取日期信息
-     * @param content 短信内容
-     * @param receivedAt 接收时间（格式：2025-11-05T11:15:04）
      */
-    private fun extractDate(content: String, receivedAt: String): String {
+    private fun extractDate(content: String): String {
         // 【菜鸟驿站特殊处理】先查找"货X-X-XXXX"格式，提取年份
         val caiNiaoPattern = Pattern.compile("货(\\d+)-(\\d+)-(\\d+)")
         val caiNiaoMatcher = caiNiaoPattern.matcher(content)
@@ -194,37 +186,21 @@ object ExpressExtractor {
         }
         
         // 匹配日期格式：12-24、12月24日、2025-11-13 等
-        // 但要避免匹配取件码中的数字（如 9-6-3012 中的 9-6）
         val datePatterns = listOf(
-            // 完整日期格式（优先级最高）
+            Pattern.compile("(\\d{1,2})[-月](\\d{1,2})"),           // 12-24 或 12月24
             Pattern.compile("(\\d{4})[-年](\\d{1,2})[-月](\\d{1,2})"), // 2025-11-13 或 2025年11月13
-            // 月日格式，但要求前后有特定的文字或符号
-            Pattern.compile("(?:到达|已到|于|在)(\\d{1,2})[-月](\\d{1,2})"), // 到达11-05
-            Pattern.compile("(\\d{1,2})[-月](\\d{1,2})(?:日|号|取件|送达)"), // 11-05日 或 11-05取件
-            // 相对日期
+            Pattern.compile("(\\d{1,2})日"),                         // 24日
             Pattern.compile("(今天|明天|后天)")                       // 相对日期
         )
         
         for (pattern in datePatterns) {
             val matcher = pattern.matcher(content)
             if (matcher.find()) {
-                return matcher.group(0) ?: ""
+                return matcher.group(0)
             }
         }
         
-        // 如果短信中没有找到日期，则从接收时间提取
-        // receivedAt 格式：2025-11-05T11:15:04
-        return try {
-            val datePart = receivedAt.split("T")[0]  // 提取 2025-11-05
-            val parts = datePart.split("-")
-            if (parts.size == 3) {
-                "${parts[1]}-${parts[2]}"  // 转换为 11-05
-            } else {
-                ""
-            }
-        } catch (e: Exception) {
-            ""
-        }
+        return ""
     }
     
     /**

@@ -39,3 +39,14 @@ npm-debug.log
 .env
 .env.local
 .env.*.local
+
+# APK and signing keys
+*.apk
+*.jks
+*.keystore
+
+# Build artifacts
+android/app/build/
+android/build/
+frontend/dist/
+backend/venv/

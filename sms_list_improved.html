@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短信列表 - 手机优化版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 12px;
+            color: #333333;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 页面头部 */
+        .header {
+            margin-bottom: 20px;
+            padding: 0 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0;
+        }
+
+        .search-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-icon:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 短信列表 */
+        .sms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sms-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sms-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .sms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .sms-sender {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sender-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .sms-time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .sms-content {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-item.active .nav-icon {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-label {
+            font-size: 10px;
+        }
+
+        /* 内容底部间距 */
+        .content-bottom-spacing {
+            height: 80px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .sms-item {
+                padding: 12px;
+            }
+
+            .sms-sender {
+                font-size: 13px;
+            }
+
+            .sms-content {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1 class="header-title">短信列表</h1>
+            <div class="search-icon">🔍</div>
+        </div>
+
+        <!-- 短信列表 -->
+        <div class="sms-list">
+            <!-- 短信1：中国移动 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📱</div>
+                        <span>中国移动</span>
+                    </div>
+                    <div class="sms-time">13分钟前</div>
+                </div>
+                <div class="sms-content">【流量查询】截至11月13日17时08分，累计消耗流量94.39GB，剩余流量按套餐标准计算，详询10086。</div>
+            </div>
+
+            <!-- 短信2：验证码 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">🔐</div>
+                        <span>验证码</span>
+                    </div>
+                    <div class="sms-time">上午10:43</div>
+                </div>
+                <div class="sms-content">【北图教育】您的验证码1981，请尽快完成身份验证，祝您学习愉快！</div>
+            </div>
+
+            <!-- 短信3：中国移动 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📱</div>
+                        <span>中国移动</span>
+                    </div>
+                    <div class="sms-time">上午10:43</div>
+                </div>
+                <div class="sms-content">【中国移动】尊敬的客户，1GB流量券专属福利已到期，请72小时内前往"中国移动APP"查看更多优惠。</div>
+            </div>
+
+            <!-- 短信4：天猫医药 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">🛍️</div>
+                        <span>天猫医药</span>
+                    </div>
+                    <div class="sms-time">上午10:00</div>
+                </div>
+                <div class="sms-content">【天猫医药】双11最后2天！他送拉非1.77/片，买送能时机，烧热爱起高嗨>jk.tb.cn/e.hrN</div>
+            </div>
+
+            <!-- 短信5：中国联通 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📡</div>
+                        <span>中国联通</span>
+                    </div>
+                    <div class="sms-time">昨天 晚上7:06</div>
+                </div>
+                <div class="sms-content">【联通回复】遗址未接主叫：0371961110...</div>
+            </div>
+
+            <!-- 短信6：郑州公安 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">🏛️</div>
+                        <span>106831320000000007</span>
+                    </div>
+                    <div class="sms-time">昨天 晚上7:02</div>
+                </div>
+                <div class="sms-content">【郑州市公安局金水分局】紧急提醒：您的账户异常，请立即点击链接核实，内容涉及您的隐私信息。</div>
+            </div>
+
+            <!-- 短信7：京东 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">🛒</div>
+                        <span>京东</span>
+                    </div>
+                    <div class="sms-time">周二 下午3:38</div>
+                </div>
+                <div class="sms-content">【京东】您有新的订单提醒，点击查看最新优惠活动。</div>
+            </div>
+
+            <!-- 短信8：菜鸟驿站 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📦</div>
+                        <span>菜鸟驿站</span>
+                    </div>
+                    <div class="sms-time">11-11 10:35</div>
+                </div>
+                <div class="sms-content">【菜鸟驿站】您的包裹已到站，凭2-4-2029到郑州市北文雅小区6号楼102店取件。</div>
+            </div>
+
+            <!-- 短信9：菜鸟驿站 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📦</div>
+                        <span>菜鸟驿站</span>
+                    </div>
+                    <div class="sms-time">11-07 19:05</div>
+                </div>
+                <div class="sms-content">【菜鸟驿站】您的包裹已到站，凭6-5-5011到郑州市北文雅小区6号楼102店取件。</div>
+            </div>
+
+            <!-- 短信10：菜鸟驿站 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📦</div>
+                        <span>菜鸟驿站</span>
+                    </div>
+                    <div class="sms-time">11-07 11:59</div>
+                </div>
+                <div class="sms-content">【菜鸟驿站】您的包裹已到站，凭8-2-5008到郑州市北文雅小区6号楼102店取件。</div>
+            </div>
+
+            <!-- 短信11：菜鸟驿站 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📦</div>
+                        <span>菜鸟驿站</span>
+                    </div>
+                    <div class="sms-time">11-05 18:19</div>
+                </div>
+                <div class="sms-content">【菜鸟驿站】您的包裹已到站，凭7-5-3028到郑州市北文雅小区6号楼102店取件。</div>
+            </div>
+
+            <!-- 短信12：菜鸟驿站 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📦</div>
+                        <span>菜鸟驿站</span>
+                    </div>
+                    <div class="sms-time">11-05 12:42</div>
+                </div>
+                <div class="sms-content">【菜鸟驿站】您有2个包裹在郑州市北文雅小区6号楼102店，取件码为6-5-3002、6-2-3006</div>
+            </div>
+
+            <!-- 短信13：菜鸟驿站 -->
+            <div class="sms-item">
+                <div class="sms-header">
+                    <div class="sms-sender">
+                        <div class="sender-icon">📦</div>
+                        <span>菜鸟驿站</span>
+                    </div>
+                    <div class="sms-time">11-05 11:15</div>
+                </div>
+                <div class="sms-content">【菜鸟驿站】您的包裹已到站，凭9-6-3012到郑州市北文雅小区6号楼102店取件。</div>
+            </div>
+        </div>
+
+        <!-- 底部间距 -->
+        <div class="content-bottom-spacing"></div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item">
+            <div class="nav-icon">📦</div>
+            <div class="nav-label">快递</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🏷️</div>
+            <div class="nav-label">标签</div>
+        </div>
+        <div class="nav-item active">
+            <div class="nav-icon">💬</div>
+            <div class="nav-label">短信</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">设置</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -192,7 +192,7 @@ const isSelectMode = ref(false)
 const selectedIds = ref([])
 
 // 筛选
-const activeTimeFilter = ref('month')
+const activeTimeFilter = ref('all')
 const searchKeyword = ref('')
 const selectedTagIds = ref([])
 const batchTagIds = ref([])
@@ -491,11 +491,17 @@ const initFromUrlParams = () => {
   const tagId = route.query.tag_id
   const tagName = route.query.tag_name
   
-  if (tagId) {
-    // 设置当前标签
-    currentTagName.value = tagName || '标签'
+  if (tagId && tagName) {
+    // 只有当同时提供了tag_id和tag_name时才应用过滤
+    // 这确保只有从标签管理页面明确点击标签时才会过滤
+    currentTagName.value = tagName
     selectedTagIds.value = [parseInt(tagId)]
     activeFilter.value = 'tag'
+  } else {
+    // 清除任何URL参数中的标签过滤
+    selectedTagIds.value = []
+    currentTagName.value = ''
+    activeFilter.value = 'all'
   }
 }
 
