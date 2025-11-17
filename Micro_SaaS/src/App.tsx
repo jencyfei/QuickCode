@@ -4,6 +4,7 @@ import '@/styles/globals.css';
 
 // Pages
 import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
 import DashboardPage from '@/pages/DashboardPage';
 import TemplatesPage from '@/pages/TemplatesPage';
 import UploadPage from '@/pages/UploadPage';
@@ -23,6 +24,10 @@ function App() {
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />}
+        />
+        <Route
+          path="/register"
+          element={isAuthenticated ? <Navigate to="/dashboard" /> : <RegisterPage />}
         />
 
         {/* 受保护的路由 */}

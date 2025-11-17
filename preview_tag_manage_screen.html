@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标签管理 - 预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .phone-frame {
+            max-width: 375px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 12px solid #000;
+            position: relative;
+        }
+        
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 25px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+        
+        .screen-content {
+            height: 812px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .status-bar {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 44px;
+        }
+        
+        .top-app-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .top-app-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .top-app-bar .icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .content {
+            padding: 16px;
+            overflow-y: auto;
+            height: calc(812px - 44px - 44px);
+        }
+        
+        .tag-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tag-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .tag-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .tag-emoji {
+            font-size: 32px;
+        }
+        
+        .tag-details h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .tag-count {
+            font-size: 12px;
+            color: #8a8a8a;
+        }
+        
+        .tag-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-small:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        .btn-delete {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
+        
+        .btn-delete:hover {
+            background: rgba(255, 107, 107, 0.2);
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.35);
+            border: 1.2px solid rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s;
+        }
+        
+        .fab:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+        
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            height: 56px;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #8a8a8a;
+            font-size: 24px;
+        }
+        
+        .nav-item.active {
+            color: #667eea;
+        }
+        
+        .nav-label {
+            font-size: 10px;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="screen-content">
+            <div class="status-bar">
+                <span>3:18</span>
+                <span>📶 📡 🔋</span>
+            </div>
+            
+            <div class="top-app-bar">
+                <h1>标签管理</h1>
+                <div class="icon">⚙️</div>
+            </div>
+            
+            <div class="content">
+                <!-- 验证码标签 -->
+                <div class="tag-card">
+                    <div class="tag-header">
+                        <div class="tag-info">
+                            <div class="tag-emoji">🔐</div>
+                            <div class="tag-details">
+                                <h3>验证码</h3>
+                                <div class="tag-count">12条短信</div>
+                            </div>
+                        </div>
+                        <div class="tag-actions">
+                            <button class="btn-small">编辑</button>
+                            <button class="btn-small btn-delete">删除</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 快递标签 -->
+                <div class="tag-card">
+                    <div class="tag-header">
+                        <div class="tag-info">
+                            <div class="tag-emoji">📦</div>
+                            <div class="tag-details">
+                                <h3>快递</h3>
+                                <div class="tag-count">28条短信</div>
+                            </div>
+                        </div>
+                        <div class="tag-actions">
+                            <button class="btn-small">编辑</button>
+                            <button class="btn-small btn-delete">删除</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 银行标签 -->
+                <div class="tag-card">
+                    <div class="tag-header">
+                        <div class="tag-info">
+                            <div class="tag-emoji">🏦</div>
+                            <div class="tag-details">
+                                <h3>银行</h3>
+                                <div class="tag-count">15条短信</div>
+                            </div>
+                        </div>
+                        <div class="tag-actions">
+                            <button class="btn-small">编辑</button>
+                            <button class="btn-small btn-delete">删除</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 通知标签 -->
+                <div class="tag-card">
+                    <div class="tag-header">
+                        <div class="tag-info">
+                            <div class="tag-emoji">🔔</div>
+                            <div class="tag-details">
+                                <h3>通知</h3>
+                                <div class="tag-count">8条短信</div>
+                            </div>
+                        </div>
+                        <div class="tag-actions">
+                            <button class="btn-small">编辑</button>
+                            <button class="btn-small btn-delete">删除</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 营销标签 -->
+                <div class="tag-card">
+                    <div class="tag-header">
+                        <div class="tag-info">
+                            <div class="tag-emoji">🎉</div>
+                            <div class="tag-details">
+                                <h3>营销</h3>
+                                <div class="tag-count">35条短信</div>
+                            </div>
+                        </div>
+                        <div class="tag-actions">
+                            <button class="btn-small">编辑</button>
+                            <button class="btn-small btn-delete">删除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="fab">➕</div>
+            
+            <div class="bottom-nav">
+                <div class="nav-item">
+                    <span>📦</span>
+                    <span class="nav-label">快递</span>
+                </div>
+                <div class="nav-item active">
+                    <span>🏷️</span>
+                    <span class="nav-label">标签</span>
+                </div>
+                <div class="nav-item">
+                    <span>💬</span>
+                    <span class="nav-label">短信</span>
+                </div>
+                <div class="nav-item">
+                    <span>⚙️</span>
+                    <span class="nav-label">设置</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

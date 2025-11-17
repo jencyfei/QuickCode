@@ -76,9 +76,10 @@ fun SmsListScreen(
             val filteredSms = if (tagFilter != null) {
                 // 对短信进行分类
                 val classified = SmsClassifier.classifySmsList(allSms)
-                // 获取指定标签的短信
+                // 获取指定标签的短信（包括"未知"分类的短信）
                 classified[tagFilter] ?: emptyList()
             } else {
+                // 显示所有短信（不过滤"未知"分类的短信）
                 allSms
             }
             

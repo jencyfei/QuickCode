@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递取件码 - 预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .phone-frame {
+            max-width: 375px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 12px solid #000;
+            position: relative;
+        }
+        
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 25px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+        
+        .screen-content {
+            height: 812px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .status-bar {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 44px;
+        }
+        
+        .top-app-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .top-app-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .top-app-bar .icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .content {
+            padding: 16px;
+            overflow-y: auto;
+            height: calc(812px - 44px - 44px);
+        }
+        
+        .date-group {
+            margin-bottom: 24px;
+        }
+        
+        .date-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        
+        .date-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .date-count {
+            background: rgba(102, 126, 234, 0.1);
+            color: #8a8a8a;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .date-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.5);
+            color: #333;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-small:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        .express-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .btn-copy {
+            flex: 1;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            color: #667eea;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-copy:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-pickup {
+            flex: 1;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            color: #667eea;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-pickup:hover {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        
+        .btn-pickup.picked {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        
+        .pickup-code-box {
+            background: rgba(102, 126, 234, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .code-label {
+            font-size: 10px;
+            color: #8a8a8a;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+        
+        .code-value {
+            font-size: 40px;
+            font-weight: bold;
+            color: #333;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            color: #8a8a8a;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            height: 56px;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #8a8a8a;
+            font-size: 24px;
+        }
+        
+        .nav-item.active {
+            color: #667eea;
+        }
+        
+        .nav-label {
+            font-size: 10px;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="screen-content">
+            <div class="status-bar">
+                <span>3:18</span>
+                <span>📶 📡 🔋</span>
+            </div>
+            
+            <div class="top-app-bar">
+                <h1>快递取件码</h1>
+                <div class="icon">⚙️</div>
+            </div>
+            
+            <div class="content">
+                <!-- 2025-11-17 日期组 -->
+                <div class="date-group">
+                    <div class="date-header">
+                        <div>
+                            <div class="date-title">2025-11-17</div>
+                        </div>
+                        <div class="date-count">2件</div>
+                        <div class="date-actions">
+                            <button class="btn-small">📋 复制全部</button>
+                            <button class="btn-small">✓ 全部已取</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 快递卡片1 -->
+                    <div class="express-card">
+                        <div class="card-header">
+                            <button class="btn-copy">📋 复制</button>
+                            <button class="btn-pickup">取出</button>
+                        </div>
+                        <div class="pickup-code-box">
+                            <div class="code-label">PICKUP CODE</div>
+                            <div class="code-value">6-4-1006</div>
+                        </div>
+                        <div class="card-info">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">2025-11-17</span>
+                        </div>
+                        <div class="card-info">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-17T13:42:22</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 快递卡片2 -->
+                    <div class="express-card">
+                        <div class="card-header">
+                            <button class="btn-copy">📋 复制</button>
+                            <button class="btn-pickup">取出</button>
+                        </div>
+                        <div class="pickup-code-box">
+                            <div class="code-label">PICKUP CODE</div>
+                            <div class="code-value">2-3-7003</div>
+                        </div>
+                        <div class="card-info">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">2025-11-17</span>
+                        </div>
+                        <div class="card-info">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-17T10:14:59</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2025-11-16 日期组 -->
+                <div class="date-group">
+                    <div class="date-header">
+                        <div>
+                            <div class="date-title">2025-11-16</div>
+                        </div>
+                        <div class="date-count">1件</div>
+                        <div class="date-actions">
+                            <button class="btn-small">📋 复制全部</button>
+                            <button class="btn-small">✓ 全部已取</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 快递卡片3 -->
+                    <div class="express-card">
+                        <div class="card-header">
+                            <button class="btn-copy">📋 复制</button>
+                            <button class="btn-pickup picked">✓ 已取</button>
+                        </div>
+                        <div class="pickup-code-box">
+                            <div class="code-label">PICKUP CODE</div>
+                            <div class="code-value">5008</div>
+                        </div>
+                        <div class="card-info">
+                            <span class="info-label">取件日期：</span>
+                            <span class="info-value">2025-11-16</span>
+                        </div>
+                        <div class="card-info">
+                            <span class="info-label">接收时间：</span>
+                            <span class="info-value">2025-11-16T08:22:15</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bottom-nav">
+                <div class="nav-item active">
+                    <span>📦</span>
+                    <span class="nav-label">快递</span>
+                </div>
+                <div class="nav-item">
+                    <span>🏷️</span>
+                    <span class="nav-label">标签</span>
+                </div>
+                <div class="nav-item">
+                    <span>💬</span>
+                    <span class="nav-label">短信</span>
+                </div>
+                <div class="nav-item">
+                    <span>⚙️</span>
+                    <span class="nav-label">设置</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,8 +1,11 @@
 package com.sms.tagger.data.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * 自定义打标规则数据模型
  */
+@Serializable
 data class TagRule(
     val id: String = "",
     val ruleName: String = "",
@@ -19,6 +22,7 @@ data class TagRule(
 /**
  * 规则类型
  */
+@Serializable
 enum class RuleType {
     SENDER,      // 基于发信人
     CONTENT      // 基于短信内容
