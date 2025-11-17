@@ -949,6 +949,62 @@ library {
 }
 library {
   maven_library {
+    groupId: "org.jetbrains.kotlinx"
+    artifactId: "kotlinx-serialization-json"
+    version: "1.6.0"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlinx"
+    artifactId: "kotlinx-serialization-json-jvm"
+    version: "1.6.0"
+  }
+  digests {
+    sha256: "\037r\274\253\2225d%\221\373Z\253\250n\0241p\036\360\016\377\245\364\005M5\204=\307\225\021v"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlinx"
+    artifactId: "kotlinx-serialization-bom"
+    version: "1.6.0"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlinx"
+    artifactId: "kotlinx-serialization-core"
+    version: "1.6.0"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlinx"
+    artifactId: "kotlinx-serialization-core-jvm"
+    version: "1.6.0"
+  }
+  digests {
+    sha256: "\3545\022\214O\271\004N\231\273\317\a\360^\362T;\372mB\003\rz\255\253\256\254\377\261nr\305"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
     groupId: "com.squareup.retrofit2"
     artifactId: "retrofit"
     version: "2.9.0"
@@ -1892,68 +1948,96 @@ library_dependencies {
 }
 library_dependencies {
   library_index: 84
+  library_dep_index: 1
   library_dep_index: 85
-  library_dep_index: 0
+  library_dep_index: 2
+  library_dep_index: 86
 }
 library_dependencies {
   library_index: 85
   library_dep_index: 86
+  library_dep_index: 84
+  library_dep_index: 83
+  library_dep_index: 87
 }
 library_dependencies {
   library_index: 86
-  library_dep_index: 0
-  library_dep_index: 2
+  library_dep_index: 87
 }
 library_dependencies {
   library_index: 87
-  library_dep_index: 83
-  library_dep_index: 88
+  library_dep_index: 1
+  library_dep_index: 85
+  library_dep_index: 2
+}
+library_dependencies {
+  library_index: 88
+  library_dep_index: 89
 }
 library_dependencies {
   library_index: 89
-  library_dep_index: 84
+  library_dep_index: 90
   library_dep_index: 0
 }
 library_dependencies {
   library_index: 90
-  library_dep_index: 44
-  library_dep_index: 60
-  library_dep_index: 18
   library_dep_index: 91
-  library_dep_index: 0
 }
 library_dependencies {
   library_index: 91
-  library_dep_index: 92
+  library_dep_index: 0
+  library_dep_index: 2
 }
 library_dependencies {
   library_index: 92
+  library_dep_index: 88
+  library_dep_index: 93
+}
+library_dependencies {
+  library_index: 94
+  library_dep_index: 89
+  library_dep_index: 0
+}
+library_dependencies {
+  library_index: 95
+  library_dep_index: 44
+  library_dep_index: 60
+  library_dep_index: 18
+  library_dep_index: 96
+  library_dep_index: 0
+}
+library_dependencies {
+  library_index: 96
+  library_dep_index: 97
+}
+library_dependencies {
+  library_index: 97
   library_dep_index: 1
   library_dep_index: 2
 }
 library_dependencies {
-  library_index: 93
+  library_index: 98
   library_dep_index: 1
-  library_dep_index: 94
-  library_dep_index: 96
+  library_dep_index: 99
+  library_dep_index: 101
 }
 library_dependencies {
-  library_index: 94
+  library_index: 99
   library_dep_index: 1
   library_dep_index: 19
   library_dep_index: 6
-  library_dep_index: 95
+  library_dep_index: 100
 }
 library_dependencies {
-  library_index: 95
+  library_index: 100
   library_dep_index: 1
   library_dep_index: 19
   library_dep_index: 6
 }
 library_dependencies {
-  library_index: 96
+  library_index: 101
   library_dep_index: 1
-  library_dep_index: 95
+  library_dep_index: 100
 }
 module_dependencies {
   module_name: "base"
@@ -1973,12 +2057,13 @@ module_dependencies {
   dependency_index: 18
   dependency_index: 19
   dependency_index: 83
-  dependency_index: 87
-  dependency_index: 84
-  dependency_index: 89
   dependency_index: 88
-  dependency_index: 90
+  dependency_index: 92
+  dependency_index: 89
+  dependency_index: 94
   dependency_index: 93
+  dependency_index: 95
+  dependency_index: 98
 }
 repositories {
   maven_repo {

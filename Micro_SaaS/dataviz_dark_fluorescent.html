@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 深色荧光风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #151515;
+            color: #FFFFFF;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: #222222;
+            border-bottom: 1px solid #333333;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-link {
+            color: #B0B0B0;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #FFFFFF;
+        }
+
+        /* 欢迎区域 */
+        .welcome-section {
+            margin-bottom: 32px;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            color: #B0B0B0;
+        }
+
+        /* 分类标签 */
+        .category-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .category-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #B0B0B0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .category-tab:hover,
+        .category-tab.active {
+            color: #FFFFFF;
+            border-bottom-color: #FFFFFF;
+        }
+
+        /* 内容卡片网格 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .content-card {
+            background: #222222;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .content-card:hover {
+            background: #2a2a2a;
+            border-color: #444444;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #3A7BFF, #2C2C2E);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .author-avatar {
+            width: 24px;
+            height: 24px;
+            background: #3A7BFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .author-name {
+            font-size: 12px;
+            color: #B0B0B0;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: #B0B0B0;
+        }
+
+        /* 底部标签栏 */
+        .bottom-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #222222;
+            border-top: 1px solid #333333;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            z-index: 100;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #B0B0B0;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .tab-item:hover,
+        .tab-item.active {
+            color: #FFFFFF;
+        }
+
+        .tab-icon {
+            font-size: 20px;
+        }
+
+        /* 浮动按钮 */
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #3A7BFF, #D8FF4B);
+            border: none;
+            border-radius: 50%;
+            color: #000000;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(58, 123, 255, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(58, 123, 255, 0.6);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .welcome-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <div class="navbar">
+            <div class="logo">
+                <span>📊</span>
+                <span>DataViz</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active">首页</a>
+                <a href="#" class="nav-link">发现</a>
+                <a href="#" class="nav-link">消息</a>
+                <a href="#" class="nav-link">我的</a>
+            </div>
+        </div>
+
+        <!-- 欢迎区域 -->
+        <div class="welcome-section">
+            <div class="welcome-title">深色荧光风格</div>
+            <div class="welcome-subtitle">沉浸式深色背景，双列瀑布流布局</div>
+        </div>
+
+        <!-- 分类标签 -->
+        <div class="category-tabs">
+            <button class="category-tab active">关注</button>
+            <button class="category-tab">精选</button>
+            <button class="category-tab">文章</button>
+            <button class="category-tab">平面</button>
+            <button class="category-tab">UI</button>
+            <button class="category-tab">网页</button>
+            <button class="category-tab">产品</button>
+        </div>
+
+        <!-- 内容卡片网格 -->
+        <div class="cards-grid">
+            <div class="content-card">
+                <div class="card-image">🎨</div>
+                <div class="card-content">
+                    <div class="card-title">数据可视化设计</div>
+                    <div class="card-meta">
+                        <div class="author-avatar">👤</div>
+                        <div class="author-name">设计师小王</div>
+                    </div>
+                    <div class="card-stats">
+                        <span>❤️ 1.2K</span>
+                        <span>👁️ 5.6K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-image">📊</div>
+                <div class="card-content">
+                    <div class="card-title">图表设计系统</div>
+                    <div class="card-meta">
+                        <div class="author-avatar">👤</div>
+                        <div class="author-name">UI设计师</div>
+                    </div>
+                    <div class="card-stats">
+                        <span>❤️ 2.1K</span>
+                        <span>👁️ 8.9K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-image">🎯</div>
+                <div class="card-content">
+                    <div class="card-title">交互设计指南</div>
+                    <div class="card-meta">
+                        <div class="author-avatar">👤</div>
+                        <div class="author-name">交互设计师</div>
+                    </div>
+                    <div class="card-stats">
+                        <span>❤️ 890</span>
+                        <span>👁️ 3.2K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-image">🌈</div>
+                <div class="card-content">
+                    <div class="card-title">色彩系统设计</div>
+                    <div class="card-meta">
+                        <div class="author-avatar">👤</div>
+                        <div class="author-name">品牌设计师</div>
+                    </div>
+                    <div class="card-stats">
+                        <span>❤️ 3.4K</span>
+                        <span>👁️ 12.1K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-image">✨</div>
+                <div class="card-content">
+                    <div class="card-title">动画效果库</div>
+                    <div class="card-meta">
+                        <div class="author-avatar">👤</div>
+                        <div class="author-name">动效设计师</div>
+                    </div>
+                    <div class="card-stats">
+                        <span>❤️ 2.8K</span>
+                        <span>👁️ 9.7K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-image">🎪</div>
+                <div class="card-content">
+                    <div class="card-title">组件库最佳实践</div>
+                    <div class="card-meta">
+                        <div class="author-avatar">👤</div>
+                        <div class="author-name">系统设计师</div>
+                    </div>
+                    <div class="card-stats">
+                        <span>❤️ 1.5K</span>
+                        <span>👁️ 6.3K</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动按钮 -->
+    <button class="fab">➕</button>
+
+    <!-- 底部标签栏 -->
+    <div class="bottom-tab-bar">
+        <a href="#" class="tab-item active">
+            <span class="tab-icon">🏠</span>
+            <span>首页</span>
+        </a>
+        <a href="#" class="tab-item">
+            <span class="tab-icon">🧭</span>
+            <span>发现</span>
+        </a>
+        <a href="#" class="tab-item">
+            <span class="tab-icon">➕</span>
+            <span>发布</span>
+        </a>
+        <a href="#" class="tab-item">
+            <span class="tab-icon">💬</span>
+            <span>消息</span>
+        </a>
+        <a href="#" class="tab-item">
+            <span class="tab-icon">👤</span>
+            <span>我的</span>
+        </a>
+    </div>
+</body>
+</html>

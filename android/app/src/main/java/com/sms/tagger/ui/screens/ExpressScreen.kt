@@ -107,8 +107,10 @@ fun ExpressScreen() {
                     )
                 }
             } else {
-                // 按地点分组
-                val groupedByLocation = expressList.groupBy { it.location ?: "未知地点" }
+                // 按日期分组，然后按日期倒序排列
+                val groupedByDate = expressList
+                    .groupBy { it.date }  // 按日期分组
+                    .toSortedMap(compareBy<String> { it }.reversed())  // 日期倒序
                 
                 LazyColumn(
                     modifier = Modifier
@@ -117,25 +119,106 @@ fun ExpressScreen() {
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // 页面头部（已删除重复的"快递取件码"标题，TopAppBar中已有）
-                    item {
-                        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-                            Text(
-                                text = "轻松管理您的快递",
-                                fontSize = 12.sp,
-                                color = Color(0xFF8A8A8A)
-                            )
-                        }
-                    }
-                    
-                    // 地点分组
-                    groupedByLocation.forEach { (location, expressItems) ->
+                    // 日期分组
+                    groupedByDate.forEach { (date, expressItems) ->
                         item {
-                            LocationGroup(location, expressItems)
+                            // 同一天内按取件码顺序排列
+                            val sortedItems = expressItems.sortedBy { it.pickupCode }
+                            DateGroup(date, sortedItems)
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun DateGroup(date: String, expressItems: List<ExpressInfo>) {
+    val clipboardManager = LocalClipboardManager.current
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 日期头部
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // 日期 + 快递数量
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 2.dp)
+                ) {
+                    Text(
+                        text = date,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF333333)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFF667EEA).copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${expressItems.size}件",
+                            fontSize = 12.sp,
+                            color = Color(0xFF8A8A8A)
+                        )
+                    }
+                }
+            }
+            
+            // 操作按钮
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = {
+                        // 复制所有取件码，用换行符分隔
+                        val allCodes = expressItems.map { it.pickupCode }.joinToString("\n")
+                        clipboardManager.setText(AnnotatedString(allCodes))
+                    },
+                    modifier = Modifier.height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.5f)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
+                ) {
+                    Text("📋 复制全部", fontSize = 11.sp, color = Color(0xFF333333))
+                }
+                
+                Button(
+                    onClick = {
+                        // 标记所有快递为已取
+                        expressItems.forEach { express ->
+                            // 这里应该更新状态并持久化
+                        }
+                    },
+                    modifier = Modifier.height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.5f)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
+                ) {
+                    Text("✓ 全部已取", fontSize = 11.sp, color = Color(0xFF333333))
+                }
+            }
+        }
+        
+        // 快递卡片列表
+        expressItems.forEach { express ->
+            ExpressItemCard(express)
         }
     }
 }
@@ -244,7 +327,14 @@ fun LocationGroup(location: String, expressItems: List<ExpressInfo>) {
 @Composable
 fun ExpressItemCard(express: ExpressInfo) {
     val clipboardManager = LocalClipboardManager.current
-    var isPicked by remember { mutableStateOf(express.status == PickupStatus.PICKED) }
+    val context = LocalContext.current
+    
+    // 从 SharedPreferences 读取状态
+    val sharedPref = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
+    val statusKey = "pickup_${express.pickupCode}"
+    var isPicked by remember { 
+        mutableStateOf(sharedPref.getBoolean(statusKey, express.status == PickupStatus.PICKED))
+    }
     
     // 根据状态确定颜色
     val statusColor = when {
@@ -300,7 +390,11 @@ fun ExpressItemCard(express: ExpressInfo) {
                     }
                     
                     Button(
-                        onClick = { isPicked = true },
+                        onClick = { 
+                            isPicked = true
+                            // 保存状态到 SharedPreferences
+                            sharedPref.edit().putBoolean(statusKey, true).apply()
+                        },
                         enabled = !isPicked,
                         modifier = Modifier
                             .height(32.dp)

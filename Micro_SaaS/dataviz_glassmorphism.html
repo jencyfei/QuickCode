@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 玻璃拟态风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #F0F4F8 0%, #E8EEF5 50%, #DFE9F3 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-link {
+            color: #4A4A4A;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #333333;
+        }
+
+        /* 主内容网格 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* 左侧面板 */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 玻璃拟态卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 16px;
+        }
+
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .device-item {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .device-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .device-icon {
+            font-size: 32px;
+        }
+
+        .device-info {
+            flex: 1;
+        }
+
+        .device-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .device-status {
+            font-size: 12px;
+            color: #4A4A4A;
+            margin-top: 4px;
+        }
+
+        .device-action {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #333333;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .device-action:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 右侧面板 */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 3D图标网格 */
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .icon-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .icon-card:hover {
+            background: rgba(255, 255, 255, 0.6);
+            transform: translateY(-4px);
+        }
+
+        .icon-large {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .icon-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #4A4A4A;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: #333333;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        /* 胶囊标签 */
+        .pill-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #4A4A4A;
+            margin-top: 12px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .icon-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .icon-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .bottom-nav {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <div class="navbar">
+            <div class="logo">
+                <span>📊</span>
+                <span>DataViz Insights</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active">首页</a>
+                <a href="#" class="nav-link">设备</a>
+                <a href="#" class="nav-link">分析</a>
+                <a href="#" class="nav-link">设置</a>
+            </div>
+        </div>
+
+        <!-- 主内容网格 -->
+        <div class="main-grid">
+            <!-- 左侧面板 -->
+            <div class="left-panel">
+                <div class="glass-card">
+                    <div class="card-title">🔗 已连接设备</div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <div class="device-icon">🎧</div>
+                            <div class="device-info">
+                                <div class="device-name">AirPods Pro</div>
+                                <div class="device-status">已连接 • 电量 85%</div>
+                            </div>
+                            <button class="device-action">编辑</button>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-icon">🎒</div>
+                            <div class="device-info">
+                                <div class="device-name">背包追踪器</div>
+                                <div class="device-status">已连接 • 位置已知</div>
+                            </div>
+                            <button class="device-action">编辑</button>
+                        </div>
+                        <div class="device-item">
+                            <div class="device-icon">💳</div>
+                            <div class="device-info">
+                                <div class="device-name">钱包追踪器</div>
+                                <div class="device-status">已连接 • 电量 92%</div>
+                            </div>
+                            <button class="device-action">编辑</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-title">📍 位置信息</div>
+                    <div style="font-size: 13px; color: #4A4A4A; line-height: 1.6;">
+                        <p>🎧 AirPods Pro</p>
+                        <p style="margin-top: 8px;">位置: 北京市朝阳区</p>
+                        <p style="margin-top: 4px;">距离: 2.3 km</p>
+                        <div class="pill-tag">最后更新: 2分钟前</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧面板 -->
+            <div class="right-panel">
+                <div class="glass-card">
+                    <div class="card-title">🎨 快速操作</div>
+                    <div class="icon-grid">
+                        <div class="icon-card">
+                            <div class="icon-large">🔔</div>
+                            <div class="icon-label">发送通知</div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-large">🔊</div>
+                            <div class="icon-label">播放声音</div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-large">🔄</div>
+                            <div class="icon-label">同步数据</div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-large">⚙️</div>
+                            <div class="icon-label">设置</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-title">📊 数据统计</div>
+                    <div style="font-size: 13px; color: #4A4A4A; line-height: 1.8;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>已连接设备:</span>
+                            <strong style="color: #333333;">3 个</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <span>电池平均:</span>
+                            <strong style="color: #333333;">89%</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <span>同步状态:</span>
+                            <strong style="color: #333333;">✓ 正常</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <span class="nav-icon">🏠</span>
+                <span>首页</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">📍</span>
+                <span>位置</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span>分析</span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span>设置</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

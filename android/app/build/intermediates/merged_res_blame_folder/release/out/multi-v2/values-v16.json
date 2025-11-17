@@ -4,7 +4,7 @@
             "outputFile": "com.sms.tagger.app-mergeReleaseResources-48:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Administrator\\.gradle\\caches\\transforms-3\\cdabb42d0eb29c24a23cb1606a6c16f6\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\Administrator\\.gradle\\caches\\transforms-3\\81859cdcdc1f0cec459796cf5a583352\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

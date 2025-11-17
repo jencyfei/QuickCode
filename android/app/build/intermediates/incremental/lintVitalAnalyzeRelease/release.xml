@@ -7,7 +7,7 @@
     mergedManifest="build\intermediates\merged_manifest\release\AndroidManifest.xml"
     proguardFiles="build\intermediates\default_proguard_files\global\proguard-android-optimize.txt-8.1.2;proguard-rules.pro"
     partialResultsDir="build\intermediates\lint_vital_partial_results\release\out"
-    desugaredMethodsFiles="C:\Users\Administrator\.gradle\caches\transforms-3\aa53d7c26a534433f31e5e25ae6380a2\transformed\D8BackportedDesugaredMethods.txt">
+    desugaredMethodsFiles="C:\Users\Administrator\.gradle\caches\transforms-3\783758867102a958b378709a5c528602\transformed\D8BackportedDesugaredMethods.txt">
   <buildFeatures
       namespacing="REQUIRED"/>
   <sourceProviders>
@@ -26,6 +26,6 @@
       applicationId="com.sms.tagger"
       generatedSourceFolders="build\generated\ap_generated_sources\release\out"
       generatedResourceFolders="build\generated\res\resValues\release"
-      desugaredMethodsFiles="C:\Users\Administrator\.gradle\caches\transforms-3\aa53d7c26a534433f31e5e25ae6380a2\transformed\D8BackportedDesugaredMethods.txt">
+      desugaredMethodsFiles="C:\Users\Administrator\.gradle\caches\transforms-3\783758867102a958b378709a5c528602\transformed\D8BackportedDesugaredMethods.txt">
   </mainArtifact>
 </variant>

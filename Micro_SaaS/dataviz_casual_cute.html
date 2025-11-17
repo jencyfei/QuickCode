@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 可爱休闲风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Trebuchet MS', cursive, sans-serif;
+            background: linear-gradient(180deg, #A0C864 0%, #89C76F 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* 主弹窗 */
+        .modal {
+            background: #FDF8E8;
+            border: 8px solid #5B3A29;
+            border-radius: 32px;
+            padding: 32px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        /* 标题栏 */
+        .modal-header {
+            background: linear-gradient(135deg, #D4A24E, #B8C5CF);
+            border: 6px solid #5B3A29;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 24px;
+            position: relative;
+            transform: rotate(-2deg);
+        }
+
+        .modal-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin: 0;
+        }
+
+        .title-decoration {
+            font-size: 32px;
+            margin-top: 8px;
+        }
+
+        /* 内容区域 */
+        .modal-content {
+            margin-bottom: 24px;
+        }
+
+        .content-text {
+            font-size: 16px;
+            color: #5B3A29;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .character-display {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: 6px solid #5B3A29;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-family: 'Comic Sans MS', cursive;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FDD451, #FFE066);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #FFE066, #FDD451);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #63D369, #7FDB7F);
+            color: #FFFFFF;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #7FDB7F, #63D369);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #E55B5B, #FF7070);
+            color: #FFFFFF;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #FF7070, #E55B5B);
+        }
+
+        /* 信息列表 */
+        .info-list {
+            background: rgba(255, 255, 255, 0.6);
+            border: 4px solid #D4A24E;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #5B3A29;
+            margin-bottom: 8px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-icon {
+            font-size: 20px;
+        }
+
+        /* 装饰元素 */
+        .decoration {
+            position: absolute;
+            font-size: 32px;
+            opacity: 0.6;
+        }
+
+        .decoration-top-left {
+            top: -16px;
+            left: -16px;
+        }
+
+        .decoration-top-right {
+            top: -16px;
+            right: -16px;
+        }
+
+        .decoration-bottom-left {
+            bottom: -16px;
+            left: -16px;
+        }
+
+        .decoration-bottom-right {
+            bottom: -16px;
+            right: -16px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .modal {
+                padding: 20px;
+            }
+
+            .modal-title {
+                font-size: 24px;
+            }
+
+            .character-display {
+                font-size: 60px;
+            }
+
+            .btn {
+                font-size: 16px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="modal">
+            <!-- 装饰角 -->
+            <div class="decoration decoration-top-left">🌿</div>
+            <div class="decoration decoration-top-right">🍃</div>
+            <div class="decoration decoration-bottom-left">🌱</div>
+            <div class="decoration decoration-bottom-right">🌾</div>
+
+            <!-- 标题栏 -->
+            <div class="modal-header">
+                <div class="title-decoration">🐱</div>
+                <h1 class="modal-title">数据分析成功！</h1>
+            </div>
+
+            <!-- 内容 -->
+            <div class="modal-content">
+                <div class="character-display">🎉</div>
+                <div class="content-text">
+                    恭喜你！数据分析已完成。<br>
+                    快来查看分析结果吧！
+                </div>
+
+                <!-- 信息列表 -->
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-icon">📊</span>
+                        <span>已生成 5 个图表</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">💡</span>
+                        <span>获得 3 条 AI 建议</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">⏱️</span>
+                        <span>耗时 2.3 秒</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">✨</span>
+                        <span>准确度 98%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 按钮组 -->
+            <div class="button-group">
+                <button class="btn btn-primary">🎯 查看结果</button>
+                <button class="btn btn-secondary">📥 导出报告</button>
+                <button class="btn btn-danger">❌ 返回</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +34,10 @@ import com.sms.tagger.data.model.RuleType
 import com.sms.tagger.data.model.TagRule
 import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
+import android.content.Context
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
 
 /**
  * 规则管理页面
@@ -96,7 +101,30 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
         )
     )
     
-    var rules by remember { mutableStateOf(initialBuiltInRules) }
+    val context = LocalContext.current
+    val sharedPref = context.getSharedPreferences("rules_config", Context.MODE_PRIVATE)
+    
+    // 从 SharedPreferences 加载规则
+    fun loadRulesFromStorage(): List<TagRule> {
+        val rulesJson = sharedPref.getString("rules_list", null)
+        return if (rulesJson != null) {
+            try {
+                Json.decodeFromString<List<TagRule>>(rulesJson)
+            } catch (e: Exception) {
+                initialBuiltInRules
+            }
+        } else {
+            initialBuiltInRules
+        }
+    }
+    
+    // 保存规则到 SharedPreferences
+    fun saveRulesToStorage(rulesToSave: List<TagRule>) {
+        val rulesJson = Json.encodeToString(rulesToSave)
+        sharedPref.edit().putString("rules_list", rulesJson).apply()
+    }
+    
+    var rules by remember { mutableStateOf(loadRulesFromStorage()) }
     var showAddRuleDialog by remember { mutableStateOf(false) }
     var editingRule by remember { mutableStateOf<TagRule?>(null) }
     
@@ -196,12 +224,14 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                                 },
                                 onDelete = { 
                                     rules = rules.filter { it.id != rule.id }
+                                    saveRulesToStorage(rules)
                                 },
                                 onToggle = {
                                     rules = rules.map { 
                                         if (it.id == rule.id) it.copy(isEnabled = !it.isEnabled)
                                         else it
                                     }
+                                    saveRulesToStorage(rules)
                                 }
                             )
                         }
@@ -228,12 +258,14 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                                 },
                                 onDelete = { 
                                     rules = rules.filter { it.id != rule.id }
+                                    saveRulesToStorage(rules)
                                 },
                                 onToggle = {
                                     rules = rules.map { 
                                         if (it.id == rule.id) it.copy(isEnabled = !it.isEnabled)
                                         else it
                                     }
+                                    saveRulesToStorage(rules)
                                 }
                             )
                         }
@@ -264,6 +296,8 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                         isBuiltIn = false
                     )
                 }
+                // 保存规则到 SharedPreferences
+                saveRulesToStorage(rules)
                 showAddRuleDialog = false
                 editingRule = null
             },
