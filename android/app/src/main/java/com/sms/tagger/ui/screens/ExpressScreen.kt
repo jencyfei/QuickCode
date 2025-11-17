@@ -30,6 +30,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Settings
+import java.util.regex.Pattern
 
 /**
  * 快递信息页面
@@ -107,10 +108,10 @@ fun ExpressScreen() {
                     )
                 }
             } else {
-                // 按日期分组，然后按日期倒序排列
+                // 按日期分组，然后按日期倒序（日期较新的在前）
                 val groupedByDate = expressList
                     .groupBy { it.date }  // 按日期分组
-                    .toSortedMap(compareBy<String> { it }.reversed())  // 日期倒序
+                    .toSortedMap(compareBy<String> { it }.reversed())  // 日期倒序（日期较新的在前）
                 
                 LazyColumn(
                     modifier = Modifier
@@ -367,7 +368,19 @@ fun ExpressItemCard(express: ExpressInfo) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 顶部：操作按钮
+                // 顶部：取货地址
+                if (express.location != null && express.location.isNotEmpty()) {
+                    Text(
+                        text = express.location,
+                        fontSize = 12.sp,
+                        color = Color(0xFF8A8A8A),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                }
+                
+                // 操作按颁
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -451,27 +464,6 @@ fun ExpressItemCard(express: ExpressInfo) {
                     }
                 }
                 
-                // 取件日期
-                if (express.date.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "取件日期：",
-                            fontSize = 13.sp,
-                            color = Color(0xFF8A8A8A),
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = express.date,
-                            fontSize = 13.sp,
-                            color = Color(0xFF333333),
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-                
                 // 接收时间 - 只显示时分秒
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -485,10 +477,12 @@ fun ExpressItemCard(express: ExpressInfo) {
                     )
                     Text(
                         text = express.receivedAt.let { time ->
-                            // 提取时分秒部分 (HH:MM:SS)
-                            val parts = time.split(" ")
-                            if (parts.size >= 2) {
-                                parts[1]  // 取时间部分
+                            // 从 ISO 8601 格式中提取时分秒 (HH:MM:SS)
+                            // 例如: 2025-11-05T12:42:25 或 2025-11-05 12:42:25
+                            val timePattern = Pattern.compile("(\\d{2}):(\\d{2}):(\\d{2})")
+                            val timeMatcher = timePattern.matcher(time)
+                            if (timeMatcher.find()) {
+                                timeMatcher.group(0)  // 返回 HH:MM:SS
                             } else {
                                 time
                             }

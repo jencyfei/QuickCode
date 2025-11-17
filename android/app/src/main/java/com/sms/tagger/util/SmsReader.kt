@@ -27,7 +27,7 @@ class SmsReader(private val context: Context) {
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         
         // 分页大小
-        private const val PAGE_SIZE = 200
+        private const val PAGE_SIZE = 100
     }
     
     /**
@@ -101,7 +101,7 @@ class SmsReader(private val context: Context) {
                 val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
                 
                 while (it.moveToNext()) {
-                    val address = it.getString(addressIndex) ?: "未知"
+                    val address = it.getString(addressIndex) ?: "未知号码"
                     val body = it.getString(bodyIndex) ?: ""
                     val date = it.getLong(dateIndex)
                     

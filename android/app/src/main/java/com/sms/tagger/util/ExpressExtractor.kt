@@ -124,23 +124,39 @@ object ExpressExtractor {
     /**
      * 【内置规则】菜鸟驿站取件码提取
      * 规则：在"凭"之后提取数字和横杠组成的取件码
-     * 示例：【菜鸟驿站】您的包裹已到站，凭6-4-1006到郑州市...取件。
+     * 支持多个取件码（逗号分隔）
+     * 示例：【菜鸟驿站】您有2个包裹在郑州市北文雅小区6号楼102店，取件码为6-5-3002, 6-2-3006。
      */
     private fun extractCaiNiaoPickupCode(content: String): String {
-        // 查找"凭"的位置
-        val bengIndex = content.indexOf("凭")
-        if (bengIndex == -1) return ""
+        // 查找"凭"或"取件码为"的位置
+        var startIndex = -1
+        var bengIndex = content.indexOf("凭")
+        var codeIndex = content.indexOf("取件码为")
         
-        // 从"凭"之后开始，提取数字和横杠组成的取件码
-        val startIndex = bengIndex + 1
+        // 优先使用"凭"，其次使用"取件码为"
+        startIndex = when {
+            bengIndex != -1 -> bengIndex + 1
+            codeIndex != -1 -> codeIndex + 4
+            else -> return ""
+        }
+        
         val restContent = content.substring(startIndex)
         
         // 匹配格式：数字-数字-数字 或 数字-数字-数字-数字 等
-        val codePattern = Pattern.compile("^\\s*([0-9]+-[0-9]+-[0-9]+(?:-[0-9]+)?)")
+        // 支持多个取件码（逗号或中文逗号分隔）
+        val codePattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]+(?:-[0-9]+)?)")
         val matcher = codePattern.matcher(restContent)
         
-        return if (matcher.find()) {
-            matcher.group(1)?.trim() ?: ""
+        // 收集所有匹配的取件码
+        val codes = mutableListOf<String>()
+        while (matcher.find()) {
+            codes.add(matcher.group(1)?.trim() ?: "")
+            // 只取第一个取件码（如果需要多个，可以改为返回所有）
+            if (codes.size == 1) break
+        }
+        
+        return if (codes.isNotEmpty()) {
+            codes[0]
         } else {
             // 如果没有找到X-X-XXXX格式，尝试提取纯数字（4-8位）
             val pureNumberPattern = Pattern.compile("^\\s*([0-9]{4,8})")
@@ -180,9 +196,20 @@ object ExpressExtractor {
     
     /**
      * 提取日期信息
+     * 优先级：完整日期 > 菜鸟驿站格式 > 其他格式
      */
     private fun extractDate(content: String): String {
-        // 【菜鸟驿站特殊处理】先查找"凭X-X-XXXX"格式，提取日期
+        // 【优先级1】匹配完整日期格式：2025-11-13 或 2025年11月13
+        val fullDatePattern = Pattern.compile("(\\d{4})[-年](\\d{1,2})[-月](\\d{1,2})")
+        val fullDateMatcher = fullDatePattern.matcher(content)
+        if (fullDateMatcher.find()) {
+            val year = fullDateMatcher.group(1)
+            val month = fullDateMatcher.group(2)
+            val day = fullDateMatcher.group(3)
+            return "$year-$month-$day"
+        }
+        
+        // 【优先级2】菜鸟驿站特殊处理：查找"凭X-X-XXXX"格式
         // 规则：凭后面的第一个数字是月份，第二个数字是日期
         val caiNiaoPattern = Pattern.compile("凭\\s*([0-9]+)-([0-9]+)-[0-9]+")
         val caiNiaoMatcher = caiNiaoPattern.matcher(content)
@@ -195,7 +222,7 @@ object ExpressExtractor {
             return "$currentYear-$month-$day"
         }
         
-        // 【备选方案】查找"货X-X-XXXX"格式（旧格式）
+        // 【优先级3】查找"货X-X-XXXX"格式（旧格式）
         val oldCaiNiaoPattern = Pattern.compile("货(\\d+)-(\\d+)-(\\d+)")
         val oldCaiNiaoMatcher = oldCaiNiaoPattern.matcher(content)
         if (oldCaiNiaoMatcher.find()) {
@@ -206,9 +233,8 @@ object ExpressExtractor {
             return "$year-$month-$day"
         }
         
-        // 匹配日期格式：12-24、12月24日、2025-11-13 等
+        // 【优先级4】匹配其他日期格式：12-24、12月24日 等
         val datePatterns = listOf(
-            Pattern.compile("(\\d{4})[-年](\\d{1,2})[-月](\\d{1,2})"), // 2025-11-13 或 2025年11月13（优先匹配完整日期）
             Pattern.compile("(\\d{1,2})[-月](\\d{1,2})"),           // 12-24 或 12月24
             Pattern.compile("(\\d{1,2})日"),                         // 24日
             Pattern.compile("(今天|明天|后天)")                       // 相对日期
