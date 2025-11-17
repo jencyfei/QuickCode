@@ -53,7 +53,8 @@ fun ExpressScreen() {
     LaunchedEffect(Unit) {
         try {
             val reader = SmsReader(context)
-            val smsList = reader.readLatestSms(200)
+            // 读取最近5000条短信，确保包含所有快递信息
+            val smsList = reader.readLatestSms(5000)
             expressList = ExpressExtractor.extractAllExpressInfo(smsList)
             isLoading = false
         } catch (e: Exception) {
@@ -368,16 +369,26 @@ fun ExpressItemCard(express: ExpressInfo) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 顶部：取货地址
+                // 顶部：取货地址（突出显示）
                 if (express.location != null && express.location.isNotEmpty()) {
-                    Text(
-                        text = express.location,
-                        fontSize = 12.sp,
-                        color = Color(0xFF8A8A8A),
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp)
-                    )
+                            .background(
+                                color = Color(0xFFF5F5F5),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = express.location,
+                            fontSize = 13.sp,
+                            color = Color(0xFF333333),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
                 
                 // 操作按颁

@@ -67,8 +67,8 @@ fun SmsListScreen(
                 return@LaunchedEffect
             }
             
-            // 读取所有短信（不限制数量）
-            val allSms = smsReader.readAllSms(1000)
+            // 读取最近5000条短信（按日期倒序）
+            val allSms = smsReader.readAllSms(5000)
             
             android.util.Log.d("SmsListScreen", "读取到 ${allSms.size} 条短信")
             
@@ -76,17 +76,17 @@ fun SmsListScreen(
             val filteredSms = if (tagFilter != null) {
                 // 对短信进行分类
                 val classified = SmsClassifier.classifySmsList(allSms)
-                // 获取指定标签的短信（包括"未知"分类的短信）
+                // 获取指定标签的短信
                 classified[tagFilter] ?: emptyList()
             } else {
-                // 显示所有短信（不过滤"未知"分类的短信）
+                // 没有标签过滤时，显示所有短信
                 allSms
             }
             
-            android.util.Log.d("SmsListScreen", "过滤后 ${filteredSms.size} 条短信 (标签: $tagFilter)")
-            
-            // 显示过滤后的短信，按时间倒序排列
+            // 按时间倒序排列（最新的短信在最前）
             smsCreateList = filteredSms.sortedByDescending { it.receivedAt }
+            
+            android.util.Log.d("SmsListScreen", "显示 ${smsCreateList.size} 条短信 (标签: $tagFilter)")
             
             if (smsCreateList.isEmpty()) {
                 errorMessage = "暂无短信"

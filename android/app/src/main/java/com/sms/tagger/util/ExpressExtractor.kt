@@ -82,9 +82,42 @@ object ExpressExtractor {
     
     /**
      * 从短信列表中提取所有快递信息
+     * 支持从一条短信中提取多个快递（多个取件码）
      */
     fun extractAllExpressInfo(smsList: List<SmsCreate>): List<ExpressInfo> {
-        return smsList.mapNotNull { extractExpressInfo(it) }
+        val allExpressInfo = mutableListOf<ExpressInfo>()
+        
+        for (sms in smsList) {
+            // 检查是否包含快递关键词
+            val company = detectExpressCompany(sms.content) ?: continue
+            
+            // 提取所有取件码
+            val pickupCodes = extractAllPickupCodes(sms.content)
+            if (pickupCodes.isEmpty()) continue
+            
+            // 提取地址和日期（对所有取件码都相同）
+            val location = extractLocation(sms.content)
+            val date = extractDate(sms.content)
+            val status = detectPickupStatus(sms.content)
+            
+            // 为每个取件码创建一个快递信息
+            for (pickupCode in pickupCodes) {
+                allExpressInfo.add(
+                    ExpressInfo(
+                        company = company,
+                        pickupCode = pickupCode,
+                        location = location,
+                        sender = sms.sender,
+                        receivedAt = sms.receivedAt,
+                        fullContent = sms.content,
+                        status = status,
+                        date = date
+                    )
+                )
+            }
+        }
+        
+        return allExpressInfo
     }
     
     /**
@@ -100,34 +133,45 @@ object ExpressExtractor {
     }
     
     /**
-     * 提取取件码
+     * 提取所有取件码（支持多个）
      */
-    private fun extractPickupCode(content: String): String? {
-        // 【内置规则】菜鸟驿站：【菜鸟驿站】...凭XXX...取件 → 在"凭"之后取8个字符
+    private fun extractAllPickupCodes(content: String): List<String> {
+        val codes = mutableListOf<String>()
+        
+        // 【内置规则】菜鸟驿站：【菜鸟驿站】...凭XXX...取件 → 在"凭"之后取数字和横杠组成的取件码
         if (content.contains("【菜鸟驿站】") || content.contains("[菜鸟驿站]")) {
-            val caiNiaoCode = extractCaiNiaoPickupCode(content)
-            if (caiNiaoCode.isNotEmpty()) {
-                return caiNiaoCode
+            val caiNiaoCodes = extractAllCaiNiaoPickupCodes(content)
+            if (caiNiaoCodes.isNotEmpty()) {
+                return caiNiaoCodes
             }
         }
         
         // 其他规则
         for (pattern in pickupCodePatterns) {
             val matcher = pattern.matcher(content)
-            if (matcher.find()) {
-                return matcher.group(1)
+            while (matcher.find()) {
+                codes.add(matcher.group(1))
             }
         }
-        return null
+        
+        return if (codes.isNotEmpty()) codes else listOf()
     }
     
     /**
-     * 【内置规则】菜鸟驿站取件码提取
-     * 规则：在"凭"之后提取数字和横杠组成的取件码
-     * 支持多个取件码（逗号分隔）
+     * 提取取件码（单个，用于向后兼容）
+     */
+    private fun extractPickupCode(content: String): String? {
+        val codes = extractAllPickupCodes(content)
+        return codes.firstOrNull()
+    }
+    
+    /**
+     * 【内置规则】菜鸟驿站取件码提取（支持多个）
+     * 规则：在"凭"或"取件码为"之后提取数字和横杠组成的取件码
+     * 支持多个取件码（逗号或中文逗号分隔）
      * 示例：【菜鸟驿站】您有2个包裹在郑州市北文雅小区6号楼102店，取件码为6-5-3002, 6-2-3006。
      */
-    private fun extractCaiNiaoPickupCode(content: String): String {
+    private fun extractAllCaiNiaoPickupCodes(content: String): List<String> {
         // 查找"凭"或"取件码为"的位置
         var startIndex = -1
         var bengIndex = content.indexOf("凭")
@@ -137,7 +181,7 @@ object ExpressExtractor {
         startIndex = when {
             bengIndex != -1 -> bengIndex + 1
             codeIndex != -1 -> codeIndex + 4
-            else -> return ""
+            else -> return emptyList()
         }
         
         val restContent = content.substring(startIndex)
@@ -151,32 +195,41 @@ object ExpressExtractor {
         val codes = mutableListOf<String>()
         while (matcher.find()) {
             codes.add(matcher.group(1)?.trim() ?: "")
-            // 只取第一个取件码（如果需要多个，可以改为返回所有）
-            if (codes.size == 1) break
         }
         
         return if (codes.isNotEmpty()) {
-            codes[0]
+            codes
         } else {
             // 如果没有找到X-X-XXXX格式，尝试提取纯数字（4-8位）
-            val pureNumberPattern = Pattern.compile("^\\s*([0-9]{4,8})")
+            val pureNumberPattern = Pattern.compile("([0-9]{4,8})")
             val numberMatcher = pureNumberPattern.matcher(restContent)
-            if (numberMatcher.find()) {
-                numberMatcher.group(1)?.trim() ?: ""
-            } else {
-                ""
+            val pureNumbers = mutableListOf<String>()
+            while (numberMatcher.find()) {
+                pureNumbers.add(numberMatcher.group(1)?.trim() ?: "")
             }
+            pureNumbers
         }
     }
     
     /**
-     * 提取地址信息
+     * 【内置规则】菜鸟驿站取件码提取（单个，用于向后兼容）
+     */
+    private fun extractCaiNiaoPickupCode(content: String): String {
+        val codes = extractAllCaiNiaoPickupCodes(content)
+        return codes.firstOrNull() ?: ""
+    }
+    
+    /**
+     * 提取地址信息（简化版本，只提取地址部分）
      */
     private fun extractLocation(content: String): String? {
-        // 简单提取驿站、超市等关键词
+        // 提取地址信息，优先级：到XXX > 在XXX > 其他
         val locationPatterns = listOf(
             // 菜鸟驿站格式：到郑州市北文雅小区6号楼102取件
             Pattern.compile("到([^，。,。]*?(?:小区|楼|店|驿站|超市|便利店|快递柜)[^，。,。]*)"),
+            // 菜鸟驿站格式：在郑州市北文雅小区6号楼102店
+            Pattern.compile("在([^，。,。]*?(?:小区|楼|店|驿站|超市|便利店|快递柜)[^，。,。]*)"),
+            // 其他格式
             Pattern.compile("(菜鸟驿站[^，。,\\s]{0,30})"),
             Pattern.compile("(.*?超市)"),
             Pattern.compile("(.*?便利店)"),
@@ -187,7 +240,14 @@ object ExpressExtractor {
         for (pattern in locationPatterns) {
             val matcher = pattern.matcher(content)
             if (matcher.find()) {
-                return matcher.group(1)?.trim()
+                var location = matcher.group(1)?.trim() ?: continue
+                // 移除【菜鸟驿站】等前缀
+                location = location.replace("【菜鸟驿站】", "")
+                location = location.replace("[菜鸟驿站]", "")
+                location = location.replace("菜鸟驿站", "")
+                // 移除"您有X个包裹在"等前缀
+                location = location.replace(Regex("您有.*?在"), "")
+                return location.trim()
             }
         }
         

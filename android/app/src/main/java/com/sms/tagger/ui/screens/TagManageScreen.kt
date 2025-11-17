@@ -73,7 +73,8 @@ fun TagManageScreen() {
                 "快递" to (classified["快递"]?.size ?: 0),
                 "银行" to (classified["银行"]?.size ?: 0),
                 "通知" to (classified["通知"]?.size ?: 0),
-                "营销" to (classified["营销"]?.size ?: 0)
+                "营销" to (classified["营销"]?.size ?: 0),
+                "未知" to (classified["未知"]?.size ?: 0)
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -155,7 +156,8 @@ fun TagManageScreen() {
                     TagItem("快递", "#4A90E2", tagCounts["快递"] ?: 0, "📦"),
                     TagItem("银行", "#7ED321", tagCounts["银行"] ?: 0, "🏦"),
                     TagItem("通知", "#F5A623", tagCounts["通知"] ?: 0, "🔔"),
-                    TagItem("营销", "#9013FE", tagCounts["营销"] ?: 0, "📢")
+                    TagItem("营销", "#9013FE", tagCounts["营销"] ?: 0, "📢"),
+                    TagItem("未知", "#999999", tagCounts["未知"] ?: 0, "❓")
                 )
             ) { tag ->
                 TagItemCard(

@@ -32,7 +32,8 @@ object SmsClassifier {
     
     // 通知关键词（排除快递相关的通知）
     private val notificationKeywords = listOf(
-        "通知", "提醒", "预约", "更新", "会议", "alert", "notice", "reminder"
+        "通知", "提醒", "预约", "更新", "会议", "alert", "notice", "reminder",
+        "中国移动", "中国联通", "中国电信", "停车", "积分", "流量", "话费"
     )
     
     /**
