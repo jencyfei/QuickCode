@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - NightDarkTheme</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 20px;
+            color: #FFFFFF;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .navbar {
+            background: #121212;
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.2);
+            border: 1px solid #BB86FC;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #BB86FC;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: #1E1E1E;
+            border: 1px solid #BB86FC;
+            border-radius: 8px;
+            color: #BB86FC;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #2C2C2E;
+            box-shadow: 0 0 8px rgba(187, 134, 252, 0.5);
+        }
+
+        .nav-btn.primary {
+            background: #BB86FC;
+            border: none;
+            color: #121212;
+            font-weight: 600;
+        }
+
+        .nav-btn.primary:hover {
+            background: #CF6679;
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #BB86FC;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .chart-section {
+            background: #121212;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.2);
+            border: 1px solid #BB86FC;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #BB86FC;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(187, 134, 252, 0.1), rgba(207, 102, 121, 0.1));
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #BB86FC;
+        }
+
+        .metrics-panel {
+            background: #121212;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            border: 1px solid #BB86FC;
+        }
+
+        .metrics-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #BB86FC;
+        }
+
+        .metric-card {
+            background: rgba(187, 134, 252, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #BB86FC;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #BDBDBD;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #BB86FC;
+            margin-bottom: 4px;
+        }
+
+        .metric-trend {
+            font-size: 12px;
+            color: #CF6679;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: #BB86FC;
+            border: none;
+            border-radius: 8px;
+            color: #121212;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background: #CF6679;
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: #1E1E1E;
+            border: 1px solid #BB86FC;
+            border-radius: 8px;
+            color: #BB86FC;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: #2C2C2E;
+            box-shadow: 0 0 8px rgba(187, 134, 252, 0.5);
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <span>🌙</span>
+                <span>DataViz Insights</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn">← 返回</button>
+                <button class="nav-btn primary">+ 新建</button>
+            </div>
+        </div>
+
+        <div class="page-header">
+            <div>
+                <div class="page-title">夜间数据分析</div>
+                <div style="font-size: 14px; color: #BDBDBD; margin-top: 4px;">深紫暗黑风格</div>
+            </div>
+            <div class="header-actions">
+                <button class="nav-btn">✏️ 编辑</button>
+                <button class="nav-btn">📥 导出</button>
+                <button class="nav-btn primary">🔗 分享</button>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="chart-section">
+                <div class="chart-title">📈 销售趋势</div>
+                <div class="chart-container">
+                    <div style="text-align: center; padding-top: 120px; color: #BB86FC; font-size: 16px;">
+                        📊 图表区域 - 深紫暗黑风格
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-panel">
+                <div class="metrics-title">📊 关键指标</div>
+                <div class="metric-card">
+                    <div class="metric-label">总销售额</div>
+                    <div class="metric-value">¥125,000</div>
+                    <div class="metric-trend">↑ +15%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">平均客单价</div>
+                    <div class="metric-value">¥250</div>
+                    <div class="metric-trend">↑ +8%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">转化率</div>
+                    <div class="metric-value">3.2%</div>
+                    <div class="metric-trend">↑ +2%</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 30px;">
+            <button class="btn-primary">💾 保存</button>
+            <button class="btn-secondary">⚙️ 设置</button>
+            <button class="btn-secondary">❌ 取消</button>
+        </div>
+    </div>
+</body>
+</html>

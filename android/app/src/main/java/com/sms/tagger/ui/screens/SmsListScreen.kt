@@ -68,9 +68,17 @@ fun SmsListScreen(
             }
             
             // 读取最近5000条短信（按日期倒序）
+            android.util.Log.d("SmsListScreen", "========== 开始加载短信列表 ==========")
+            android.util.Log.d("SmsListScreen", "标签过滤: $tagFilter")
+            
             val allSms = smsReader.readAllSms(5000)
             
-            android.util.Log.d("SmsListScreen", "读取到 ${allSms.size} 条短信")
+            android.util.Log.d("SmsListScreen", "✅ 读取到 ${allSms.size} 条短信")
+            
+            // 打印前3条短信的详细信息
+            allSms.take(3).forEachIndexed { index, sms ->
+                android.util.Log.d("SmsListScreen", "短信 ${index + 1}: 发件人=${sms.sender}, 内容=${sms.content.take(50)}, 时间=${sms.receivedAt}")
+            }
             
             // 按标签过滤短信
             val filteredSms = if (tagFilter != null) {
@@ -83,10 +91,19 @@ fun SmsListScreen(
                 allSms
             }
             
+            android.util.Log.d("SmsListScreen", "过滤后短信数: ${filteredSms.size} 条")
+            
             // 按时间倒序排列（最新的短信在最前）
             smsCreateList = filteredSms.sortedByDescending { it.receivedAt }
             
-            android.util.Log.d("SmsListScreen", "显示 ${smsCreateList.size} 条短信 (标签: $tagFilter)")
+            android.util.Log.d("SmsListScreen", "排序后短信数: ${smsCreateList.size} 条")
+            
+            // 打印排序后的前3条短信
+            smsCreateList.take(3).forEachIndexed { index, sms ->
+                android.util.Log.d("SmsListScreen", "排序后短信 ${index + 1}: 发件人=${sms.sender}, 时间=${sms.receivedAt}")
+            }
+            
+            android.util.Log.d("SmsListScreen", "========== 短信列表加载完成 ==========")
             
             if (smsCreateList.isEmpty()) {
                 errorMessage = "暂无短信"

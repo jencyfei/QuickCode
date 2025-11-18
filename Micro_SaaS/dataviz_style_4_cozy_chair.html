@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - CozyChairStyle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #FAF0E6 0%, #FFF8DC 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #212121;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #D2691E;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: #FFF9C4;
+            border: 2px solid #FFD54F;
+            border-radius: 12px;
+            color: #212121;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #FFE082;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #D2691E, #CD853F);
+            border: none;
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        .nav-btn.primary:hover {
+            background: linear-gradient(135deg, #CD853F, #DEB887);
+            box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3);
+        }
+
+        /* 页面标题 */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #212121;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 主内容网格 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* 图表区域 */
+        .chart-section {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212121;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: linear-gradient(135deg, #FFF9C4, #C8E6C9);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        /* 关键指标面板 */
+        .metrics-panel {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .metrics-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #212121;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #FFF9C4, #B3E5FC);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 2px solid #FFD54F;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #D2691E;
+            margin-bottom: 4px;
+        }
+
+        .metric-trend {
+            font-size: 12px;
+            color: #C8E6C9;
+            font-weight: 600;
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #D2691E, #CD853F);
+            border: none;
+            border-radius: 12px;
+            color: #FFFFFF;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: #FFF9C4;
+            border: 2px solid #FFD54F;
+            border-radius: 12px;
+            color: #212121;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: #FFE082;
+            transform: translateY(-2px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <div class="navbar">
+            <div class="logo">
+                <span>🪑</span>
+                <span>DataViz Insights</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn">← 返回</button>
+                <button class="nav-btn primary">+ 新建</button>
+            </div>
+        </div>
+
+        <!-- 页面标题和操作 -->
+        <div class="page-header">
+            <div>
+                <div class="page-title">舒适数据分析</div>
+                <div style="font-size: 14px; color: #757575; margin-top: 4px;">温暖舒适的分析体验</div>
+            </div>
+            <div class="header-actions">
+                <button class="nav-btn">✏️ 编辑</button>
+                <button class="nav-btn">📥 导出</button>
+                <button class="nav-btn primary">🔗 分享</button>
+            </div>
+        </div>
+
+        <!-- 主内容网格 -->
+        <div class="main-grid">
+            <!-- 左侧图表区域 -->
+            <div class="chart-section">
+                <div class="chart-title">📈 销售趋势</div>
+                <div class="chart-container">
+                    <div style="text-align: center; padding-top: 120px; color: #D2691E; font-size: 16px;">
+                        📊 图表区域 - 舒适暖色风格
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧关键指标 -->
+            <div class="metrics-panel">
+                <div class="metrics-title">📊 关键指标</div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">总销售额</div>
+                    <div class="metric-value">¥125,000</div>
+                    <div class="metric-trend">↑ +15%</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">平均客单价</div>
+                    <div class="metric-value">¥250</div>
+                    <div class="metric-trend">↑ +8%</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">转化率</div>
+                    <div class="metric-value">3.2%</div>
+                    <div class="metric-trend">↑ +2%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div style="display: flex; gap: 12px; margin-top: 30px;">
+            <button class="btn-primary">💾 保存</button>
+            <button class="btn-secondary">⚙️ 设置</button>
+            <button class="btn-secondary">❌ 取消</button>
+        </div>
+    </div>
+</body>
+</html>
