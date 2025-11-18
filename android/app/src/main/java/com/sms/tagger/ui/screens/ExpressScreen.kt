@@ -72,6 +72,12 @@ fun ExpressScreen() {
     }
     
     GradientBackground {
+        // 获取今日快递
+        val today = java.time.LocalDate.now().toString().replace("-", "-").takeLast(5) // MM-DD
+        val todayItems = expressList.filter { item ->
+            item.receivedAt.takeLast(5) == today
+        }
+        
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -93,7 +99,7 @@ fun ExpressScreen() {
                             containerColor = Color.Transparent
                         )
                     )
-                    // 摘要栏
+                    // 摘要栏 - 显示今日待取件
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -108,7 +114,7 @@ fun ExpressScreen() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "待取件：${expressList.size}件",
+                            text = "今日待取件：${todayItems.size}件",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF333333)
@@ -122,7 +128,7 @@ fun ExpressScreen() {
                                 onCheckedChange = { checked ->
                                     selectAllChecked = checked
                                     selectedExpressIds = if (checked) {
-                                        expressList.map { it.pickupCode }.toSet()
+                                        todayItems.map { it.pickupCode }.toSet()
                                     } else {
                                         emptySet()
                                     }
@@ -175,17 +181,13 @@ fun ExpressScreen() {
                     Button(
                         onClick = {
                             if (selectedExpressIds.isNotEmpty()) {
-                                confirmDialogTitle = "批量取出"
-                                confirmDialogMessage = "确认取出${selectedExpressIds.size}个快递吗？"
-                                confirmDialogAction = {
-                                    selectedExpressIds.forEach { id ->
-                                        // 标记为已取
-                                    }
-                                    showToast = "已更新${selectedExpressIds.size}个快递"
-                                    selectedExpressIds = emptySet()
-                                    selectAllChecked = false
+                                // 直接标记为已取，无需确认
+                                selectedExpressIds.forEach { id ->
+                                    // 标记为已取
                                 }
-                                showConfirmDialog = true
+                                showToast = "已更新${selectedExpressIds.size}个快递"
+                                selectedExpressIds = emptySet()
+                                selectAllChecked = false
                             }
                         },
                         enabled = selectedExpressIds.isNotEmpty(),
@@ -255,10 +257,8 @@ fun ExpressScreen() {
 
 @Composable
 fun DateGroup(date: String, expressItems: List<ExpressInfo>) {
-    val clipboardManager = LocalClipboardManager.current
-    
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 日期头部
+        // 日期头部 - 简化版，无操作按钮
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -266,72 +266,32 @@ fun DateGroup(date: String, expressItems: List<ExpressInfo>) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                // 日期 + 快递数量
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(bottom = 2.dp)
+            // 日期 + 快递数量
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(bottom = 2.dp)
+            ) {
+                Text(
+                    text = date,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF333333)
+                )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF667EEA).copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = date,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF333333)
+                        text = "${expressItems.size}件",
+                        fontSize = 12.sp,
+                        color = Color(0xFF8A8A8A)
                     )
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFF667EEA).copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${expressItems.size}件",
-                            fontSize = 12.sp,
-                            color = Color(0xFF8A8A8A)
-                        )
-                    }
-                }
-            }
-            
-            // 操作按钮
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = {
-                        // 复制所有取件码，用换行符分隔
-                        val allCodes = expressItems.map { it.pickupCode }.joinToString("\n")
-                        clipboardManager.setText(AnnotatedString(allCodes))
-                    },
-                    modifier = Modifier.height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.5f)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
-                ) {
-                    Text("📋 复制全部", fontSize = 11.sp, color = Color(0xFF333333))
-                }
-                
-                Button(
-                    onClick = {
-                        // 标记所有快递为已取
-                        expressItems.forEach { express ->
-                            // 这里应该更新状态并持久化
-                        }
-                    },
-                    modifier = Modifier.height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.5f)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
-                ) {
-                    Text("✓ 全部已取", fontSize = 11.sp, color = Color(0xFF333333))
                 }
             }
         }
