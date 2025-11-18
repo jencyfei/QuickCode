@@ -74,7 +74,7 @@
         }
 
         .summary-text {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 500;
         }
 
@@ -204,7 +204,7 @@
         }
 
         .card-date {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #333;
         }
@@ -227,7 +227,7 @@
             display: flex;
             align-items: flex-start;
             gap: 6px;
-            font-size: 14px;
+            font-size: 16px;
             color: #666;
             line-height: 1.4;
         }
@@ -548,58 +548,23 @@
 
     <script>
         // ===== Data Model =====
+        // 按照设计文档要求的示例数据
         let items = [
             {
                 id: 1,
-                date: '11-16',
-                code: '6-4-1006',
-                address: '郑州市北文雅小区6号楼102店',
-                time: '10:14',
+                date: '6-5',
+                code: '6-5-3002',
+                address: '郑州北文雅小区6号楼102层',
+                time: '12:42:25',
                 selected: false,
                 picked: false
             },
             {
                 id: 2,
-                date: '11-16',
-                code: '6-2-3003',
-                address: '郑州市北文雅小区6号楼102店',
-                time: '10:14',
-                selected: false,
-                picked: false
-            },
-            {
-                id: 3,
-                date: '11-14',
-                code: '6-5-2019',
-                address: '郑州市北文雅小区6号楼102店',
-                time: '16:52',
-                selected: false,
-                picked: false
-            },
-            {
-                id: 4,
-                date: '11-11',
-                code: '6-2-2029',
-                address: '郑州市北文雅小区6号楼102店',
-                time: '10:35',
-                selected: false,
-                picked: false
-            },
-            {
-                id: 5,
-                date: '11-07',
-                code: '6-5-5011',
-                address: '郑州市北文雅小区6号楼102店',
-                time: '19:05',
-                selected: false,
-                picked: false
-            },
-            {
-                id: 6,
-                date: '11-07',
-                code: '6-2-5008',
-                address: '郑州市北文雅小区6号楼102店',
-                time: '11:59',
+                date: '6-2',
+                code: '6-2-3006',
+                address: '郑州北文雅小区6号楼102层',
+                time: '12:42:25',
                 selected: false,
                 picked: false
             }
@@ -638,7 +603,9 @@
                             <div class="card-date">${item.date}</div>
                             <div class="card-time">${item.time}</div>
                         </div>
-                        <div class="card-code">${item.code}</div>
+                        <div style="background-color: rgba(103, 58, 183, 0.08); border-radius: 8px; padding: 12px 8px; margin: 8px 0;">
+                            <div class="card-code">${item.code}</div>
+                        </div>
                         <div class="card-address">
                             <span class="material-icons">location_on</span>
                             <span>${item.address}</span>
@@ -660,8 +627,9 @@
         }
 
         function updateSummary() {
-            const todayCount = items.filter(item => item.date === '11-16').length;
-            document.getElementById('todayCount').textContent = todayCount;
+            // 显示所有快递数量（因为示例数据中没有特定的"今日"日期）
+            const totalCount = items.filter(item => !item.picked).length;
+            document.getElementById('todayCount').textContent = totalCount;
         }
 
         function updateButtonStates() {
