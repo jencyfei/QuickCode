@@ -99,6 +99,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 12px;
+            padding-bottom: 130px;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -321,14 +322,19 @@
 
         /* ===== Bottom Action Bar ===== */
         footer {
+            position: fixed;
+            bottom: 56px;
+            left: 0;
+            right: 0;
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
             padding: 12px;
             display: flex;
             gap: 8px;
-            flex-shrink: 0;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+            z-index: 100;
         }
 
         .action-btn {
@@ -366,7 +372,7 @@
         /* ===== Toast 提示 ===== */
         .toast {
             position: fixed;
-            bottom: 70px;
+            bottom: 130px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.8);
