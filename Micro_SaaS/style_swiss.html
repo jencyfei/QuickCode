@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 瑞士风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            background: #FFFFFF;
+            color: #1A1A1A;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: #FFFFFF;
+            border-bottom: 1px solid #E0E0E0;
+            padding: 32px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-title {
+            font-size: 24px;
+            font-weight: 300;
+            color: #1A1A1A;
+            letter-spacing: 1px;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-btn {
+            padding: 0;
+            background: transparent;
+            border: none;
+            color: #1A1A1A;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            transition: opacity 0.3s ease;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            opacity: 0.6;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 64px 48px;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 64px;
+        }
+
+        .page-title {
+            font-size: 48px;
+            font-weight: 300;
+            color: #1A1A1A;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #666666;
+            font-weight: 400;
+            line-height: 1.8;
+            max-width: 600px;
+        }
+
+        /* 网格系统 */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 64px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-bottom: 64px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: #FFFFFF;
+            border-left: 2px solid #1A1A1A;
+            padding: 32px 0 32px 24px;
+        }
+
+        .card-number {
+            font-size: 11px;
+            color: #999999;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #1A1A1A;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #666666;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid #1A1A1A;
+            background: #FFFFFF;
+            color: #1A1A1A;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #1A1A1A;
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background: #FFFFFF;
+            color: #1A1A1A;
+        }
+
+        .btn-secondary {
+            background: #FFFFFF;
+            color: #1A1A1A;
+        }
+
+        .btn-secondary:hover {
+            background: #F5F5F5;
+        }
+
+        /* 特色区块 */
+        .feature-section {
+            margin-bottom: 64px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #999999;
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+            text-transform: uppercase;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+
+        .feature-item {
+            text-align: left;
+        }
+
+        .feature-item-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .feature-item-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: #1A1A1A;
+            letter-spacing: 0.5px;
+        }
+
+        /* 输入框 */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: #999999;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #E0E0E0;
+            background: #FFFFFF;
+            color: #1A1A1A;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #1A1A1A;
+        }
+
+        .input-field::placeholder {
+            color: #CCCCCC;
+        }
+
+        /* 分割线 */
+        .divider {
+            height: 1px;
+            background: #E0E0E0;
+            margin: 64px 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 24px;
+            }
+
+            .page-title {
+                font-size: 32px;
+            }
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .feature-list {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .navbar {
+                padding: 24px 24px;
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .navbar-actions {
+                gap: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="navbar">
+        <div class="navbar-title">DataViz</div>
+        <div class="navbar-actions">
+            <button class="nav-btn">Login</button>
+            <button class="nav-btn">Sign Up</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <div class="page-title">DataViz Insights</div>
+            <div class="page-subtitle">
+                A systematic approach to data visualization. Precision, clarity, and timeless design principles guide every interface element. Swiss typography meets modern data analytics.
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 功能卡片 -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-number">01</div>
+                <div class="card-title">Quick Start</div>
+                <div class="card-description">
+                    Three steps to create professional data analysis reports. Upload your data, define metrics, and let the system generate insights automatically.
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary">Start</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-number">02</div>
+                <div class="card-title">Smart Charts</div>
+                <div class="card-description">
+                    The system automatically recommends the best chart type for your data. Intelligent visualization selection based on data characteristics.
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary">Learn More</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-number">03</div>
+                <div class="card-title">AI Insights</div>
+                <div class="card-description">
+                    Get deep insights and actionable recommendations from your data. Machine learning powered analysis reveals hidden patterns and trends.
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary">View Examples</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-number">04</div>
+                <div class="card-title">Collaboration</div>
+                <div class="card-description">
+                    Share your analysis with team members. Real-time collaboration features enable seamless teamwork and knowledge sharing.
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary">Explore</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 核心功能 -->
+        <div class="feature-section">
+            <div class="section-title">Core Features</div>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-item-icon">📈</div>
+                    <div class="feature-item-text">Smart Chart Generation</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">🤖</div>
+                    <div class="feature-item-text">AI Data Insights</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">⚡</div>
+                    <div class="feature-item-text">Real-time Updates</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">👥</div>
+                    <div class="feature-item-text">Team Collaboration</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 新建项目表单 -->
+        <div class="feature-section" style="max-width: 500px;">
+            <div class="section-title">Create New Project</div>
+            <div class="input-group">
+                <label class="input-label">Project Name</label>
+                <input type="text" class="input-field" placeholder="Enter project name">
+            </div>
+            <div class="input-group">
+                <label class="input-label">Description</label>
+                <input type="text" class="input-field" placeholder="Enter project description">
+            </div>
+            <div style="display: flex; gap: 16px; justify-content: flex-start;">
+                <button class="btn btn-secondary">Cancel</button>
+                <button class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

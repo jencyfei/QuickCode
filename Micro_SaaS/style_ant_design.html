@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 蚂蚁设计风格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'PingFang SC', sans-serif;
+            background: #FAFAFA;
+            color: #000000D9;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background: #FFFFFF;
+            border-bottom: 1px solid #F0F0F0;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        .navbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000000D9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .nav-btn {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid #D9D9D9;
+            border-radius: 6px;
+            color: #1677FF;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            border-color: #1677FF;
+            color: #0051BA;
+        }
+
+        /* 主容器 */
+        .container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* 侧栏菜单 */
+        .sidebar {
+            background: #FFFFFF;
+            border-right: 1px solid #F0F0F0;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            padding: 8px 16px;
+            color: #00000073;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-item:hover {
+            background: #F5F5F5;
+            color: #1677FF;
+        }
+
+        .menu-item.active {
+            background: #E6F7FF;
+            color: #1677FF;
+            border-left: 3px solid #1677FF;
+            padding-left: 13px;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000D9;
+            margin-bottom: 8px;
+        }
+
+        .page-breadcrumb {
+            font-size: 12px;
+            color: #00000073;
+        }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: #FFFFFF;
+            border: 1px solid #F0F0F0;
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+            border-color: #1677FF;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000D9;
+            margin-bottom: 8px;
+        }
+
+        .card-content {
+            font-size: 12px;
+            color: #00000073;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 表格 */
+        .table-container {
+            background: #FFFFFF;
+            border: 1px solid #F0F0F0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-header {
+            background: #FAFAFA;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .table-header th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #000000D9;
+        }
+
+        .table-body td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #F0F0F0;
+            font-size: 12px;
+            color: #00000073;
+        }
+
+        .table-body tr:hover {
+            background: #F5F5F5;
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #1677FF;
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background: #0051BA;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #D9D9D9;
+            color: #000000D9;
+        }
+
+        .btn-secondary:hover {
+            border-color: #1677FF;
+            color: #1677FF;
+        }
+
+        /* 输入框 */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #000000D9;
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 6px 12px;
+            border: 1px solid #D9D9D9;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #000000D9;
+            background: #FFFFFF;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #1677FF;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="navbar">
+        <div class="navbar-title">
+            <span>📊</span>
+            <span>DataViz Insights</span>
+        </div>
+        <div class="navbar-actions">
+            <button class="nav-btn">登录</button>
+            <button class="nav-btn">注册</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 侧栏菜单 -->
+        <div class="sidebar">
+            <div class="menu-item active">
+                <span>📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="menu-item">
+                <span>📋</span>
+                <span>模板库</span>
+            </div>
+            <div class="menu-item">
+                <span>📤</span>
+                <span>数据上传</span>
+            </div>
+            <div class="menu-item">
+                <span>📈</span>
+                <span>分析结果</span>
+            </div>
+            <div class="menu-item">
+                <span>⚙️</span>
+                <span>设置</span>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <div class="page-title">Dashboard</div>
+                <div class="page-breadcrumb">首页 / Dashboard</div>
+            </div>
+
+            <!-- 卡片网格 -->
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">🚀 快速开始</div>
+                    <div class="card-content">上传您的数据表格，定义指标公式，系统将自动生成专业图表。</div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary">开始使用</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📊 最近项目</div>
+                    <div class="card-content">• 2025 Q4 销售分析<br>• 用户增长趋势<br>• 产品性能对比</div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary">查看全部</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">✨ 核心功能</div>
+                    <div class="card-content">✓ 智能图表生成<br>✓ AI 数据洞察<br>✓ 实时数据更新</div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary">了解更多</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 项目列表表格 -->
+            <div class="table-container">
+                <table class="table">
+                    <thead class="table-header">
+                        <tr>
+                            <th>项目名称</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        <tr>
+                            <td>2025 Q4 销售分析</td>
+                            <td>2025-11-10</td>
+                            <td>2025-11-18</td>
+                            <td>已完成</td>
+                            <td>
+                                <button class="btn btn-secondary">查看</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>用户增长趋势</td>
+                            <td>2025-11-08</td>
+                            <td>2025-11-17</td>
+                            <td>已完成</td>
+                            <td>
+                                <button class="btn btn-secondary">查看</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>产品性能对比</td>
+                            <td>2025-11-05</td>
+                            <td>2025-11-16</td>
+                            <td>已完成</td>
+                            <td>
+                                <button class="btn btn-secondary">查看</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 新建项目表单 -->
+            <div class="card" style="max-width: 500px;">
+                <div class="card-title">新建项目</div>
+                <div class="input-group">
+                    <label class="input-label">项目名称</label>
+                    <input type="text" class="input-field" placeholder="输入项目名称">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">项目描述</label>
+                    <input type="text" class="input-field" placeholder="输入项目描述">
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button class="btn btn-secondary">取消</button>
+                    <button class="btn btn-primary">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

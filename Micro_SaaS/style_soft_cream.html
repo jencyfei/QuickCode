@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataViz Insights - 奶油柔和风</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rounded UI', 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFFBF7 100%);
+            color: #4A3F35;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: linear-gradient(135deg, #FFB6A1 0%, #FFD8CC 100%);
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 4px 15px rgba(255, 182, 161, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            color: #FFFFFF;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #4A3F35;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #7A6F67;
+            line-height: 1.6;
+        }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 28px;
+            margin-bottom: 40px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 8px 24px rgba(255, 182, 161, 0.15);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 216, 204, 0.5);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 32px rgba(255, 182, 161, 0.25);
+            border-color: #FFB6A1;
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4A3F35;
+            margin-bottom: 12px;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #7A6F67;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFB6A1 0%, #FFC98B 100%);
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(255, 182, 161, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 182, 161, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 216, 204, 0.5);
+            color: #4A3F35;
+            border: 2px solid rgba(255, 182, 161, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 182, 161, 0.2);
+            border-color: #FFB6A1;
+        }
+
+        /* 特色区块 */
+        .feature-section {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 24px rgba(255, 182, 161, 0.15);
+            border: 2px solid rgba(255, 216, 204, 0.5);
+        }
+
+        .feature-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4A3F35;
+            margin-bottom: 20px;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .feature-item {
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(255, 216, 204, 0.3) 0%, rgba(255, 201, 139, 0.2) 100%);
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .feature-item-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .feature-item-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4A3F35;
+        }
+
+        /* 输入框 */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4A3F35;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid rgba(255, 216, 204, 0.5);
+            border-radius: 16px;
+            font-size: 14px;
+            color: #4A3F35;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #FFB6A1;
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(255, 182, 161, 0.1);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .navbar {
+                border-radius: 0;
+            }
+
+            .feature-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="navbar">
+        <div class="navbar-title">
+            <span>🎨</span>
+            <span>DataViz</span>
+        </div>
+        <div class="navbar-actions">
+            <button class="nav-btn">登录</button>
+            <button class="nav-btn">注册</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <div class="page-title">欢迎来到 DataViz Insights</div>
+            <div class="page-subtitle">温暖、友好的数据可视化体验。让数据分析变得简单而有趣。</div>
+        </div>
+
+        <!-- 功能卡片 -->
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">🚀</div>
+                <div class="card-title">快速开始</div>
+                <div class="card-description">三步即可创建专业数据分析报告，无需编程知识</div>
+                <div class="card-footer">
+                    <button class="btn btn-primary">开始使用</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">智能图表</div>
+                <div class="card-description">系统自动推荐最适合的图表类型和配色方案</div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary">了解更多</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🤖</div>
+                <div class="card-title">AI 洞察</div>
+                <div class="card-description">获得数据背后的深层洞察和可操作的建议</div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary">查看示例</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心功能 -->
+        <div class="feature-section">
+            <div class="feature-title">✨ 核心功能</div>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-item-icon">📈</div>
+                    <div class="feature-item-text">智能图表生成</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">🤖</div>
+                    <div class="feature-item-text">AI 数据洞察</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">⚡</div>
+                    <div class="feature-item-text">实时数据更新</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-item-icon">👥</div>
+                    <div class="feature-item-text">团队协作分享</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新建项目表单 -->
+        <div class="feature-section" style="max-width: 500px; margin: 0 auto;">
+            <div class="feature-title">📝 新建项目</div>
+            <div class="input-group">
+                <label class="input-label">项目名称</label>
+                <input type="text" class="input-field" placeholder="输入项目名称">
+            </div>
+            <div class="input-group">
+                <label class="input-label">项目描述</label>
+                <input type="text" class="input-field" placeholder="输入项目描述">
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-secondary">取消</button>
+                <button class="btn btn-primary">创建项目</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

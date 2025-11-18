@@ -89,13 +89,13 @@ class LogFileWriter(private val context: Context) {
             
             if (files.size > MAX_LOG_FILES) {
                 // 按修改时间排序，删除最旧的文件
-                files.sortBy { it.lastModified() }
-                    .take(files.size - MAX_LOG_FILES)
-                    .forEach { file ->
-                        if (file.delete()) {
-                            Log.d(TAG, "删除旧日志文件: ${file.name}")
-                        }
+                val sortedFiles = files.sortedBy { it.lastModified() }
+                val filesToDelete = sortedFiles.take(files.size - MAX_LOG_FILES)
+                for (file in filesToDelete) {
+                    if (file.delete()) {
+                        Log.d(TAG, "删除旧日志文件: ${file.name}")
                     }
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "清理旧日志文件失败", e)

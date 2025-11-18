@@ -1,509 +1,680 @@
 [
   {
-    "name": "GreenChatStyle",
-    "colors": {
-      "primary": "#4CAF50",
-      "secondary": "#FFEB3B",
-      "accent": "#E91E63",
-      "background": "#F0F4F8",
-      "surface": "#FFFFFF",
-      "textPrimary": "#000000",
-      "textSecondary": "#757575",
-      "error": "#F44336"
+    "style_name": "材料设计（Material Design）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#6200EE",
+        "secondary": "#03DAC6",
+        "accent": "#BB86FC",
+        "background": "#FFFFFF",
+        "surface": "#F5F5F5",
+        "text_primary": "#212121",
+        "text_secondary": "#757575",
+        "state": {
+          "hover": "rgba(98,0,238,0.08)",
+          "active": "rgba(98,0,238,0.16)",
+          "disabled": "rgba(0,0,0,0.26)"
+        }
+      },
+      "typography": {
+        "font_family": "Roboto, sans-serif",
+        "heading_style": "粗体、大字号、清晰明确",
+        "body_style": "中等字重，易读性强",
+        "font_scale": "基于 4dp 模块的排版比例"
+      },
+      "corner_radius": "4px",
+      "shadow_style": "多层次投影，模拟真实光照",
+      "border_style": "无明显边框，以阴影分层",
+      "icon_style": "线性图标 + 简洁几何形状"
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "8dp 网格系统",
+      "page_structure": {
+        "navigation": "顶部应用栏 + 可选抽屉侧栏",
+        "content_layout": "卡片式区块排列",
+        "sidebar": "可滑出式导航抽屉",
+        "card_behavior": "卡片有轻微浮动阴影，悬停时提升"
+      },
+      "spacing_rules": {
+        "padding_scale": "8/16/24 dp",
+        "margin_scale": "8/16/24 dp",
+        "component_spacing": "组件间保持统一 8dp 间隔"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "component_style": {
+      "button": {
+        "shape": "矩形圆角 4px",
+        "text_case": "句首大写",
+        "elevation": "提升 2~4dp",
+        "default_size": "中等高度 36~40dp"
+      },
+      "input": {
+        "shape": "带浮动标签",
+        "focus_style": "主题色下划线",
+        "placement": "竖向排列"
+      },
+      "card": {
+        "shape": "小圆角",
+        "shadow_level": "标准 1~3dp",
+        "header_style": "标题在上，内容清晰分组"
+      }
+    },
+    "motion": {
+      "animation_curve": "标准 Material 曲线",
+      "transition_duration": "150~250ms",
+      "interaction_feedback": "水波纹反馈效果"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "顶部导航 + 可展开侧栏 + 卡片网格内容",
+      "hero_section": "全宽横幅，内含标题与操作按钮",
+      "content_blocks": "用独立卡片承载主要信息",
+      "component_arrangement": "信息按区块分组",
+      "footer_pattern": "简洁底部信息栏"
+    },
+    "dos_and_donts": {
+      "do": [
+        "保持 8dp 规则",
+        "使用卡片划分层级",
+        "保持阴影与层级一致性"
+      ],
+      "dont": [
+        "不要滥用颜色",
+        "不要删除必要的留白"
+      ]
     }
   },
+
   {
-    "name": "CuteCatStyle",
-    "colors": {
-      "primary": "#FFD54F",
-      "secondary": "#81D4FA",
-      "accent": "#FF4081",
-      "background": "#E0F7FA",
-      "surface": "#FFFFFF",
-      "textPrimary": "#212121",
-      "textSecondary": "#757575",
-      "error": "#F44336"
+    "style_name": "苹果风格（Apple Human Interface）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#007AFF",
+        "secondary": "#5856D6",
+        "accent": "#34C759",
+        "background": "#FFFFFF",
+        "surface": "#F2F2F7",
+        "text_primary": "#000000",
+        "text_secondary": "#6e6e73",
+        "state": {
+          "hover": "rgba(0,122,255,0.05)",
+          "active": "rgba(0,122,255,0.1)",
+          "disabled": "rgba(0,0,0,0.3)"
+        }
+      },
+      "typography": {
+        "font_family": "SF Pro Display, Helvetica",
+        "heading_style": "大标题 + 轻字重",
+        "body_style": "舒适的行高与间距",
+        "font_scale": "苹果动态字体比例"
+      },
+      "corner_radius": "12px",
+      "shadow_style": "柔和浅影，不强调层级",
+      "border_style": "极细边界 #D1D1D6",
+      "icon_style": "线面结合、圆润友好"
     },
-    "typography": {
-      "fontFamily": "Noto Sans, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "流式布局 + 苹果安全区规范",
+      "page_structure": {
+        "navigation": "顶部大标题导航",
+        "content_layout": "大留白 + 分区式列表",
+        "sidebar": "简洁固定侧栏",
+        "card_behavior": "卡片扁平、边框浅、无明显投影"
+      },
+      "spacing_rules": {
+        "padding_scale": "12/20/32px",
+        "margin_scale": "12/20/32px",
+        "component_spacing": "保持较大留白"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "component_style": {
+      "button": {
+        "shape": "高圆角（胶囊）",
+        "text_case": "首字母大写",
+        "elevation": "基本无阴影",
+        "default_size": "44px 高度"
+      },
+      "input": {
+        "shape": "圆角全边框",
+        "focus_style": "蓝色柔光边框",
+        "placement": "靠左对齐"
+      },
+      "card": {
+        "shape": "圆角大、边框浅",
+        "shadow_level": "无阴影",
+        "header_style": "大标题 + 细分隔线"
+      }
+    },
+    "motion": {
+      "animation_curve": "自然回弹曲线",
+      "transition_duration": "200~300ms",
+      "interaction_feedback": "柔和缩放反馈"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "大标题 Header + 流式内容区",
+      "hero_section": "左对齐大标题 + 小副标题",
+      "content_blocks": "块状分区面板 + 大留白",
+      "component_arrangement": "列表式、分区式内容排列",
+      "footer_pattern": "极简底栏"
+    },
+    "dos_and_donts": {
+      "do": [
+        "保持大空间留白",
+        "使用轻字重排版",
+        "控件保持一致的圆角风格"
+      ],
+      "dont": [
+        "避免复杂阴影",
+        "避免密集布局"
+      ]
     }
   },
+
   {
-    "name": "PurpleAnalyticsStyle",
-    "colors": {
-      "primary": "#6C5CE7",
-      "secondary": "#00B0FF",
-      "accent": "#FF4081",
-      "background": "#F3F6FA",
-      "surface": "#FFFFFF",
-      "textPrimary": "#212121",
-      "textSecondary": "#757575",
-      "error": "#F44336"
+    "style_name": "蚂蚁设计风格（Ant Design）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#1677FF",
+        "secondary": "#52C41A",
+        "accent": "#FAAD14",
+        "background": "#FFFFFF",
+        "surface": "#FAFAFA",
+        "text_primary": "#000000D9",
+        "text_secondary": "#00000073",
+        "state": {
+          "hover": "#1677FF20",
+          "active": "#1677FF40",
+          "disabled": "#00000040"
+        }
+      },
+      "typography": {
+        "font_family": "Arial, PingFang SC",
+        "heading_style": "中性、克制、统一比例",
+        "body_style": "信息密度较高",
+        "font_scale": "12/14/16/18 标准阶梯"
+      },
+      "corner_radius": "6px",
+      "shadow_style": "轻度投影，以层次区分",
+      "border_style": "浅灰分隔线",
+      "icon_style": "线性 + 功能性图标"
     },
-    "typography": {
-      "fontFamily": "Inter, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "24 栅格系统",
+      "page_structure": {
+        "navigation": "固定顶部导航",
+        "content_layout": "信息密度高的布局",
+        "sidebar": "固定侧栏导航",
+        "card_behavior": "卡片轻投影 + 信息化强"
+      },
+      "spacing_rules": {
+        "padding_scale": "8 / 12 / 16px",
+        "margin_scale": "8 / 16 / 24px",
+        "component_spacing": "紧凑但不拥挤"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "component_style": {
+      "button": {
+        "shape": "标准圆角",
+        "text_case": "正常书写",
+        "elevation": "无投影",
+        "default_size": "高度 32px"
+      },
+      "input": {
+        "shape": "矩形边框",
+        "focus_style": "蓝色边框高亮",
+        "placement": "水平排列"
+      },
+      "card": {
+        "shape": "6px 圆角",
+        "shadow_level": "轻微阴影",
+        "header_style": "左对齐标签式表头"
+      }
+    },
+    "motion": {
+      "animation_curve": "减速曲线",
+      "transition_duration": "150ms",
+      "interaction_feedback": "轻微透明度变化"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "顶部导航 + 左侧菜单 + 主内容区",
+      "hero_section": "顶部信息栏 + 面包屑",
+      "content_blocks": "卡片 + 表格 + 表单区组合",
+      "component_arrangement": "高信息密度区块",
+      "footer_pattern": "页脚放置系统信息"
+    },
+    "dos_and_donts": {
+      "do": [
+        "保持统一栅格",
+        "控制信息密度",
+        "突出主要操作按钮"
+      ],
+      "dont": [
+        "不要使用过多色彩",
+        "不要使用过大留白"
+      ]
     }
   },
+
   {
-    "name": "CozyChairStyle",
-    "colors": {
-      "primary": "#FFFFFF",
-      "secondary": "#F5F5F5",
-      "accent": "#000000",
-      "background": "#FAF0E6",
-      "surface": "#FFFFFF",
-      "textPrimary": "#212121",
-      "textSecondary": "#757575",
-      "error": "#F44336",
-      "pastelYellow": "#FFF9C4",
-      "pastelBlue": "#B3E5FC",
-      "pastelGreen": "#C8E6C9"
+    "style_name": "奶油柔和风（Soft Cream UI）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#FFB6A1",
+        "secondary": "#FFD8CC",
+        "accent": "#FFC98B",
+        "background": "#FFF8F0",
+        "surface": "#FFFFFF",
+        "text_primary": "#4A3F35",
+        "text_secondary": "#7A6F67",
+        "state": {
+          "hover": "rgba(255,182,161,0.2)",
+          "active": "rgba(255,182,161,0.35)",
+          "disabled": "rgba(0,0,0,0.25)"
+        }
+      },
+      "typography": {
+        "font_family": "Rounded UI, Nunito, sans-serif",
+        "heading_style": "圆润、轻松、温和",
+        "body_style": "行高较大、可读性强",
+        "font_scale": "柔和舒适的比例"
+      },
+      "corner_radius": "18px 超圆角",
+      "shadow_style": "柔和扩散阴影",
+      "border_style": "浅色柔边",
+      "icon_style": "手绘感 / 圆润图标"
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "28px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "柔性流式布局",
+      "page_structure": {
+        "navigation": "暖色块状导航栏",
+        "content_layout": "圆角卡片 + 大圆角块",
+        "sidebar": "柔色背景块",
+        "card_behavior": "轻柔浮动效果"
+      },
+      "spacing_rules": {
+        "padding_scale": "20 / 28 / 36px",
+        "margin_scale": "16 / 24 / 32px",
+        "component_spacing": "大圆角 + 宽呼吸感"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "12px"
+    "component_style": {
+      "button": {
+        "shape": "超圆角胶囊按钮",
+        "text_case": "小写友好风",
+        "elevation": "柔和扩散阴影",
+        "default_size": "大而柔和 48px"
+      },
+      "input": {
+        "shape": "圆润大输入框",
+        "focus_style": "柔色外光",
+        "placement": "竖向卡片内排布"
+      },
+      "card": {
+        "shape": "超圆角",
+        "shadow_level": "柔和散射",
+        "header_style": "大标题 + 小色块图标"
+      }
+    },
+    "motion": {
+      "animation_curve": "减速 + 柔和弹性",
+      "transition_duration": "220ms",
+      "interaction_feedback": "轻柔缩放 + 光晕"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "圆角导航 + 块状布局",
+      "hero_section": "柔色背景大横幅",
+      "content_blocks": "圆角块状内容分组",
+      "component_arrangement": "视觉舒适的流式排列",
+      "footer_pattern": "大圆角底栏"
+    },
+    "dos_and_donts": {
+      "do": [
+        "使用圆角统一视觉",
+        "保证柔色调一致",
+        "留白充足"
+      ],
+      "dont": [
+        "不要使用硬阴影",
+        "避免过深颜色"
+      ]
     }
   },
+
   {
-    "name": "ZenSpaceStyle",
-    "colors": {
-      "primary": "#000000",
-      "secondary": "#F5F5F5",
-      "accent": "#2196F3",
-      "background": "#FFFFFF",
-      "surface": "#FAFAFA",
-      "textPrimary": "#212121",
-      "textSecondary": "#757575",
-      "error": "#F44336"
+    "style_name": "拟物浮雕风（Neumorphism）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#D6D6D6",
+        "secondary": "#EDEDED",
+        "accent": "#C8C8C8",
+        "background": "#E0E0E0",
+        "surface": "#EBEBEB",
+        "text_primary": "#333333",
+        "text_secondary": "#666666",
+        "state": {
+          "hover": "#FFFFFF80",
+          "active": "#00000015",
+          "disabled": "#A0A0A040"
+        }
+      },
+      "typography": {
+        "font_family": "Inter, sans-serif",
+        "heading_style": "简洁低对比字体",
+        "body_style": "中性无衬线",
+        "font_scale": "适中比例"
+      },
+      "corner_radius": "20px",
+      "shadow_style": "强光源 + 内外投影模拟浮雕",
+      "border_style": "极浅边框",
+      "icon_style": "压凹/凸起图标"
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "32px",
-      "heading2": "24px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "中央对称布局",
+      "page_structure": {
+        "navigation": "凹陷式顶部栏",
+        "content_layout": "凸起卡片区块",
+        "sidebar": "凹凸式边栏",
+        "card_behavior": "卡片浮起与压下状态切换"
+      },
+      "spacing_rules": {
+        "padding_scale": "16 / 24 / 32",
+        "margin_scale": "16 / 24 / 32",
+        "component_spacing": "适度舒展"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "component_style": {
+      "button": {
+        "shape": "超圆角、浮雕",
+        "text_case": "正常",
+        "elevation": "双向阴影浮雕",
+        "default_size": "44px"
+      },
+      "input": {
+        "shape": "凹进式输入框",
+        "focus_style": "光源增强",
+        "placement": "上下排列"
+      },
+      "card": {
+        "shape": "大圆角",
+        "shadow_level": "浮雕光影",
+        "header_style": "简洁无装饰"
+      }
+    },
+    "motion": {
+      "animation_curve": "缓慢柔和",
+      "transition_duration": "250ms",
+      "interaction_feedback": "按压凹陷动画"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "中心对齐 + 浮雕式卡片排布",
+      "hero_section": "凸起式标题条",
+      "content_blocks": "凸起内容模块",
+      "component_arrangement": "居中排列",
+      "footer_pattern": "凹陷底栏"
+    },
+    "dos_and_donts": {
+      "do": [
+        "保持一致光源方向",
+        "组件使用统一浮雕效果"
+      ],
+      "dont": [
+        "不要使用强烈色彩",
+        "不要破坏光影风格"
+      ]
     }
   },
+
   {
-    "name": "BeautyProductStyle",
-    "colors": {
-      "primary": "#FFC0CB",
-      "secondary": "#98FB98",
-      "accent": "#FFFF99",
-      "background": "#FFFAFA",
-      "surface": "#FFFFFF",
-      "textPrimary": "#000000",
-      "textSecondary": "#696969",
-      "error": "#FF4500"
+    "style_name": "粗野主义（Brutalism）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#000000",
+        "secondary": "#FFFFFF",
+        "accent": "#FF1A1A",
+        "background": "#FFFFFF",
+        "surface": "#FFFFFF",
+        "text_primary": "#000000",
+        "text_secondary": "#333333",
+        "state": {
+          "hover": "#00000010",
+          "active": "#00000025",
+          "disabled": "#CCCCCC"
+        }
+      },
+      "typography": {
+        "font_family": "Arial Black, Impact",
+        "heading_style": "大字号、对比强、醒目",
+        "body_style": "粗体 + 低修饰",
+        "font_scale": "极高对比比例"
+      },
+      "corner_radius": "0px（完全无圆角）",
+      "shadow_style": "无阴影，全靠边框",
+      "border_style": "粗黑边框",
+      "icon_style": "像素风或极简几何"
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "自由布局",
+      "page_structure": {
+        "navigation": "醒目的粗黑条",
+        "content_layout": "方块拼贴视觉",
+        "sidebar": "极粗线条框架",
+        "card_behavior": "方块式、无圆角、无阴影"
+      },
+      "spacing_rules": {
+        "padding_scale": "8 / 12 / 20px",
+        "margin_scale": "8 / 12 / 24px",
+        "component_spacing": "密集且规则"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "component_style": {
+      "button": {
+        "shape": "方形硬边",
+        "text_case": "全大写",
+        "elevation": "无阴影",
+        "default_size": "大按钮 48px"
+      },
+      "input": {
+        "shape": "粗边框输入框",
+        "focus_style": "粗黑边强调",
+        "placement": "左右紧凑排列"
+      },
+      "card": {
+        "shape": "方形",
+        "shadow_level": "无",
+        "header_style": "全大写标题"
+      }
+    },
+    "motion": {
+      "animation_curve": "无动画",
+      "transition_duration": "0ms",
+      "interaction_feedback": "瞬间响应"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "粗框架 + 拼贴结构",
+      "hero_section": "黑白对比大横幅",
+      "content_blocks": "模块化方块区域",
+      "component_arrangement": "紧凑区块排列",
+      "footer_pattern": "粗线分隔底栏"
+    },
+    "dos_and_donts": {
+      "do": [
+        "保持高对比",
+        "使用粗线条",
+        "布局像拼贴杂志一样"
+      ],
+      "dont": [
+        "不要使用圆角",
+        "不要使用轻盈视觉"
+      ]
     }
   },
+
   {
-    "name": "FitnessHealthStyle",
-    "colors": {
-      "primary": "#DFFF00",
-      "secondary": "#000000",
-      "accent": "#FFFFFF",
-      "background": "#000000",
-      "surface": "#1C1C1E",
-      "textPrimary": "#FFFFFF",
-      "textSecondary": "#A0A0A0",
-      "error": "#FF3B30"
+    "style_name": "瑞士风格（Swiss / 国际排印风）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#E2001A",
+        "secondary": "#000000",
+        "accent": "#C6C6C6",
+        "background": "#FFFFFF",
+        "surface": "#FFFFFF",
+        "text_primary": "#000000",
+        "text_secondary": "#555555",
+        "state": {
+          "hover": "#DDDDDD",
+          "active": "#BBBBBB",
+          "disabled": "#999999"
+        }
+      },
+      "typography": {
+        "font_family": "Helvetica, Arial",
+        "heading_style": "强网格、左对齐、高字距",
+        "body_style": "干净中性无衬线",
+        "font_scale": "严格网格排印"
+      },
+      "corner_radius": "0px",
+      "shadow_style": "无阴影",
+      "border_style": "细线分隔",
+      "icon_style": "极简方形图标"
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "28px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "严格网格系统",
+      "page_structure": {
+        "navigation": "左侧大标题导航",
+        "content_layout": "模块化排印结构",
+        "sidebar": "窄侧栏 + 网格对齐",
+        "card_behavior": "平面无阴影"
+      },
+      "spacing_rules": {
+        "padding_scale": "12 / 18 / 24px",
+        "margin_scale": "12 / 18 / 24px",
+        "component_spacing": "严格网格对齐"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "component_style": {
+      "button": {
+        "shape": "方形硬边",
+        "text_case": "全部大写",
+        "elevation": "无",
+        "default_size": "36px"
+      },
+      "input": {
+        "shape": "极细边框",
+        "focus_style": "黑色边框强化",
+        "placement": "左对齐、竖向排列"
+      },
+      "card": {
+        "shape": "方形",
+        "shadow_level": "无",
+        "header_style": "大字号标题"
+      }
+    },
+    "motion": {
+      "animation_curve": "无动效",
+      "transition_duration": "0ms",
+      "interaction_feedback": "无特殊反馈"
+    },
+    "html_structure_blueprint": {
+      "layout_pattern": "左侧标题导航 + 网格内容布局",
+      "hero_section": "大号排印标题 + 短副标题",
+      "content_blocks": "网格模块",
+      "component_arrangement": "高度结构化排版",
+      "footer_pattern": "细线条文本底栏"
+    },
+    "dos_and_donts": {
+      "do": [
+        "严格网格",
+        "使用强排印风",
+        "保持左对齐"
+      ],
+      "dont": [
+        "不要使用圆角",
+        "不要使用阴影"
+      ]
     }
   },
+
   {
-    "name": "MoodTrackingStyle",
-    "colors": {
-      "primary": "#FFB6C1",
-      "secondary": "#ADD8E6",
-      "accent": "#FFD700",
-      "background": "#FFE4E1",
-      "surface": "#FFFFFF",
-      "textPrimary": "#000000",
-      "textSecondary": "#696969",
-      "error": "#FF4500"
+    "style_name": "赛博朋克 UI（Cyberpunk）",
+    "visual_language": {
+      "color_scheme": {
+        "primary": "#00F0FF",
+        "secondary": "#FF00FF",
+        "accent": "#FFD700",
+        "background": "#0A0A0C",
+        "surface": "#111118",
+        "text_primary": "#E8E8FF",
+        "text_secondary": "#A7A7D3",
+        "state": {
+          "hover": "#00F0FF33",
+          "active": "#00F0FF66",
+          "disabled": "#444444"
+        }
+      },
+      "typography": {
+        "font_family": "Orbitron, Roboto Mono",
+        "heading_style": "未来科技风 + 几何切角",
+        "body_style": "等宽字体 + 数字感",
+        "font_scale": "高对比比例、大字号标题"
+      },
+      "corner_radius": "0px 或 不规则切角",
+      "shadow_style": "霓虹外发光",
+      "border_style": "发光边框",
+      "icon_style": "线框科技图标"
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
+    "layout": {
+      "grid_system": "模块化 HUD 布局",
+      "page_structure": {
+        "navigation": "顶部霓虹导航条",
+        "content_layout": "HUD 面板 + 信息块",
+        "sidebar": "科技扫描屏样式",
+        "card_behavior": "发光边框面板"
+      },
+      "spacing_rules": {
+        "padding_scale": "12 / 20 / 28px",
+        "margin_scale": "12 / 20 / 32px",
+        "component_spacing": "科技感模块化排布"
+      }
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "OceanBlueTheme",
-    "colors": {
-      "primary": "#007BFF",
-      "secondary": "#00BFFF",
-      "accent": "#1E90FF",
-      "background": "#E6F7FF",
-      "surface": "#FFFFFF",
-      "textPrimary": "#00008B",
-      "textSecondary": "#4682B4",
-      "error": "#FF0000"
+    "component_style": {
+      "button": {
+        "shape": "切角矩形",
+        "text_case": "全大写",
+        "elevation": "霓虹发光",
+        "default_size": "42px"
+      },
+      "input": {
+        "shape": "发光边框输入框",
+        "focus_style": "霓虹闪光外发光",
+        "placement": "未来感 HUD 布局"
+      },
+      "card": {
+        "shape": "切角面板",
+        "shadow_level": "霓虹发光阴影",
+        "header_style": "科技线框标题栏"
+      }
     },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
+    "motion": {
+      "animation_curve": "线型高速 + 轻微闪烁",
+      "transition_duration": "120ms",
+      "interaction_feedback": "霓虹闪烁、轻微抖动"
     },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "ForestGreenTheme",
-    "colors": {
-      "primary": "#228B22",
-      "secondary": "#32CD32",
-      "accent": "#556B2F",
-      "background": "#F0FFF0",
-      "surface": "#FFFFFF",
-      "textPrimary": "#006400",
-      "textSecondary": "#808000",
-      "error": "#FF4500"
+    "html_structure_blueprint": {
+      "layout_pattern": "HUD 模块界面 + 发光区块",
+      "hero_section": "科技扫描横幅",
+      "content_blocks": "模块化信息面板",
+      "component_arrangement": "科技感网格 + 不对称布局",
+      "footer_pattern": "发光条纹底栏"
     },
-    "typography": {
-      "fontFamily": "Noto Sans, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "SunsetOrangeTheme",
-    "colors": {
-      "primary": "#FF4500",
-      "secondary": "#FFA500",
-      "accent": "#FF8C00",
-      "background": "#FFF5EE",
-      "surface": "#FFFFFF",
-      "textPrimary": "#8B4513",
-      "textSecondary": "#A0522D",
-      "error": "#B22222"
-    },
-    "typography": {
-      "fontFamily": "Inter, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "28px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "12px"
-    }
-  },
-  {
-    "name": "NightDarkTheme",
-    "colors": {
-      "primary": "#121212",
-      "secondary": "#1E1E1E",
-      "accent": "#BB86FC",
-      "background": "#000000",
-      "surface": "#121212",
-      "textPrimary": "#FFFFFF",
-      "textSecondary": "#BDBDBD",
-      "error": "#CF6679"
-    },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "32px",
-      "heading2": "24px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "CandyPinkTheme",
-    "colors": {
-      "primary": "#FF69B4",
-      "secondary": "#FFB6C1",
-      "accent": "#FF1493",
-      "background": "#FFF0F5",
-      "surface": "#FFFFFF",
-      "textPrimary": "#C71585",
-      "textSecondary": "#DB7093",
-      "error": "#FF0000"
-    },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "TechBlueTheme",
-    "colors": {
-      "primary": "#0D47A1",
-      "secondary": "#1976D2",
-      "accent": "#2196F3",
-      "background": "#E3F2FD",
-      "surface": "#FFFFFF",
-      "textPrimary": "#000000",
-      "textSecondary": "#757575",
-      "error": "#B00020"
-    },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "28px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "VintageRetroTheme",
-    "colors": {
-      "primary": "#8B4513",
-      "secondary": "#D2691E",
-      "accent": "#CD853F",
-      "background": "#FFF8DC",
-      "surface": "#FAF0E6",
-      "textPrimary": "#4B0082",
-      "textSecondary": "#483D8B",
-      "error": "#DC143C"
-    },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "MinimalistGrayTheme",
-    "colors": {
-      "primary": "#808080",
-      "secondary": "#A9A9A9",
-      "accent": "#C0C0C0",
-      "background": "#F5F5F5",
-      "surface": "#FFFFFF",
-      "textPrimary": "#000000",
-      "textSecondary": "#696969",
-      "error": "#FF0000"
-    },
-    "typography": {
-      "fontFamily": "Inter, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "EnergeticRedTheme",
-    "colors": {
-      "primary": "#FF0000",
-      "secondary": "#DC143C",
-      "accent": "#B22222",
-      "background": "#FFE4E1",
-      "surface": "#FFFFFF",
-      "textPrimary": "#FFFFFF",
-      "textSecondary": "#FFDAB9",
-      "error": "#8B0000"
-    },
-    "typography": {
-      "fontFamily": "Roboto, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "28px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
-    }
-  },
-  {
-    "name": "MysticPurpleTheme",
-    "colors": {
-      "primary": "#9370DB",
-      "secondary": "#8A2BE2",
-      "accent": "#9932CC",
-      "background": "#F8F8FF",
-      "surface": "#FFFFFF",
-      "textPrimary": "#4B0082",
-      "textSecondary": "#6A5ACD",
-      "error": "#FF00FF"
-    },
-    "typography": {
-      "fontFamily": "Noto Sans, sans-serif",
-      "fontSizeBase": "14px",
-      "heading1": "24px",
-      "heading2": "20px",
-      "body": "16px"
-    },
-    "spacing": {
-      "base": "8px",
-      "small": "4px",
-      "medium": "16px",
-      "large": "24px",
-      "paddingCard": "16px",
-      "marginItem": "8px"
+    "dos_and_donts": {
+      "do": [
+        "使用霓虹色高对比",
+        "保持科技 HUD 模块",
+        "尽量使用直线 + 切角"
+      ],
+      "dont": [
+        "避免粉色柔和风格",
+        "不要加入圆角"
+      ]
     }
   }
 ]

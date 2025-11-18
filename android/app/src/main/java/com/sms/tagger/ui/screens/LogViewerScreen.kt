@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.util.LogFileWriter
 import java.io.File
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 /**
  * 日志查看页面
