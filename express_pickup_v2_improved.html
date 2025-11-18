@@ -116,18 +116,19 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 4px;
-            cursor: pointer;
             user-select: none;
-        }
-
-        .date-group-header:hover {
-            opacity: 0.8;
         }
 
         .date-group-title {
             display: flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .date-group-title:hover {
+            opacity: 0.8;
         }
 
         .date-group-title .date {
@@ -152,6 +153,39 @@
 
         .date-group-title .expand-icon.collapsed {
             transform: rotate(-90deg);
+        }
+
+        /* 日期分组操作按钮 */
+        .date-group-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .date-group-btn {
+            height: 32px;
+            padding: 0 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: #333333;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .date-group-btn:hover {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .date-group-btn:active {
+            transform: scale(0.95);
         }
 
         .date-group-items {
@@ -589,6 +623,16 @@
                             <div class="count">${dateItems.length}件</div>
                             <div class="expand-icon material-icons ${!isExpanded ? 'collapsed' : ''}">expand_more</div>
                         </div>
+                        <div class="date-group-actions">
+                            <button class="date-group-btn copy-all-btn" data-date="${date}">
+                                <span class="material-icons" style="font-size: 16px;">content_copy</span>
+                                复制全部
+                            </button>
+                            <button class="date-group-btn pickup-all-btn" data-date="${date}">
+                                <span class="material-icons" style="font-size: 16px;">local_shipping</span>
+                                全部已取
+                            </button>
+                        </div>
                     </div>
                     <div class="date-group-items ${!isExpanded ? 'collapsed' : ''}" data-date="${date}">
                         <!-- 卡片将被插入这里 -->
@@ -601,12 +645,36 @@
                 });
 
                 // 添加展开/折叠事件
-                const header = dateGroup.querySelector('.date-group-header');
-                header.addEventListener('click', () => {
+                const title = dateGroup.querySelector('.date-group-title');
+                title.addEventListener('click', () => {
                     const itemsDiv = dateGroup.querySelector(`[data-date="${date}"].date-group-items`);
-                    const icon = header.querySelector('.expand-icon');
+                    const icon = title.querySelector('.expand-icon');
                     itemsDiv.classList.toggle('collapsed');
                     icon.classList.toggle('collapsed');
+                });
+
+                // 复制全部按钮
+                dateGroup.querySelector('.copy-all-btn').addEventListener('click', () => {
+                    const codes = dateItems.map(item => item.code).join(', ');
+                    navigator.clipboard.writeText(codes).then(() => {
+                        showToast(`已复制${dateItems.length}个码`);
+                    }).catch(() => {
+                        showToast(`复制失败，请重试`);
+                    });
+                });
+
+                // 全部已取按钮
+                dateGroup.querySelector('.pickup-all-btn').addEventListener('click', () => {
+                    if (confirm(`确认取出${dateItems.length}个快递吗？`)) {
+                        dateItems.forEach(item => {
+                            if (!item.picked) {
+                                item.picked = true;
+                            }
+                        });
+                        renderItems();
+                        updateActionButtons();
+                        showToast(`已更新${dateItems.length}个快递`);
+                    }
                 });
 
                 mainContent.appendChild(dateGroup);
