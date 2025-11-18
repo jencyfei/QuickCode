@@ -1,0 +1,509 @@
+[
+  {
+    "name": "GreenChatStyle",
+    "colors": {
+      "primary": "#4CAF50",
+      "secondary": "#FFEB3B",
+      "accent": "#E91E63",
+      "background": "#F0F4F8",
+      "surface": "#FFFFFF",
+      "textPrimary": "#000000",
+      "textSecondary": "#757575",
+      "error": "#F44336"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "CuteCatStyle",
+    "colors": {
+      "primary": "#FFD54F",
+      "secondary": "#81D4FA",
+      "accent": "#FF4081",
+      "background": "#E0F7FA",
+      "surface": "#FFFFFF",
+      "textPrimary": "#212121",
+      "textSecondary": "#757575",
+      "error": "#F44336"
+    },
+    "typography": {
+      "fontFamily": "Noto Sans, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "PurpleAnalyticsStyle",
+    "colors": {
+      "primary": "#6C5CE7",
+      "secondary": "#00B0FF",
+      "accent": "#FF4081",
+      "background": "#F3F6FA",
+      "surface": "#FFFFFF",
+      "textPrimary": "#212121",
+      "textSecondary": "#757575",
+      "error": "#F44336"
+    },
+    "typography": {
+      "fontFamily": "Inter, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "CozyChairStyle",
+    "colors": {
+      "primary": "#FFFFFF",
+      "secondary": "#F5F5F5",
+      "accent": "#000000",
+      "background": "#FAF0E6",
+      "surface": "#FFFFFF",
+      "textPrimary": "#212121",
+      "textSecondary": "#757575",
+      "error": "#F44336",
+      "pastelYellow": "#FFF9C4",
+      "pastelBlue": "#B3E5FC",
+      "pastelGreen": "#C8E6C9"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "28px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "12px"
+    }
+  },
+  {
+    "name": "ZenSpaceStyle",
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#F5F5F5",
+      "accent": "#2196F3",
+      "background": "#FFFFFF",
+      "surface": "#FAFAFA",
+      "textPrimary": "#212121",
+      "textSecondary": "#757575",
+      "error": "#F44336"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "32px",
+      "heading2": "24px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "BeautyProductStyle",
+    "colors": {
+      "primary": "#FFC0CB",
+      "secondary": "#98FB98",
+      "accent": "#FFFF99",
+      "background": "#FFFAFA",
+      "surface": "#FFFFFF",
+      "textPrimary": "#000000",
+      "textSecondary": "#696969",
+      "error": "#FF4500"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "FitnessHealthStyle",
+    "colors": {
+      "primary": "#DFFF00",
+      "secondary": "#000000",
+      "accent": "#FFFFFF",
+      "background": "#000000",
+      "surface": "#1C1C1E",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#A0A0A0",
+      "error": "#FF3B30"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "28px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "MoodTrackingStyle",
+    "colors": {
+      "primary": "#FFB6C1",
+      "secondary": "#ADD8E6",
+      "accent": "#FFD700",
+      "background": "#FFE4E1",
+      "surface": "#FFFFFF",
+      "textPrimary": "#000000",
+      "textSecondary": "#696969",
+      "error": "#FF4500"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "OceanBlueTheme",
+    "colors": {
+      "primary": "#007BFF",
+      "secondary": "#00BFFF",
+      "accent": "#1E90FF",
+      "background": "#E6F7FF",
+      "surface": "#FFFFFF",
+      "textPrimary": "#00008B",
+      "textSecondary": "#4682B4",
+      "error": "#FF0000"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "ForestGreenTheme",
+    "colors": {
+      "primary": "#228B22",
+      "secondary": "#32CD32",
+      "accent": "#556B2F",
+      "background": "#F0FFF0",
+      "surface": "#FFFFFF",
+      "textPrimary": "#006400",
+      "textSecondary": "#808000",
+      "error": "#FF4500"
+    },
+    "typography": {
+      "fontFamily": "Noto Sans, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "SunsetOrangeTheme",
+    "colors": {
+      "primary": "#FF4500",
+      "secondary": "#FFA500",
+      "accent": "#FF8C00",
+      "background": "#FFF5EE",
+      "surface": "#FFFFFF",
+      "textPrimary": "#8B4513",
+      "textSecondary": "#A0522D",
+      "error": "#B22222"
+    },
+    "typography": {
+      "fontFamily": "Inter, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "28px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "12px"
+    }
+  },
+  {
+    "name": "NightDarkTheme",
+    "colors": {
+      "primary": "#121212",
+      "secondary": "#1E1E1E",
+      "accent": "#BB86FC",
+      "background": "#000000",
+      "surface": "#121212",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#BDBDBD",
+      "error": "#CF6679"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "32px",
+      "heading2": "24px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "CandyPinkTheme",
+    "colors": {
+      "primary": "#FF69B4",
+      "secondary": "#FFB6C1",
+      "accent": "#FF1493",
+      "background": "#FFF0F5",
+      "surface": "#FFFFFF",
+      "textPrimary": "#C71585",
+      "textSecondary": "#DB7093",
+      "error": "#FF0000"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "TechBlueTheme",
+    "colors": {
+      "primary": "#0D47A1",
+      "secondary": "#1976D2",
+      "accent": "#2196F3",
+      "background": "#E3F2FD",
+      "surface": "#FFFFFF",
+      "textPrimary": "#000000",
+      "textSecondary": "#757575",
+      "error": "#B00020"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "28px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "VintageRetroTheme",
+    "colors": {
+      "primary": "#8B4513",
+      "secondary": "#D2691E",
+      "accent": "#CD853F",
+      "background": "#FFF8DC",
+      "surface": "#FAF0E6",
+      "textPrimary": "#4B0082",
+      "textSecondary": "#483D8B",
+      "error": "#DC143C"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "MinimalistGrayTheme",
+    "colors": {
+      "primary": "#808080",
+      "secondary": "#A9A9A9",
+      "accent": "#C0C0C0",
+      "background": "#F5F5F5",
+      "surface": "#FFFFFF",
+      "textPrimary": "#000000",
+      "textSecondary": "#696969",
+      "error": "#FF0000"
+    },
+    "typography": {
+      "fontFamily": "Inter, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "EnergeticRedTheme",
+    "colors": {
+      "primary": "#FF0000",
+      "secondary": "#DC143C",
+      "accent": "#B22222",
+      "background": "#FFE4E1",
+      "surface": "#FFFFFF",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#FFDAB9",
+      "error": "#8B0000"
+    },
+    "typography": {
+      "fontFamily": "Roboto, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "28px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  },
+  {
+    "name": "MysticPurpleTheme",
+    "colors": {
+      "primary": "#9370DB",
+      "secondary": "#8A2BE2",
+      "accent": "#9932CC",
+      "background": "#F8F8FF",
+      "surface": "#FFFFFF",
+      "textPrimary": "#4B0082",
+      "textSecondary": "#6A5ACD",
+      "error": "#FF00FF"
+    },
+    "typography": {
+      "fontFamily": "Noto Sans, sans-serif",
+      "fontSizeBase": "14px",
+      "heading1": "24px",
+      "heading2": "20px",
+      "body": "16px"
+    },
+    "spacing": {
+      "base": "8px",
+      "small": "4px",
+      "medium": "16px",
+      "large": "24px",
+      "paddingCard": "16px",
+      "marginItem": "8px"
+    }
+  }
+]
