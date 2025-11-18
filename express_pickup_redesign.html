@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速取件码 - 快递取件</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: #F3F3F3;
+            color: #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ===== Header / AppBar ===== */
+        header {
+            background: linear-gradient(135deg, #673AB7 0%, #7E57C2 100%);
+            color: white;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-icon .material-icons {
+            font-size: 24px;
+        }
+
+        .header-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .summary-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .select-all-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .select-all-container label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* ===== Main Content ===== */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .empty-state {
+            display: none;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .empty-state.show {
+            display: flex;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            color: #ccc;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            color: #999;
+        }
+
+        .empty-state-button {
+            padding: 8px 16px;
+            background-color: #673AB7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .empty-state-button:hover {
+            background-color: #5E35B1;
+        }
+
+        /* ===== Card List ===== */
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .card.selected {
+            background-color: #F3E5F5;
+            border-color: #673AB7;
+        }
+
+        .card.picked {
+            opacity: 0.6;
+            background-color: #F5F5F5;
+        }
+
+        /* Checkbox column */
+        .card-checkbox {
+            display: flex;
+            align-items: flex-start;
+            padding-top: 4px;
+        }
+
+        .card-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #673AB7;
+        }
+
+        /* Main content column */
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-date {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .card-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #673AB7;
+            text-align: center;
+            letter-spacing: 2px;
+            padding: 8px 0;
+        }
+
+        .card-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .card-address .material-icons {
+            font-size: 18px;
+            color: #673AB7;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Action buttons column */
+        .card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            background-color: #F0F0F0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: #673AB7;
+        }
+
+        .action-btn:hover {
+            background-color: #E8E8E8;
+            transform: scale(1.05);
+        }
+
+        .action-btn .material-icons {
+            font-size: 20px;
+        }
+
+        .action-btn.copy-btn {
+            background-color: #E8EAF6;
+        }
+
+        .action-btn.pickup-btn {
+            background-color: #F3E5F5;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== Bottom Action Bar ===== */
+        footer {
+            background: white;
+            border-top: 1px solid #E0E0E0;
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-button .material-icons {
+            font-size: 20px;
+        }
+
+        .action-button.copy-all {
+            background-color: #673AB7;
+            color: white;
+        }
+
+        .action-button.copy-all:hover:not(:disabled) {
+            background-color: #5E35B1;
+            box-shadow: 0 4px 8px rgba(103, 58, 183, 0.3);
+        }
+
+        .action-button.pickup-all {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .action-button.pickup-all:hover:not(:disabled) {
+            background-color: #45a049;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #E0E0E0;
+            color: #999;
+        }
+
+        /* ===== Toast / Snackbar ===== */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #323232;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ===== Confirmation Dialog ===== */
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog-overlay.show {
+            display: flex;
+        }
+
+        .dialog {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 300px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .dialog-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .dialog-content {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .dialog-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .dialog-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dialog-button.cancel {
+            background-color: #E0E0E0;
+            color: #333;
+        }
+
+        .dialog-button.cancel:hover {
+            background-color: #D0D0D0;
+        }
+
+        .dialog-button.confirm {
+            background-color: #673AB7;
+            color: white;
+        }
+
+        .dialog-button.confirm:hover {
+            background-color: #5E35B1;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 480px) {
+            body {
+                height: 100vh;
+            }
+
+            header {
+                padding: 12px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            main {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .card-code {
+                font-size: 28px;
+            }
+
+            footer {
+                padding: 10px;
+            }
+        }
+
+        /* ===== Scrollbar Styling ===== */
+        main::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header / AppBar -->
+    <header>
+        <div class="header-top">
+            <div class="header-icon" onclick="goBack()" title="返回">
+                <span class="material-icons">arrow_back</span>
+            </div>
+            <div class="header-title">快速取件码</div>
+            <div class="header-icon" onclick="openSettings()" title="设置">
+                <span class="material-icons">settings</span>
+            </div>
+        </div>
+        <div class="header-summary">
+            <div class="summary-text">
+                今日取件：<span id="todayCount">0</span>件
+            </div>
+            <div class="select-all-container">
+                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                <label for="selectAllCheckbox">全选</label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon">📦</div>
+            <div class="empty-state-text">暂无取件码</div>
+            <button class="empty-state-button" onclick="refreshData()">刷新</button>
+        </div>
+        <div class="card-list" id="cardList"></div>
+    </main>
+
+    <!-- Bottom Action Bar -->
+    <footer>
+        <button class="action-button copy-all" id="copyAllBtn" onclick="copyAllSelected()" disabled>
+            <span class="material-icons">content_copy</span>
+            批量复制
+        </button>
+        <button class="action-button pickup-all" id="pickupAllBtn" onclick="pickupAllSelected()" disabled>
+            <span class="material-icons">local_shipping</span>
+            批量取出
+        </button>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Confirmation Dialog -->
+    <div class="dialog-overlay" id="dialogOverlay">
+        <div class="dialog">
+            <div class="dialog-title" id="dialogTitle">确认操作</div>
+            <div class="dialog-content" id="dialogContent">确认要执行此操作吗？</div>
+            <div class="dialog-actions">
+                <button class="dialog-button cancel" onclick="closeDialog()">取消</button>
+                <button class="dialog-button confirm" id="dialogConfirmBtn" onclick="confirmDialog()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Data Model =====
+        let items = [
+            {
+                id: 1,
+                date: '11-16',
+                code: '6-4-1006',
+                address: '郑州市北文雅小区6号楼102店',
+                time: '10:14',
+                selected: false,
+                picked: false
+            },
+            {
+                id: 2,
+                date: '11-16',
+                code: '6-2-3003',
+                address: '郑州市北文雅小区6号楼102店',
+                time: '10:14',
+                selected: false,
+                picked: false
+            },
+            {
+                id: 3,
+                date: '11-14',
+                code: '6-5-2019',
+                address: '郑州市北文雅小区6号楼102店',
+                time: '16:52',
+                selected: false,
+                picked: false
+            },
+            {
+                id: 4,
+                date: '11-11',
+                code: '6-2-2029',
+                address: '郑州市北文雅小区6号楼102店',
+                time: '10:35',
+                selected: false,
+                picked: false
+            },
+            {
+                id: 5,
+                date: '11-07',
+                code: '6-5-5011',
+                address: '郑州市北文雅小区6号楼102店',
+                time: '19:05',
+                selected: false,
+                picked: false
+            },
+            {
+                id: 6,
+                date: '11-07',
+                code: '6-2-5008',
+                address: '郑州市北文雅小区6号楼102店',
+                time: '11:59',
+                selected: false,
+                picked: false
+            }
+        ];
+
+        let dialogAction = null;
+
+        // ===== Initialization =====
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCards();
+            updateSummary();
+        });
+
+        // ===== Render Functions =====
+        function renderCards() {
+            const cardList = document.getElementById('cardList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (items.length === 0) {
+                cardList.innerHTML = '';
+                emptyState.classList.add('show');
+                return;
+            }
+
+            emptyState.classList.remove('show');
+            cardList.innerHTML = items.map(item => `
+                <div class="card ${item.selected ? 'selected' : ''} ${item.picked ? 'picked' : ''}">
+                    <div class="card-checkbox">
+                        <input type="checkbox" 
+                               ${item.picked ? 'disabled' : ''} 
+                               ${item.selected ? 'checked' : ''} 
+                               onchange="toggleItemSelect(${item.id})">
+                    </div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-date">${item.date}</div>
+                            <div class="card-time">${item.time}</div>
+                        </div>
+                        <div class="card-code">${item.code}</div>
+                        <div class="card-address">
+                            <span class="material-icons">location_on</span>
+                            <span>${item.address}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn copy-btn" onclick="copySingleCode(${item.id})" title="复制">
+                            <span class="material-icons">content_copy</span>
+                        </button>
+                        <button class="action-btn pickup-btn" 
+                                onclick="pickupSingle(${item.id})" 
+                                ${item.picked ? 'disabled' : ''} 
+                                title="取出">
+                            <span class="material-icons">check_circle</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateSummary() {
+            const todayCount = items.filter(item => item.date === '11-16').length;
+            document.getElementById('todayCount').textContent = todayCount;
+        }
+
+        function updateButtonStates() {
+            const selectedCount = items.filter(item => item.selected).length;
+            const copyAllBtn = document.getElementById('copyAllBtn');
+            const pickupAllBtn = document.getElementById('pickupAllBtn');
+
+            copyAllBtn.disabled = selectedCount === 0;
+            pickupAllBtn.disabled = selectedCount === 0;
+        }
+
+        // ===== Selection Functions =====
+        function toggleSelectAll() {
+            const checkbox = document.getElementById('selectAllCheckbox');
+            const isChecked = checkbox.checked;
+            items.forEach(item => {
+                if (!item.picked) {
+                    item.selected = isChecked;
+                }
+            });
+            renderCards();
+            updateButtonStates();
+        }
+
+        function toggleItemSelect(id) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.selected = !item.selected;
+            }
+            updateSelectAllCheckbox();
+            renderCards();
+            updateButtonStates();
+        }
+
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const selectableItems = items.filter(item => !item.picked);
+            const selectedItems = items.filter(item => item.selected && !item.picked);
+            selectAllCheckbox.checked = selectableItems.length > 0 && selectableItems.length === selectedItems.length;
+            selectAllCheckbox.indeterminate = selectedItems.length > 0 && selectedItems.length < selectableItems.length;
+        }
+
+        // ===== Individual Actions =====
+        function copySingleCode(id) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                copyToClipboard(item.code);
+                showToast(`已复制码: ${item.code}`);
+            }
+        }
+
+        function pickupSingle(id) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                showDialog(
+                    '确认取出',
+                    `确认取出快递码 ${item.code} 吗？`,
+                    () => {
+                        item.picked = true;
+                        item.selected = false;
+                        renderCards();
+                        updateButtonStates();
+                        updateSelectAllCheckbox();
+                        showToast(`已取出: ${item.code}`);
+                    }
+                );
+            }
+        }
+
+        // ===== Batch Actions =====
+        function copyAllSelected() {
+            const selectedItems = items.filter(item => item.selected);
+            if (selectedItems.length === 0) {
+                showToast('请先选择要复制的快递码');
+                return;
+            }
+            const codes = selectedItems.map(item => item.code).join(', ');
+            copyToClipboard(codes);
+            showToast(`已复制${selectedItems.length}个码`);
+        }
+
+        function pickupAllSelected() {
+            const selectedItems = items.filter(item => item.selected);
+            if (selectedItems.length === 0) {
+                showToast('请先选择要取出的快递');
+                return;
+            }
+            showDialog(
+                '批量取出',
+                `确认取出${selectedItems.length}个快递吗？`,
+                () => {
+                    selectedItems.forEach(item => {
+                        item.picked = true;
+                        item.selected = false;
+                    });
+                    renderCards();
+                    updateButtonStates();
+                    updateSelectAllCheckbox();
+                    showToast(`已更新${selectedItems.length}个快递`);
+                }
+            );
+        }
+
+        // ===== Utility Functions =====
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(err => {
+                    console.error('复制失败:', err);
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function showDialog(title, content, onConfirm) {
+            document.getElementById('dialogTitle').textContent = title;
+            document.getElementById('dialogContent').textContent = content;
+            dialogAction = onConfirm;
+            document.getElementById('dialogOverlay').classList.add('show');
+        }
+
+        function closeDialog() {
+            document.getElementById('dialogOverlay').classList.remove('show');
+            dialogAction = null;
+        }
+
+        function confirmDialog() {
+            if (dialogAction) {
+                dialogAction();
+            }
+            closeDialog();
+        }
+
+        function goBack() {
+            showToast('返回上一页');
+            // In a real app, this would navigate back
+        }
+
+        function openSettings() {
+            showToast('打开设置');
+            // In a real app, this would open settings
+        }
+
+        function refreshData() {
+            showToast('刷新数据');
+            // In a real app, this would fetch new data
+        }
+
+        // Close dialog on overlay click
+        document.getElementById('dialogOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'dialogOverlay') {
+                closeDialog();
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDialog();
+            }
+        });
+    </script>
+</body>
+</html>
