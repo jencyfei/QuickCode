@@ -25,6 +25,12 @@ fun SettingsScreen(
     val context = LocalContext.current
     var selectedSetting by remember { mutableStateOf<String?>(null) }
     
+    // 如果显示日志查看器，则显示日志查看器页面
+    if (selectedSetting == "logs") {
+        LogViewerScreen(onBack = { selectedSetting = null })
+        return
+    }
+    
     GradientBackground {
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -102,6 +108,13 @@ fun SettingsScreen(
                 title = "帮助与反馈",
                 subtitle = "获取帮助或提供反馈",
                 onClick = { selectedSetting = "help" }
+            )
+            
+            SettingItem(
+                icon = Icons.Default.BugReport,
+                title = "日志查看器",
+                subtitle = "查看应用日志信息",
+                onClick = { selectedSetting = "logs" }
             )
         }
         }

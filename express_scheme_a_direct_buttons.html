@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递取件码 - 方案A：直达按钮型</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #F9F8FF 0%, #FAD0C4 50%, #D9C8FF 100%);
+            background-attachment: fixed;
+            color: #333333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ===== Header / AppBar ===== */
+        header {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            color: #333333;
+            padding: 12px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .header-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: #333333;
+        }
+
+        /* 摘要栏 */
+        .summary-bar {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333333;
+        }
+
+        .summary-text .highlight {
+            color: #667EEA;
+            font-weight: 600;
+        }
+
+        /* ===== Main Content ===== */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 日期分组 */
+        .date-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .date-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+            user-select: none;
+        }
+
+        .date-group-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .date-group-title .date {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .date-group-title .count {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #8A8A8A;
+        }
+
+        .date-group-title .expand-icon {
+            font-size: 20px;
+            color: #8A8A8A;
+            transition: transform 0.3s ease;
+        }
+
+        .date-group-title.collapsed .expand-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* 快递卡片 */
+        .express-card {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .express-card:active {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .express-card.picked {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        /* 卡片头部：地址 + 时间 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card-location {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .card-location-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .card-location-addr {
+            font-size: 12px;
+            color: #8A8A8A;
+        }
+
+        .card-time {
+            font-size: 12px;
+            color: #8A8A8A;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* 品牌Logo + 取件码 */
+        .card-code-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .brand-logo.sf {
+            background: #FF6B35;
+        }
+
+        .brand-logo.yt {
+            background: #667EEA;
+        }
+
+        .brand-logo.zt {
+            background: #FF9800;
+        }
+
+        .brand-logo.jd {
+            background: #E53935;
+        }
+
+        .brand-logo.default {
+            background: #999999;
+        }
+
+        .code-display {
+            flex: 1;
+        }
+
+        .code-display.picked {
+            text-decoration: line-through;
+            color: #4CAF50;
+        }
+
+        .pickup-code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333333;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-display.picked .pickup-code {
+            color: #4CAF50;
+        }
+
+        /* 操作按钮组 */
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-copy {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-copy:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-pickup {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-pickup:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-pickup.picked {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4CAF50;
+        }
+
+        .btn-pickup.picked:active {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        /* ===== Bottom Bar ===== */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.7);
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .bottom-bar.hidden {
+            display: none;
+        }
+
+        .btn-batch {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-batch-copy {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-batch-copy:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-batch-copy:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-batch-pickup {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-batch-pickup:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-batch-pickup:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 隐藏的分组 */
+        .date-group.collapsed .express-card {
+            display: none;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8A8A8A;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <h1 class="header-title">快递取件码</h1>
+            <span class="material-icons header-icon">settings</span>
+        </div>
+        <div class="summary-bar">
+            <span class="summary-text">今日待取件：<span class="highlight">0件</span></span>
+        </div>
+    </header>
+
+    <main>
+        <!-- 今日分组 -->
+        <div class="date-group">
+            <div class="date-group-header">
+                <div class="date-group-title">
+                    <span class="date">11-18</span>
+                    <span class="count">0件</span>
+                    <span class="material-icons expand-icon">expand_more</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史分组 -->
+        <div class="date-group collapsed">
+            <div class="date-group-header">
+                <div class="date-group-title">
+                    <span class="date">11-17</span>
+                    <span class="count">2件</span>
+                    <span class="material-icons expand-icon">expand_more</span>
+                </div>
+            </div>
+            <div class="express-card">
+                <div class="card-header">
+                    <div class="card-location">
+                        <div class="card-location-name">郑州市北文港小区6号楼102店</div>
+                        <div class="card-location-addr">蜂鸟驿站</div>
+                    </div>
+                    <div class="card-time">07-08 15:18</div>
+                </div>
+                <div class="card-code-section">
+                    <div class="brand-logo yt">YT</div>
+                    <div class="code-display">
+                        <div class="pickup-code">6-5-3401</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-copy">📋 复制</button>
+                    <button class="btn btn-pickup">取出</button>
+                </div>
+            </div>
+
+            <div class="express-card picked">
+                <div class="card-header">
+                    <div class="card-location">
+                        <div class="card-location-name">清阳小区5栋1单元101</div>
+                        <div class="card-location-addr">便民驿站</div>
+                    </div>
+                    <div class="card-time">07-08 15:18</div>
+                </div>
+                <div class="card-code-section">
+                    <div class="brand-logo jd">JD</div>
+                    <div class="code-display picked">
+                        <div class="pickup-code">9-4-2056</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-copy">📋 复制</button>
+                    <button class="btn btn-pickup picked">✓ 已取</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 更早分组 -->
+        <div class="date-group collapsed">
+            <div class="date-group-header">
+                <div class="date-group-title">
+                    <span class="date">11-16</span>
+                    <span class="count">1件</span>
+                    <span class="material-icons expand-icon">expand_more</span>
+                </div>
+            </div>
+            <div class="express-card picked">
+                <div class="card-header">
+                    <div class="card-location">
+                        <div class="card-location-name">和谐公寓3号楼1层</div>
+                        <div class="card-location-addr">家园驿站</div>
+                    </div>
+                    <div class="card-time">07-08 15:18</div>
+                </div>
+                <div class="card-code-section">
+                    <div class="brand-logo sf">SF</div>
+                    <div class="code-display picked">
+                        <div class="pickup-code">2-7-5183</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-copy">📋 复制</button>
+                    <button class="btn btn-pickup picked">✓ 已取</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部批量操作栏 -->
+    <div class="bottom-bar">
+        <button class="btn-batch btn-batch-copy" disabled>📋 批量复制</button>
+        <button class="btn-batch btn-batch-pickup" disabled>📦 批量取出</button>
+    </div>
+
+    <script>
+        // 折叠/展开分组
+        document.querySelectorAll('.date-group-title').forEach(title => {
+            title.addEventListener('click', function() {
+                const group = this.closest('.date-group');
+                group.classList.toggle('collapsed');
+            });
+        });
+
+        // 复制按钮
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const code = this.closest('.express-card').querySelector('.pickup-code').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    alert('已复制: ' + code);
+                });
+            });
+        });
+
+        // 取出按钮
+        document.querySelectorAll('.btn-pickup').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const card = this.closest('.express-card');
+                card.classList.toggle('picked');
+                this.classList.toggle('picked');
+                this.textContent = card.classList.contains('picked') ? '✓ 已取' : '取出';
+            });
+        });
+
+        // 批量操作（演示）
+        document.querySelector('.btn-batch-copy').addEventListener('click', function() {
+            alert('批量复制功能');
+        });
+
+        document.querySelector('.btn-batch-pickup').addEventListener('click', function() {
+            alert('批量取出功能');
+        });
+    </script>
+</body>
+</html>

@@ -41,6 +41,7 @@ class SmsReader(private val context: Context) {
         
         android.util.Log.d(TAG, "========== 开始读取短信 ==========")
         android.util.Log.d(TAG, "限制数量: $limit")
+        android.util.Log.d(TAG, "当前时间: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}")
         
         // 检查权限
         if (!hasPermission()) {
@@ -130,40 +131,62 @@ class SmsReader(private val context: Context) {
                 
                 android.util.Log.d(TAG, "第 $pageNum 页: 列索引 - ADDRESS=$addressIndex, BODY=$bodyIndex, DATE=$dateIndex")
                 
-                var rowCount = 0
-                while (it.moveToNext()) {
-                    rowCount++
-                    val address = it.getString(addressIndex) ?: "未知号码"
-                    val body = it.getString(bodyIndex) ?: ""
-                    val date = it.getLong(dateIndex)
-                    
-                    // 转换为ISO 8601格式
-                    val receivedAt = try {
-                        dateFormat.format(Date(date))
-                    } catch (e: Exception) {
-                        android.util.Log.w(TAG, "❌ 时间戳转换失败: date=$date, 错误=${e.message}")
-                        "1970-01-01T00:00:00"
-                    }
-                    
-                    // 只打印前3条短信的详细信息
-                    if (rowCount <= 3) {
-                        android.util.Log.d(TAG, "第 $pageNum 页第 $rowCount 行: 发件人=$address, 内容=${body.take(40)}, 时间戳=$date, 转换后=$receivedAt")
-                    }
-                    
-                    smsList.add(
-                        SmsCreate(
-                            sender = address,
-                            content = body,
-                            receivedAt = receivedAt,
-                            phoneNumber = address
-                        )
-                    )
+                // 检查列索引是否有效
+                if (addressIndex < 0 || bodyIndex < 0 || dateIndex < 0) {
+                    android.util.Log.e(TAG, "❌ 第 $pageNum 页: 列索引无效 - ADDRESS=$addressIndex, BODY=$bodyIndex, DATE=$dateIndex")
+                    return smsList
                 }
                 
-                android.util.Log.d(TAG, "第 $pageNum 页: 共读取 $rowCount 行数据")
+                var rowCount = 0
+                var errorCount = 0
+                while (it.moveToNext()) {
+                    rowCount++
+                    try {
+                        val address = it.getString(addressIndex) ?: "未知号码"
+                        val body = it.getString(bodyIndex) ?: ""
+                        val date = it.getLong(dateIndex)
+                        
+                        // 检查短信内容是否为空
+                        if (body.isEmpty()) {
+                            android.util.Log.w(TAG, "⚠️ 第 $pageNum 页第 $rowCount 行: 短信内容为空，发件人=$address")
+                            errorCount++
+                        }
+                    
+                        // 转换为ISO 8601格式
+                        val receivedAt = try {
+                            dateFormat.format(Date(date))
+                        } catch (e: Exception) {
+                            android.util.Log.w(TAG, "❌ 时间戳转换失败: date=$date, 错误=${e.message}")
+                            "1970-01-01T00:00:00"
+                        }
+                        
+                        // 只打印前3条短信的详细信息
+                        if (rowCount <= 3) {
+                            android.util.Log.d(TAG, "第 $pageNum 页第 $rowCount 行: 发件人=$address, 内容=${body.take(40)}, 时间戳=$date, 转换后=$receivedAt")
+                        }
+                        
+                        smsList.add(
+                            SmsCreate(
+                                sender = address,
+                                content = body,
+                                receivedAt = receivedAt,
+                                phoneNumber = address
+                            )
+                        )
+                    } catch (e: Exception) {
+                        errorCount++
+                        android.util.Log.e(TAG, "❌ 第 $pageNum 页第 $rowCount 行: 读取短信字段失败 - ${e.message}", e)
+                    }
+                }
+                
+                android.util.Log.d(TAG, "第 $pageNum 页: 共读取 $rowCount 行数据，其中错误 $errorCount 行")
+                if (errorCount > 0) {
+                    android.util.Log.w(TAG, "⚠️ 第 $pageNum 页: 有 $errorCount 条短信读取失败，请检查日志")
+                }
             }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "❌ 第 $pageNum 页读取错误: ${e.message}", e)
+            android.util.Log.e(TAG, "❌ 错误堆栈: ${e.stackTraceToString()}")
             e.printStackTrace()
         }
         

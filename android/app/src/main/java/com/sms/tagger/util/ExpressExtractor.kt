@@ -62,8 +62,8 @@ object ExpressExtractor {
         // 提取地址信息（如果有）
         val location = extractLocation(content)
         
-        // 提取日期信息
-        val date = extractDate(content)
+        // 提取日期信息（从接收时间中获取）
+        val date = extractDateFromReceivedTime(sms.receivedAt)
         
         // 检测取件状态
         val status = detectPickupStatus(content)
@@ -97,7 +97,7 @@ object ExpressExtractor {
             
             // 提取地址和日期（对所有取件码都相同）
             val location = extractLocation(sms.content)
-            val date = extractDate(sms.content)
+            val date = extractDateFromReceivedTime(sms.receivedAt)
             val status = detectPickupStatus(sms.content)
             
             // 为每个取件码创建一个快递信息
@@ -252,6 +252,21 @@ object ExpressExtractor {
         }
         
         return null
+    }
+    
+    /**
+     * 从接收时间中提取日期
+     * 接收时间格式：2025-11-05T12:42:25
+     * 返回格式：2025-11-05
+     */
+    private fun extractDateFromReceivedTime(receivedAt: String): String {
+        // 接收时间格式：2025-11-05T12:42:25
+        // 提取前10个字符作为日期：2025-11-05
+        return if (receivedAt.length >= 10) {
+            receivedAt.substring(0, 10)
+        } else {
+            receivedAt
+        }
     }
     
     /**

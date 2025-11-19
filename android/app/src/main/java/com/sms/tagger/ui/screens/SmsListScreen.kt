@@ -83,11 +83,27 @@ fun SmsListScreen(
             // 按标签过滤短信
             val filteredSms = if (tagFilter != null) {
                 // 对短信进行分类
+                android.util.Log.d("SmsListScreen", "开始分类短信...")
                 val classified = SmsClassifier.classifySmsList(allSms)
+                
+                // 打印分类结果统计
+                android.util.Log.d("SmsListScreen", "分类结果统计:")
+                classified.forEach { (tag, smsList) ->
+                    android.util.Log.d("SmsListScreen", "  - $tag: ${smsList.size} 条")
+                }
+                
                 // 获取指定标签的短信
-                classified[tagFilter] ?: emptyList()
+                val taggedSms = classified[tagFilter] ?: emptyList()
+                android.util.Log.d("SmsListScreen", "✅ 标签 '$tagFilter' 的短信数: ${taggedSms.size} 条")
+                
+                if (taggedSms.isEmpty()) {
+                    android.util.Log.w("SmsListScreen", "⚠️ 标签 '$tagFilter' 下没有短信，可用标签: ${classified.keys}")
+                }
+                
+                taggedSms
             } else {
                 // 没有标签过滤时，显示所有短信
+                android.util.Log.d("SmsListScreen", "未指定标签过滤，显示所有短信")
                 allSms
             }
             

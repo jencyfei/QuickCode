@@ -1,6 +1,7 @@
 package com.sms.tagger.util
 
 import android.content.Context
+import android.os.Environment
 import android.util.Log
 import java.io.File
 import java.text.SimpleDateFormat
@@ -9,12 +10,13 @@ import java.util.*
 /**
  * 日志文件写入工具
  * 将应用日志写入到文件中，便于诊断问题
+ * 日志文件存储在 /sdcard/Download/sms_agent_logs/ 目录，方便用户直接访问
  */
 class LogFileWriter(private val context: Context) {
     
     companion object {
         private const val TAG = "LogFileWriter"
-        private const val LOG_DIR = "sms_logs"
+        private const val LOG_DIR = "sms_agent_logs"
         private const val MAX_LOG_FILES = 10  // 最多保留10个日志文件
         private const val MAX_LOG_SIZE = 5 * 1024 * 1024  // 单个日志文件最大5MB
         
@@ -22,7 +24,8 @@ class LogFileWriter(private val context: Context) {
         private val fileNameFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
     }
     
-    private val logDir: File = File(context.getExternalFilesDir(null), LOG_DIR)
+    // 使用下载目录，方便用户直接访问
+    private val logDir: File = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), LOG_DIR)
     private var currentLogFile: File? = null
     
     init {

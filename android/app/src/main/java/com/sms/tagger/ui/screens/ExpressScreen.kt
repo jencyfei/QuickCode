@@ -2,6 +2,7 @@ package com.sms.tagger.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,9 +10,14 @@ import androidx.compose.material3.*
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -50,6 +56,9 @@ fun ExpressScreen() {
     var confirmDialogAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var confirmDialogTitle by remember { mutableStateOf("") }
     var confirmDialogMessage by remember { mutableStateOf("") }
+    var showDebugDialog by remember { mutableStateOf(false) }
+    var debugInfo by remember { mutableStateOf("") }
+    var currentTab by remember { mutableStateOf("pending") }
     
     // 如果显示规则管理，则显示规则管理页面
     if (showRuleManager) {
@@ -57,12 +66,15 @@ fun ExpressScreen() {
         return
     }
     
+    var rawSmsList by remember { mutableStateOf<List<com.sms.tagger.data.model.SmsCreate>>(emptyList()) }
+    
     // 加载快递信息
     LaunchedEffect(Unit) {
         try {
             val reader = SmsReader(context)
             // 读取最近5000条短信，确保包含所有快递信息
             val smsList = reader.readLatestSms(5000)
+            rawSmsList = smsList
             expressList = ExpressExtractor.extractAllExpressInfo(smsList)
             isLoading = false
         } catch (e: Exception) {
@@ -83,14 +95,97 @@ fun ExpressScreen() {
             topBar = {
                 Column {
                     TopAppBar(
-                        title = { Text("快递取件码") },
+                        title = { Text("未取快递") },
                         actions = {
+                            // 一键取件按钮
+                            Button(
+                                onClick = {
+                                    // 获取未取快递列表
+                                    val pendingItems = expressList.filter { it.status != PickupStatus.PICKED }
+                                    
+                                    if (pendingItems.isEmpty()) {
+                                        showToast = "暂无未取快递"
+                                    } else {
+                                        // 显示确认对话框
+                                        showConfirmDialog = true
+                                        confirmDialogTitle = "一键取件"
+                                        confirmDialogMessage = "确定要一键取件 ${pendingItems.size} 个快递吗？"
+                                        confirmDialogAction = {
+                                            // 标记所有未取快递为已取
+                                            pendingItems.forEach { express ->
+                                                val statusKey = "pickup_${express.pickupCode}"
+                                                context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
+                                                    .edit()
+                                                    .putBoolean(statusKey, true)
+                                                    .apply()
+                                            }
+                                            showToast = "已取件 ${pendingItems.size} 个快递"
+                                            // 刷新列表
+                                            expressList = expressList.map { express ->
+                                                if (express.status != PickupStatus.PICKED) {
+                                                    express.copy(status = PickupStatus.PICKED)
+                                                } else {
+                                                    express
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .height(36.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF667EEA).copy(alpha = 0.1f)
+                                )
+                            ) {
+                                Text(
+                                    text = "一键取件",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF667EEA)
+                                )
+                            }
+                            // 调试按钮
                             IconButton(
-                                onClick = { showRuleManager = true }
+                                onClick = { 
+                                    val debugText = buildString {
+                                        append("=== 原始短信数据 (JSON格式) ===\n")
+                                        append("[\n")
+                                        rawSmsList.take(10).forEachIndexed { index, sms ->
+                                            append("  {\n")
+                                            append("    \"收信时间\": \"${sms.receivedAt}\",\n")
+                                            append("    \"发信号码\": \"${sms.sender}\",\n")
+                                            append("    \"短信内容\": \"${sms.content.replace("\"", "\\\"")}\"\n")
+                                            append("  }")
+                                            if (index < rawSmsList.take(10).size - 1) {
+                                                append(",")
+                                            }
+                                            append("\n")
+                                        }
+                                        append("]\n\n")
+                                        append("=== 提取结果 ===\n")
+                                        append("总快递数: ${expressList.size}\n\n")
+                                        expressList.take(10).forEachIndexed { index, express ->
+                                            append("【快递 ${index + 1}】\n")
+                                            append("快递公司: ${express.company}\n")
+                                            append("取件码: ${express.pickupCode}\n")
+                                            append("提取日期: ${express.date}\n")
+                                            append("地址: ${express.location ?: "未提取"}\n")
+                                            append("发件人: ${express.sender}\n")
+                                            append("接收时间: ${express.receivedAt}\n")
+                                            append("取件状态: ${express.status}\n")
+                                            append("原始短信: ${express.fullContent.take(80)}\n")
+                                            append("\n")
+                                        }
+                                    }
+                                    debugInfo = debugText
+                                    showDebugDialog = true
+                                }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Settings,
-                                    contentDescription = "取件码规则配置",
+                                    contentDescription = "调试信息",
                                     tint = Color(0xFF333333)
                                 )
                             }
@@ -99,112 +194,65 @@ fun ExpressScreen() {
                             containerColor = Color.Transparent
                         )
                     )
-                    // 摘要栏 - 显示今日待取件
+                    // 页签栏
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                            .background(
-                                color = Color.White.copy(alpha = 0.4f),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .border(1.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "今日待取件：${todayItems.size}件",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF333333)
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        Button(
+                            onClick = { currentTab = "pending" },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (currentTab == "pending") 
+                                    Color(0xFF667EEA).copy(alpha = 0.15f) 
+                                else 
+                                    Color.White.copy(alpha = 0.3f)
+                            ),
+                            border = if (currentTab == "pending") 
+                                BorderStroke(1.dp, Color(0xFF667EEA).copy(alpha = 0.3f))
+                            else
+                                null
                         ) {
-                            Checkbox(
-                                checked = selectAllChecked,
-                                onCheckedChange = { checked ->
-                                    selectAllChecked = checked
-                                    selectedExpressIds = if (checked) {
-                                        todayItems.map { it.pickupCode }.toSet()
-                                    } else {
-                                        emptySet()
-                                    }
-                                },
-                                modifier = Modifier.size(20.dp)
+                            Text(
+                                text = "未取",
+                                fontSize = 14.sp,
+                                fontWeight = if (currentTab == "pending") FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (currentTab == "pending") Color(0xFF667EEA) else Color(0xFF333333)
                             )
-                            Text("全选", fontSize = 14.sp, color = Color(0xFF333333))
+                        }
+                        Button(
+                            onClick = { currentTab = "picked" },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (currentTab == "picked") 
+                                    Color(0xFF4CAF50).copy(alpha = 0.15f) 
+                                else 
+                                    Color.White.copy(alpha = 0.3f)
+                            ),
+                            border = if (currentTab == "picked") 
+                                BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f))
+                            else
+                                null
+                        ) {
+                            Text(
+                                text = "已取",
+                                fontSize = 14.sp,
+                                fontWeight = if (currentTab == "picked") FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (currentTab == "picked") Color(0xFF4CAF50) else Color(0xFF333333)
+                            )
                         }
                     }
                 }
             },
-            bottomBar = {
-                // 底部操作栏
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = Color.White.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                        )
-                        .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            if (selectedExpressIds.isNotEmpty()) {
-                                val codes = expressList
-                                    .filter { selectedExpressIds.contains(it.pickupCode) }
-                                    .map { it.pickupCode }
-                                    .joinToString(", ")
-                                clipboardManager.setText(AnnotatedString(codes))
-                                showToast = "已复制${selectedExpressIds.size}个码"
-                            }
-                        },
-                        enabled = selectedExpressIds.isNotEmpty(),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.5f),
-                            disabledContainerColor = Color.White.copy(alpha = 0.2f)
-                        ),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.6f))
-                    ) {
-                        Text("📋 批量复制", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF333333))
-                    }
-                    
-                    Button(
-                        onClick = {
-                            if (selectedExpressIds.isNotEmpty()) {
-                                // 直接标记为已取，无需确认
-                                selectedExpressIds.forEach { id ->
-                                    // 标记为已取
-                                }
-                                showToast = "已更新${selectedExpressIds.size}个快递"
-                                selectedExpressIds = emptySet()
-                                selectAllChecked = false
-                            }
-                        },
-                        enabled = selectedExpressIds.isNotEmpty(),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.5f),
-                            disabledContainerColor = Color.White.copy(alpha = 0.2f)
-                        ),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.6f))
-                    ) {
-                        Text("📦 批量取出", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF333333))
-                    }
-                }
-            }
+            bottomBar = {}
         ) { paddingValues ->
             if (isLoading) {
                 Box(
@@ -229,177 +277,219 @@ fun ExpressScreen() {
                     )
                 }
             } else {
+                // 获取当天日期
+                val today = java.time.LocalDate.now()
+                val todayStr = today.toString().substring(5).replace("-", "-")  // MM-DD 格式
+                
+                // 根据当前页签过滤数据
+                val filteredList = if (currentTab == "pending") {
+                    // 未取快递：默认显示最近7天的信息
+                    val sevenDaysAgo = today.minusDays(7)
+                    expressList.filter { express ->
+                        express.status != PickupStatus.PICKED && try {
+                            // 解析日期 (YYYY-MM-DD 格式)
+                            val expressDate = java.time.LocalDate.parse(express.date)
+                            expressDate >= sevenDaysAgo
+                        } catch (e: Exception) {
+                            true  // 如果解析失败，保留该项
+                        }
+                    }
+                } else {
+                    // 已取快递：最多显示最近30天的信息
+                    val thirtyDaysAgo = today.minusDays(30)
+                    expressList.filter { express ->
+                        express.status == PickupStatus.PICKED && try {
+                            val expressDate = java.time.LocalDate.parse(express.date)
+                            expressDate >= thirtyDaysAgo
+                        } catch (e: Exception) {
+                            true  // 如果解析失败，保留该项
+                        }
+                    }
+                }
+                
                 // 按日期分组，然后按日期倒序（日期较新的在前）
-                val groupedByDate = expressList
+                val groupedByDate = filteredList
                     .groupBy { it.date }  // 按日期分组
                     .toSortedMap(compareBy<String> { it }.reversed())  // 日期倒序（日期较新的在前）
+                
+                // 添加地址追踪变量
+                var lastAddress: String? = null
                 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
                     // 日期分组
                     groupedByDate.forEach { (date, expressItems) ->
                         item {
                             // 同一天内按取件码顺序排列
                             val sortedItems = expressItems.sortedBy { it.pickupCode }
-                            DateGroup(date, sortedItems)
+                            DateGroup(
+                                date = date,
+                                expressItems = sortedItems,
+                                isEditMode = false,
+                                selectedExpressIds = emptySet(),
+                                lastAddress = lastAddress,
+                                onLastAddressChange = { newAddress ->
+                                    lastAddress = newAddress
+                                },
+                                onSelectionChange = { _, _ -> }
+                            )
                         }
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-fun DateGroup(date: String, expressItems: List<ExpressInfo>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 日期头部 - 简化版，无操作按钮
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 日期 + 快递数量
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(bottom = 2.dp)
-            ) {
-                Text(
-                    text = date,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF333333)
-                )
+    
+    // 调试对话框
+    if (showDebugDialog) {
+        AlertDialog(
+            onDismissRequest = { showDebugDialog = false },
+            title = { Text("📋 调试信息 - 原始数据与提取结果") },
+            text = {
                 Box(
                     modifier = Modifier
-                        .background(
-                            color = Color(0xFF667EEA).copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                        .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
                 ) {
-                    Text(
-                        text = "${expressItems.size}件",
-                        fontSize = 12.sp,
-                        color = Color(0xFF8A8A8A)
-                    )
+                    androidx.compose.foundation.lazy.LazyColumn {
+                        item {
+                            Text(
+                                text = debugInfo,
+                                fontSize = 11.sp,
+                                color = Color(0xFF333333),
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // 复制到剪贴板
+                        clipboardManager.setText(AnnotatedString(debugInfo))
+                        showToast = "已复制调试信息"
+                        showDebugDialog = false
+                    }
+                ) {
+                    Text("复制")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDebugDialog = false }
+                ) {
+                    Text("关闭")
                 }
             }
+        )
+    }
+}
+
+@Composable
+fun DateGroup(
+    date: String,
+    expressItems: List<ExpressInfo>,
+    isEditMode: Boolean = false,
+    selectedExpressIds: Set<String> = emptySet(),
+    lastAddress: String? = null,
+    onLastAddressChange: (String?) -> Unit = {},
+    onSelectionChange: ((String, Boolean) -> Unit)? = null
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // 日期头部 - 简化，只显示日期（无折叠功能）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 只显示日期，移除日期数量和折叠图标
+            Text(
+                text = date,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF333333)
+            )
         }
         
-        // 快递卡片列表
-        expressItems.forEach { express ->
-            ExpressItemCard(express)
+        // 快递卡片列表 - 按地址分组，始终显示
+        val groupedByLocation = expressItems.groupBy { it.location ?: "未知地址" }
+        var currentLastAddress = lastAddress
+        groupedByLocation.forEach { (location, items) ->
+            LocationGroup(
+                location = location,
+                expressItems = items,
+                isEditMode = isEditMode,
+                selectedExpressIds = selectedExpressIds,
+                showHeader = (location != currentLastAddress),
+                onSelectionChange = onSelectionChange
+            )
+            // 更新最后一个地址
+            items.lastOrNull()?.let { 
+                currentLastAddress = it.location ?: "未知地址"
+                onLastAddressChange(currentLastAddress)
+            }
         }
     }
 }
 
 @Composable
-fun LocationGroup(location: String, expressItems: List<ExpressInfo>) {
-    val clipboardManager = LocalClipboardManager.current
-    
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 地点头部
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                // 地点名称 + 快递数量
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(bottom = 2.dp)
-                ) {
-                    Text(
-                        text = location,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF333333)
+fun LocationGroup(
+    location: String,
+    expressItems: List<ExpressInfo>,
+    isEditMode: Boolean = false,
+    selectedExpressIds: Set<String> = emptySet(),
+    showHeader: Boolean = true,
+    onSelectionChange: ((String, Boolean) -> Unit)? = null
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // 地址标题 - 条件显示（智能隐藏重复地址）
+        if (showHeader) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(0xFF667EEA).copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(8.dp)
                     )
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFF667EEA).copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${expressItems.size}件",
-                            fontSize = 12.sp,
-                            color = Color(0xFF8A8A8A)
-                        )
-                    }
-                }
-                // 地址信息 - 只显示一次
-                val addressText = expressItems.firstOrNull()?.location
-                if (addressText != null && addressText != location) {
-                    Text(
-                        text = addressText,
-                        fontSize = 12.sp,
-                        color = Color(0xFF8A8A8A),
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
-            }
-            
-            // 操作按钮
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = {
-                        // 复制所有取件码，用换行符分隔
-                        val allCodes = expressItems.map { it.pickupCode }.joinToString("\n")
-                        clipboardManager.setText(AnnotatedString(allCodes))
-                    },
-                    modifier = Modifier.height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.5f)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
-                ) {
-                    Text("📋 复制全部", fontSize = 11.sp, color = Color(0xFF333333))
-                }
-                
-                Button(
-                    onClick = {
-                        // 标记所有快递为已取（通过状态更新）
-                        // 注：实际应用中应该保存到数据库
-                        expressItems.forEach { express ->
-                            // 这里应该更新状态，但当前实现中状态是本地的
-                        }
-                    },
-                    modifier = Modifier.height(36.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.5f)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f))
-                ) {
-                    Text("✓ 全部已取", fontSize = 11.sp, color = Color(0xFF333333))
-                }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "地址",
+                    modifier = Modifier.size(18.dp),
+                    tint = Color(0xFF667EEA)
+                )
+                Text(
+                    text = location,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF333333)
+                )
             }
         }
         
-        // 快递卡片列表
+        // 该地址下的所有快递卡片
         expressItems.forEach { express ->
-            ExpressItemCard(express)
+            ExpressItemCard(
+                express = express,
+                isEditMode = isEditMode,
+                isSelected = selectedExpressIds.contains(express.pickupCode),
+                onSelectionChange = { selected ->
+                    onSelectionChange?.invoke(express.pickupCode, selected)
+                }
+            )
         }
     }
 }
@@ -407,6 +497,7 @@ fun LocationGroup(location: String, expressItems: List<ExpressInfo>) {
 @Composable
 fun ExpressItemCard(
     express: ExpressInfo,
+    isEditMode: Boolean = false,
     isSelected: Boolean = false,
     onSelectionChange: ((Boolean) -> Unit)? = null
 ) {
@@ -420,11 +511,15 @@ fun ExpressItemCard(
         mutableStateOf(sharedPref.getBoolean(statusKey, express.status == PickupStatus.PICKED))
     }
     
-    // 根据状态确定颜色
-    val statusColor = when {
-        isPicked -> Color(0xFF4CAF50)      // 绿色 - 已取
-        express.status == PickupStatus.EXPIRED -> Color(0xFFFF9800)     // 橙色 - 已过期
-        else -> Color(0xFF667EEA)     // 蓝色 - 未取
+    // 提取时间信息
+    val timeStr = express.receivedAt.let { time ->
+        val timePattern = Pattern.compile("(\\d{2}):(\\d{2}):(\\d{2})")
+        val timeMatcher = timePattern.matcher(time)
+        if (timeMatcher.find()) {
+            timeMatcher.group(0)  // 返回 HH:MM:SS
+        } else {
+            time
+        }
     }
     
     Card(
@@ -432,191 +527,125 @@ fun ExpressItemCard(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.7f),
-                shape = RoundedCornerShape(16.dp)
+                color = if (isSelected) Color(0xFF667EEA).copy(alpha = 0.3f) else Color.White.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(12.dp)
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = when {
-                isSelected -> Color.White.copy(alpha = 0.7f)
-                isPicked -> Color(0xFF4CAF50).copy(alpha = 0.1f)
-                else -> Color.White.copy(alpha = 0.5f)
+                isSelected -> Color.White
+                isPicked -> Color.White.copy(alpha = 0.3f)
+                else -> Color.White
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 取件码和日期时间
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // 左侧复选框
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = { checked ->
-                        onSelectionChange?.invoke(checked)
-                    },
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(top = 2.dp),
-                    enabled = !isPicked
-                )
-                
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // 顶部：取货地址（突出显示）
-                    if (express.location != null && express.location.isNotEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = Color(0xFFF5F5F5),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(12.dp),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = express.location,
-                            fontSize = 13.sp,
-                            color = Color(0xFF333333),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                
-                // 操作按颁
+                // 取件码和日期时间框
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(express.pickupCode))
-                        },
-                        modifier = Modifier
-                            .height(32.dp)
-                            .weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF667EEA).copy(alpha = 0.2f)
-                        ),
-                        border = BorderStroke(1.dp, Color(0xFF667EEA).copy(alpha = 0.3f)),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text("📋 复制", fontSize = 12.sp, color = Color(0xFF667EEA))
-                    }
-                    
-                    Button(
-                        onClick = { 
-                            isPicked = true
-                            // 保存状态到 SharedPreferences
-                            sharedPref.edit().putBoolean(statusKey, true).apply()
-                        },
-                        enabled = !isPicked,
-                        modifier = Modifier
-                            .height(32.dp)
-                            .weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF667EEA).copy(alpha = 0.2f),
-                            disabledContainerColor = Color(0xFF4CAF50).copy(alpha = 0.2f)
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            if (isPicked) Color(0xFF4CAF50).copy(alpha = 0.3f)
-                            else Color(0xFF667EEA).copy(alpha = 0.3f)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            if (isPicked) "✓ 已取" else "取出",
-                            fontSize = 12.sp,
-                            color = if (isPicked) Color(0xFF4CAF50) else Color(0xFF667EEA)
-                        )
-                    }
-                }
-                
-                // 取件码区域（大字显示）
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = Color(0xFF667EEA).copy(alpha = 0.08f),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         Text(
-                            text = "PICKUP CODE",
-                            fontSize = 10.sp,
-                            color = Color(0xFF8A8A8A),
-                            letterSpacing = 0.1.sp
+                            text = "取件码",
+                            fontSize = 11.sp,
+                            color = Color(0xFF999999),
+                            fontWeight = FontWeight.Normal
                         )
                         Text(
                             text = express.pickupCode,
-                            fontSize = 40.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF333333),
-                            letterSpacing = 2.sp
+                            letterSpacing = 1.sp
+                        )
+                    }
+                    
+                    // 日期和时间框 - 美化显示
+                    Column(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFF667EEA).copy(alpha = 0.08f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        Text(
+                            text = express.date,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF667EEA)
+                        )
+                        Text(
+                            text = timeStr,
+                            fontSize = 10.sp,
+                            color = Color(0xFFAAAAAA)
                         )
                     }
                 }
                 
-                // 接收时间 - 只显示时分秒
+                // 状态标签
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
                 ) {
+                    Icon(
+                        imageVector = if (isPicked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                        contentDescription = if (isPicked) "已取" else "未取",
+                        tint = if (isPicked) Color(0xFF4CAF50) else Color(0xFFFF9800),
+                        modifier = Modifier.size(14.dp)
+                    )
                     Text(
-                        text = "接收时间：",
-                        fontSize = 13.sp,
-                        color = Color(0xFF8A8A8A),
+                        text = if (isPicked) "已取" else "未取",
+                        fontSize = 12.sp,
+                        color = if (isPicked) Color(0xFF4CAF50) else Color(0xFFFF9800),
                         fontWeight = FontWeight.Medium
                     )
-                    Text(
-                        text = express.receivedAt.let { time ->
-                            // 从 ISO 8601 格式中提取时分秒 (HH:MM:SS)
-                            // 例如: 2025-11-05T12:42:25 或 2025-11-05 12:42:25
-                            val timePattern = Pattern.compile("(\\d{2}):(\\d{2}):(\\d{2})")
-                            val timeMatcher = timePattern.matcher(time)
-                            if (timeMatcher.find()) {
-                                timeMatcher.group(0)  // 返回 HH:MM:SS
-                            } else {
-                                time
-                            }
-                        },
-                        fontSize = 13.sp,
-                        color = Color(0xFF333333)
-                    )
                 }
-                }  // 关闭Column
-            }  // 关闭Row
+            }
             
-            // 右上角状态圆点
-            Box(
+            // 状态按钮 - 始终显示
+            IconButton(
+                onClick = {
+                    isPicked = !isPicked
+                    // 保存状态到 SharedPreferences
+                    sharedPref.edit().putBoolean(statusKey, isPicked).apply()
+                },
                 modifier = Modifier
-                    .size(12.dp)
+                    .size(36.dp)
                     .background(
-                        color = statusColor,
+                        color = if (isPicked) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color(0xFF667EEA).copy(alpha = 0.1f),
                         shape = RoundedCornerShape(50)
                     )
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-            )
+            ) {
+                Icon(
+                    imageVector = if (isPicked) 
+                        Icons.Default.CheckCircle 
+                    else 
+                        Icons.Default.RadioButtonUnchecked,
+                    contentDescription = if (isPicked) "已取" else "未取",
+                    tint = if (isPicked) Color(0xFF4CAF50) else Color(0xFF667EEA),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

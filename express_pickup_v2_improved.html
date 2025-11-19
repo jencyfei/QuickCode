@@ -218,17 +218,25 @@
         .card-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-date-location {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
         }
 
         .card-date-time {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             align-items: center;
         }
 
         .card-date {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: #333333;
         }
@@ -238,45 +246,53 @@
             color: #8A8A8A;
         }
 
-        .card-actions {
+        .card-location {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            align-items: center;
+            font-size: 12px;
+            color: #666666;
         }
 
-        .card-action-btn {
-            width: 32px;
-            height: 32px;
+        .card-location-icon {
+            font-size: 14px;
+            color: #667EEA;
+            flex-shrink: 0;
+        }
+
+        .card-status-btn {
+            width: 36px;
+            height: 36px;
             border: none;
             background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px;
+            border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
             color: #667EEA;
             transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
-        .card-action-btn:hover {
+        .card-status-btn:hover {
             background: rgba(102, 126, 234, 0.2);
             transform: scale(1.1);
         }
 
-        .card-action-btn:active {
+        .card-status-btn:active {
             transform: scale(0.95);
         }
 
-        /* 地址 */
+        .card-status-btn.picked {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+        }
+
+        /* 地址 - 隐藏 */
         .card-address {
-            background: rgba(245, 245, 245, 0.8);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 13px;
-            color: #333333;
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
+            display: none;
         }
 
         .card-address-icon {
@@ -291,22 +307,32 @@
             background: rgba(102, 126, 234, 0.08);
             border-radius: 12px;
             padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-code-content {
+            flex: 1;
             text-align: center;
         }
 
         .card-code-label {
             font-size: 10px;
             color: #8A8A8A;
-            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 4px;
+            display: none;
         }
 
         .card-code {
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 700;
             color: #333333;
-            letter-spacing: 2px;
             font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
         }
 
         /* 空状态 */
@@ -632,13 +658,9 @@
                             <div class="card-date">${item.date}</div>
                             <div class="card-time">${item.time}</div>
                         </div>
-                        <div class="card-actions">
-                            <button class="card-action-btn copy-btn" title="复制">
-                                <span class="material-icons">content_copy</span>
-                            </button>
-                            <button class="card-action-btn pickup-btn" title="取出" ${item.picked ? 'disabled' : ''}>
-                                <span class="material-icons">check_circle</span>
-                            </button>
+                        <div class="card-location">
+                            <span class="card-location-icon material-icons">location_on</span>
+                            <span>${item.address}</span>
                         </div>
                     </div>
                     <div class="card-address">
@@ -646,8 +668,13 @@
                         <span>${item.address}</span>
                     </div>
                     <div class="card-code-box">
-                        <div class="card-code-label">PICKUP CODE</div>
-                        <div class="card-code">${item.code}</div>
+                        <div class="card-code-content">
+                            <div class="card-code-label">PICKUP CODE</div>
+                            <div class="card-code">${item.code}</div>
+                        </div>
+                        <button class="card-status-btn ${item.picked ? 'picked' : ''}" title="${item.picked ? '已取' : '未取'}">
+                            <span class="material-icons">${item.picked ? 'check_circle' : 'radio_button_unchecked'}</span>
+                        </button>
                     </div>
                 </div>
             `;
@@ -661,23 +688,18 @@
                 updateActionButtons();
             });
 
-            // 复制按钮
-            card.querySelector('.copy-btn').addEventListener('click', () => {
-                navigator.clipboard.writeText(item.code).then(() => {
-                    showToast(`已复制: ${item.code}`);
-                }).catch(() => {
-                    showToast(`复制失败，请重试`);
-                });
-            });
-
-            // 取出按钮
-            card.querySelector('.pickup-btn').addEventListener('click', () => {
-                if (confirm(`确认取出 ${item.code} 吗？`)) {
-                    item.picked = true;
-                    card.classList.add('picked');
-                    checkbox.disabled = true;
-                    card.querySelector('.pickup-btn').disabled = true;
-                    showToast(`已标记为已取: ${item.code}`);
+            // 状态按钮事件
+            const statusBtn = card.querySelector('.card-status-btn');
+            statusBtn.addEventListener('click', () => {
+                if (confirm(`确认${item.picked ? '取消' : ''}标记为${item.picked ? '未取' : '已取'} ${item.code} 吗？`)) {
+                    item.picked = !item.picked;
+                    card.classList.toggle('picked', item.picked);
+                    statusBtn.classList.toggle('picked', item.picked);
+                    statusBtn.innerHTML = `<span class="material-icons">${item.picked ? 'check_circle' : 'radio_button_unchecked'}</span>`;
+                    statusBtn.title = item.picked ? '已取' : '未取';
+                    checkbox.disabled = item.picked;
+                    showToast(`已标记为${item.picked ? '已取' : '未取'}: ${item.code}`);
+                    updateActionButtons();
                 }
             });
 

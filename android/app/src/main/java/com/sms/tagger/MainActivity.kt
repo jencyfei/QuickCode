@@ -27,6 +27,8 @@ import com.sms.tagger.ui.screens.*
 import com.sms.tagger.ui.theme.SmsAgentTheme
 import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.util.PreferencesManager
+import com.sms.tagger.util.LogFileWriter
+import com.sms.tagger.util.AppLogger
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -44,6 +46,11 @@ class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // ✅ 初始化日志系统
+        val logFileWriter = LogFileWriter(this)
+        AppLogger.init(logFileWriter)
+        android.util.Log.d("MainActivity", "✅ 日志系统已初始化，日志目录: ${logFileWriter.getLogDirPath()}")
         
         // 请求权限
         requestSmsPermissions()

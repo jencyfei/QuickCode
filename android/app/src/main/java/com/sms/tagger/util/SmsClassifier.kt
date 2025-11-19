@@ -16,7 +16,8 @@ object SmsClassifier {
     // 银行关键词
     private val bankKeywords = listOf(
         "银行", "余额", "交易", "转账", "信用卡", "debit", "credit", 
-        "alipay", "wechat pay", "微信支付", "支付宝", "消费", "入账", "出账"
+        "alipay", "wechat pay", "微信支付", "支付宝", "消费", "入账", "出账",
+        "光大", "工商", "建设", "农业", "中国", "招商", "浦发", "民生", "兴业"
     )
     
     // 快递关键词（包含"取件通知"这类快递相关通知）
@@ -115,6 +116,21 @@ object SmsClassifier {
      * 对短信列表进行分类
      */
     fun classifySmsList(smsList: List<SmsCreate>): Map<String, List<SmsCreate>> {
-        return smsList.groupBy { classifySms(it.content) }
+        android.util.Log.d("SmsClassifier", "========== 开始分类短信 ==========")
+        android.util.Log.d("SmsClassifier", "总短信数: ${smsList.size}")
+        
+        val classified = smsList.groupBy { sms ->
+            val tag = classifySms(sms.content)
+            android.util.Log.d("SmsClassifier", "短信分类: $tag | 发件人=${sms.sender} | 内容=${sms.content.take(50)}")
+            tag
+        }
+        
+        android.util.Log.d("SmsClassifier", "分类完成:")
+        classified.forEach { (tag, items) ->
+            android.util.Log.d("SmsClassifier", "  $tag: ${items.size} 条")
+        }
+        android.util.Log.d("SmsClassifier", "========== 分类完成 ==========")
+        
+        return classified
     }
 }

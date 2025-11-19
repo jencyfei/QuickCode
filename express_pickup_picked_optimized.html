@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>已取快递 - 快递取件码</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #F9F8FF 0%, #FAD0C4 50%, #D9C8FF 100%);
+            background-attachment: fixed;
+            color: #333333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ===== Header / AppBar ===== */
+        header {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            color: #333333;
+            padding: 12px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .header-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: #333333;
+            transition: all 0.2s ease;
+        }
+
+        .header-icon:hover {
+            transform: scale(1.1);
+        }
+
+        /* 页签切换 - 优化版 */
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: #333333;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tab-btn.active {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4CAF50;
+            font-weight: 600;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 摘要栏 - 已取页面隐藏 */
+        .summary-bar {
+            display: none;
+        }
+
+        /* ===== Main Content ===== */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 130px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 日期分组 - 已取页面竖排显示 */
+        .date-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(200, 200, 200, 0.3);
+        }
+
+        .date-group:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .date-group-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 0;
+            background: transparent;
+            border-radius: 0;
+            user-select: none;
+            cursor: default;
+            transition: none;
+        }
+
+        .date-group-header:hover {
+            background: transparent;
+        }
+
+        .date-group-title {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .date-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-info .material-icons {
+            font-size: 18px;
+            color: #666666;
+        }
+
+        .date {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .date-divider {
+            display: none;
+        }
+
+        .count-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .count-info .material-icons {
+            font-size: 18px;
+            color: #666666;
+        }
+
+        .count {
+            font-size: 14px;
+            color: #666666;
+            font-weight: 500;
+        }
+
+        .expand-icon {
+            display: none;
+        }
+
+        .expand-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .date-group-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .date-group-items.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* 地址标题 - 优化版 */
+        .location-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(76, 175, 80, 0.05);
+            border-radius: 8px;
+            margin-bottom: 4px;
+            margin-top: 8px;
+        }
+
+        .location-icon {
+            font-size: 18px;
+            color: #4CAF50;
+            flex-shrink: 0;
+        }
+
+        .location-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 快递卡片 - 已取页面只读 */
+        .card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            transition: all 0.3s ease;
+            opacity: 1;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            transform: none;
+        }
+
+        .card:active {
+            transform: scale(1);
+        }
+
+        .card.selected {
+            background: #FFFFFF;
+            opacity: 1;
+        }
+
+        .card-checkbox {
+            display: none;
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 地址信息 - 卡片内 */
+        .card-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .card-address-icon {
+            font-size: 16px;
+            color: #4CAF50;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .card-address-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333333;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* 快递编号区 - 优化版 */
+        .card-code-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: rgba(76, 175, 80, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .card-code-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-code-label {
+            font-size: 12px;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .card-code {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333333;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .card-code-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .copy-btn {
+            display: none;
+        }
+
+        .copy-btn:hover {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 状态标签 - 已取页面 */
+        .card-status-btn {
+            width: auto;
+            height: auto;
+            border: none;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 4px;
+            cursor: default;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #4CAF50;
+            transition: none;
+            flex-shrink: 0;
+            padding: 4px 8px;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .card-status-btn:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: none;
+        }
+
+        .card-status-btn:active {
+            transform: none;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8A8A8A;
+            font-size: 14px;
+        }
+
+        .empty-state .material-icons {
+            font-size: 48px;
+            color: #CCCCCC;
+            margin-bottom: 12px;
+        }
+
+        /* ===== Footer / Action Bar ===== */
+        footer {
+            display: none;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 44px;
+            border: none;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 12px;
+            color: #4CAF50;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: rgba(76, 175, 80, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* 底部导航栏 - 优化版 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: #999999;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            color: #4CAF50;
+        }
+
+        .nav-item.active {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+
+        .nav-item .material-icons {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <h1 class="header-title">已取快递</h1>
+            <span class="material-icons header-icon" onclick="openSettings()">settings</span>
+        </div>
+        
+        <!-- 页签切换 -->
+        <div class="tab-bar">
+            <button class="tab-btn" onclick="switchTab('pending')">未取 (<span id="pendingCount">0</span>)</button>
+            <button class="tab-btn active" onclick="switchTab('picked')">已取 (<span id="pickedCount">0</span>)</button>
+        </div>
+    </header>
+
+    <main id="mainContent">
+        <!-- 快递列表将在这里渲染 -->
+    </main>
+
+    <!-- 操作栏 - 已取页面隐藏 -->
+    <footer>
+        <button class="action-btn" id="copyBtn" onclick="copySelectedCodes()" disabled>
+            <span class="material-icons">content_copy</span>
+            批量复制
+        </button>
+        <button class="action-btn" id="undoBtn" onclick="markAsUnpickedBatch()" disabled>
+            <span class="material-icons">undo</span>
+            批量撤销
+        </button>
+    </footer>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 底部导航栏 -->
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="navigateTo('express')">
+            <span class="material-icons">local_shipping</span>
+            <span>快递</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('tags')">
+            <span class="material-icons">label</span>
+            <span>标签</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('sms')">
+            <span class="material-icons">message</span>
+            <span>短信</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('settings')">
+            <span class="material-icons">settings</span>
+            <span>设置</span>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        let items = [
+            { code: '2-4-2029', date: '2025-11-18', time: '10:35', address: '郑州市北文雅小区6号楼102取件', picked: false, selected: false },
+            { code: '6-5-5011', date: '2025-11-18', time: '19:05', address: '郑州市北文雅小区6号楼102取件', picked: false, selected: false },
+            { code: '5008', date: '2025-11-17', time: '14:22', address: '郑州市北文雅小区6号楼102取件', picked: false, selected: false },
+            { code: '3028', date: '2025-10-28', time: '08:15', address: '郑州市北文雅小区6号楼102取件', picked: true, selected: false },
+        ];
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            renderItems();
+            updateCounts();
+        });
+
+        // 切换页签
+        function switchTab(tab) {
+            if (tab === 'pending') {
+                window.location.href = 'express_pickup_pending.html';
+            } else if (tab === 'picked') {
+                window.location.href = 'express_pickup_picked_optimized.html';
+            }
+        }
+
+        // 渲染快递列表 - 只显示已取的
+        function renderItems() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = '';
+
+            // 过滤已取的快递
+            const pickedItems = items.filter(item => item.picked);
+
+            if (pickedItems.length === 0) {
+                mainContent.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">inbox</span>
+                        <p>暂无已取快递</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 按日期分组
+            const grouped = {};
+            pickedItems.forEach(item => {
+                if (!grouped[item.date]) {
+                    grouped[item.date] = [];
+                }
+                grouped[item.date].push(item);
+            });
+
+            // 按日期倒序排列
+            const sortedDates = Object.keys(grouped).sort((a, b) => {
+                const dateA = new Date(a);
+                const dateB = new Date(b);
+                return dateB - dateA;
+            });
+
+            // 渲染每个日期分组 - 已取的默认全部展开
+            sortedDates.forEach(date => {
+                const dateItems = grouped[date];
+                const isExpanded = true;
+
+                // 按地址进行二级分组
+                const locationGrouped = {};
+                dateItems.forEach(item => {
+                    if (!locationGrouped[item.address]) {
+                        locationGrouped[item.address] = [];
+                    }
+                    locationGrouped[item.address].push(item);
+                });
+
+                const dateGroup = document.createElement('div');
+                dateGroup.className = 'date-group';
+                dateGroup.innerHTML = `
+                    <div class="date-group-header" data-date="${date}">
+                        <div class="date-group-title">
+                            <div class="date-info">
+                                <span class="material-icons">calendar_today</span>
+                                <span class="date">${date}</span>
+                            </div>
+                            <div class="count-info">
+                                <span class="material-icons">local_shipping</span>
+                                <span class="count">共 ${dateItems.length} 件</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="date-group-items" data-date="${date}">
+                        <!-- 卡片将被插入这里 -->
+                    </div>
+                `;
+
+                const itemsContainer = dateGroup.querySelector(`[data-date="${date}"].date-group-items`);
+                
+                // 为每个地址创建地址组
+                Object.keys(locationGrouped).forEach(address => {
+                    const locationItems = locationGrouped[address];
+                    
+                    // 创建地址标题
+                    const locationHeader = document.createElement('div');
+                    locationHeader.className = 'location-header';
+                    locationHeader.innerHTML = `
+                        <span class="location-icon material-icons">check_circle</span>
+                        <span class="location-name">${address}</span>
+                    `;
+                    itemsContainer.appendChild(locationHeader);
+                    
+                    // 添加该地址下的所有快递卡片
+                    locationItems.forEach((item, index) => {
+                        itemsContainer.appendChild(createCardElement(item, index));
+                    });
+                });
+
+                mainContent.appendChild(dateGroup);
+            });
+        }
+
+        // 创建卡片元素 - 已取页面只读
+        function createCardElement(item, index) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-content">
+                    <div class="card-address">
+                        <span class="card-address-icon material-icons">location_on</span>
+                        <span class="card-address-text">${item.address}</span>
+                    </div>
+                    <div class="card-code-box">
+                        <div class="card-code-content">
+                            <div class="card-code-label">快递编号</div>
+                            <div class="card-code">${item.code}</div>
+                        </div>
+                        <div class="card-code-actions">
+                            <button class="card-status-btn" title="已取">
+                                <span class="material-icons" style="font-size: 14px;">check</span>
+                                <span>已取</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 复制单个编号
+        function copyCode(code, event) {
+            event.stopPropagation();
+            navigator.clipboard.writeText(code).then(() => {
+                showToast(`已复制: ${code}`);
+            });
+        }
+
+        // 更新统计信息
+        function updateCounts() {
+            const pendingCount = items.filter(item => !item.picked).length;
+            const pickedCount = items.filter(item => item.picked).length;
+
+            document.getElementById('pendingCount').textContent = pendingCount;
+            document.getElementById('pickedCount').textContent = pickedCount;
+            document.getElementById('totalPickedCount').textContent = pickedCount;
+        }
+
+        // 已取页面不需要这些函数
+        function toggleSelectAll() {}
+        function updateActionButtons() {}
+        function copySelectedCodes() {}
+        function markAsUnpickedBatch() {}
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 打开设置
+        function openSettings() {
+            alert('打开设置页面');
+        }
+
+        // 导航
+        function navigateTo(page) {
+            console.log('导航到:', page);
+        }
+    </script>
+</body>
+</html>

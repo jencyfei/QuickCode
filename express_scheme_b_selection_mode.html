@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递取件码 - 方案B：选择模式型</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #F9F8FF 0%, #FAD0C4 50%, #D9C8FF 100%);
+            background-attachment: fixed;
+            color: #333333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ===== Header / AppBar ===== */
+        header {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            color: #333333;
+            padding: 12px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        header.selection-mode {
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .header-title.selection-mode {
+            font-size: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: #333333;
+            padding: 4px;
+        }
+
+        .header-icon:active {
+            opacity: 0.7;
+        }
+
+        .btn-edit {
+            padding: 6px 12px;
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            border-radius: 6px;
+            color: #667EEA;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-edit.active {
+            background: rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-cancel {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 6px;
+            color: #667EEA;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel:active {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* 摘要栏 */
+        .summary-bar {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333333;
+        }
+
+        .summary-text .highlight {
+            color: #667EEA;
+            font-weight: 600;
+        }
+
+        .select-all-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .select-all-group.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .select-all-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .select-all-group label {
+            font-size: 14px;
+            color: #333333;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* ===== Main Content ===== */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 日期分组 */
+        .date-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .date-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+            user-select: none;
+        }
+
+        .date-group-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .date-group-title .date {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .date-group-title .count {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #8A8A8A;
+        }
+
+        .date-group-title .expand-icon {
+            font-size: 20px;
+            color: #8A8A8A;
+            transition: transform 0.3s ease;
+        }
+
+        .date-group-title.collapsed .expand-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* 快递卡片 */
+        .express-card {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .express-card:active {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .express-card.picked {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .express-card.selected {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        /* 卡片头部：选择框 + 地址 + 时间 */
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            flex-shrink: 0;
+        }
+
+        .card-checkbox.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .card-location {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .card-location-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        .card-location-addr {
+            font-size: 12px;
+            color: #8A8A8A;
+        }
+
+        .card-time {
+            font-size: 12px;
+            color: #8A8A8A;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* 品牌Logo + 取件码 */
+        .card-code-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .brand-logo.sf {
+            background: #FF6B35;
+        }
+
+        .brand-logo.yt {
+            background: #667EEA;
+        }
+
+        .brand-logo.zt {
+            background: #FF9800;
+        }
+
+        .brand-logo.jd {
+            background: #E53935;
+        }
+
+        .brand-logo.default {
+            background: #999999;
+        }
+
+        .code-display {
+            flex: 1;
+        }
+
+        .code-display.picked {
+            text-decoration: line-through;
+            color: #4CAF50;
+        }
+
+        .pickup-code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333333;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-display.picked .pickup-code {
+            color: #4CAF50;
+        }
+
+        /* 状态指示 */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #4CAF50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .express-card.picked .status-badge {
+            opacity: 1;
+        }
+
+        /* 隐藏的分组 */
+        .date-group.collapsed .express-card {
+            display: none;
+        }
+
+        /* ===== Bottom Bar ===== */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.7);
+            padding: 12px 16px;
+            display: none;
+            gap: 8px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bottom-bar.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .btn-batch {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-batch-copy {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-batch-copy:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-batch-copy:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-batch-pickup {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667EEA;
+        }
+
+        .btn-batch-pickup:active {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-batch-pickup:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8A8A8A;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <h1 class="header-title">快递取件码</h1>
+            <div class="header-actions">
+                <button class="btn-edit" id="editBtn">编辑</button>
+                <button class="btn-cancel" id="cancelBtn" style="display: none;">取消</button>
+                <span class="material-icons header-icon">settings</span>
+            </div>
+        </div>
+        <div class="summary-bar">
+            <span class="summary-text">今日待取件：<span class="highlight">0件</span></span>
+            <div class="select-all-group" id="selectAllGroup">
+                <input type="checkbox" id="selectAllCheckbox">
+                <label for="selectAllCheckbox">全选</label>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- 今日分组 -->
+        <div class="date-group">
+            <div class="date-group-header">
+                <div class="date-group-title">
+                    <span class="date">11-18</span>
+                    <span class="count">0件</span>
+                    <span class="material-icons expand-icon">expand_more</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史分组 -->
+        <div class="date-group collapsed">
+            <div class="date-group-header">
+                <div class="date-group-title">
+                    <span class="date">11-17</span>
+                    <span class="count">2件</span>
+                    <span class="material-icons expand-icon">expand_more</span>
+                </div>
+            </div>
+            <div class="express-card" data-id="1">
+                <div class="card-header">
+                    <input type="checkbox" class="card-checkbox">
+                    <div class="card-info">
+                        <div class="card-location">
+                            <div class="card-location-name">郑州市北文港小区6号楼102店</div>
+                            <div class="card-location-addr">蜂鸟驿站</div>
+                        </div>
+                        <div class="card-time">07-08 15:18</div>
+                    </div>
+                </div>
+                <div class="card-code-section">
+                    <div class="brand-logo yt">YT</div>
+                    <div class="code-display">
+                        <div class="pickup-code">6-5-3401</div>
+                    </div>
+                    <div class="status-badge">
+                        <span class="material-icons" style="font-size: 16px;">check_circle</span>
+                        <span>已取</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="express-card picked" data-id="2">
+                <div class="card-header">
+                    <input type="checkbox" class="card-checkbox">
+                    <div class="card-info">
+                        <div class="card-location">
+                            <div class="card-location-name">清阳小区5栋1单元101</div>
+                            <div class="card-location-addr">便民驿站</div>
+                        </div>
+                        <div class="card-time">07-08 15:18</div>
+                    </div>
+                </div>
+                <div class="card-code-section">
+                    <div class="brand-logo jd">JD</div>
+                    <div class="code-display picked">
+                        <div class="pickup-code">9-4-2056</div>
+                    </div>
+                    <div class="status-badge">
+                        <span class="material-icons" style="font-size: 16px;">check_circle</span>
+                        <span>已取</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 更早分组 -->
+        <div class="date-group collapsed">
+            <div class="date-group-header">
+                <div class="date-group-title">
+                    <span class="date">11-16</span>
+                    <span class="count">1件</span>
+                    <span class="material-icons expand-icon">expand_more</span>
+                </div>
+            </div>
+            <div class="express-card picked" data-id="3">
+                <div class="card-header">
+                    <input type="checkbox" class="card-checkbox">
+                    <div class="card-info">
+                        <div class="card-location">
+                            <div class="card-location-name">和谐公寓3号楼1层</div>
+                            <div class="card-location-addr">家园驿站</div>
+                        </div>
+                        <div class="card-time">07-08 15:18</div>
+                    </div>
+                </div>
+                <div class="card-code-section">
+                    <div class="brand-logo sf">SF</div>
+                    <div class="code-display picked">
+                        <div class="pickup-code">2-7-5183</div>
+                    </div>
+                    <div class="status-badge">
+                        <span class="material-icons" style="font-size: 16px;">check_circle</span>
+                        <span>已取</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部批量操作栏 -->
+    <div class="bottom-bar" id="bottomBar">
+        <button class="btn-batch btn-batch-copy" id="batchCopyBtn" disabled>📋 批量复制</button>
+        <button class="btn-batch btn-batch-pickup" id="batchPickupBtn" disabled>📦 批量取出</button>
+    </div>
+
+    <script>
+        let isSelectionMode = false;
+        const selectedCards = new Set();
+
+        const editBtn = document.getElementById('editBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const selectAllGroup = document.getElementById('selectAllGroup');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const bottomBar = document.getElementById('bottomBar');
+        const batchCopyBtn = document.getElementById('batchCopyBtn');
+        const batchPickupBtn = document.getElementById('batchPickupBtn');
+        const header = document.querySelector('header');
+
+        // 进入/退出选择模式
+        editBtn.addEventListener('click', function() {
+            isSelectionMode = true;
+            editBtn.style.display = 'none';
+            cancelBtn.style.display = 'block';
+            header.classList.add('selection-mode');
+            selectAllGroup.classList.add('visible');
+            bottomBar.classList.add('visible');
+            document.querySelectorAll('.card-checkbox').forEach(cb => {
+                cb.classList.add('visible');
+            });
+        });
+
+        cancelBtn.addEventListener('click', function() {
+            isSelectionMode = false;
+            editBtn.style.display = 'block';
+            cancelBtn.style.display = 'none';
+            header.classList.remove('selection-mode');
+            selectAllGroup.classList.remove('visible');
+            bottomBar.classList.remove('visible');
+            document.querySelectorAll('.card-checkbox').forEach(cb => {
+                cb.classList.remove('visible');
+                cb.checked = false;
+            });
+            selectedCards.clear();
+            updateBatchButtons();
+            document.querySelectorAll('.express-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+        });
+
+        // 全选
+        selectAllCheckbox.addEventListener('change', function() {
+            document.querySelectorAll('.express-card').forEach(card => {
+                card.querySelector('.card-checkbox').checked = this.checked;
+                if (this.checked) {
+                    selectedCards.add(card.dataset.id);
+                    card.classList.add('selected');
+                } else {
+                    selectedCards.delete(card.dataset.id);
+                    card.classList.remove('selected');
+                }
+            });
+            updateBatchButtons();
+        });
+
+        // 单个卡片选择
+        document.querySelectorAll('.card-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const card = this.closest('.express-card');
+                if (this.checked) {
+                    selectedCards.add(card.dataset.id);
+                    card.classList.add('selected');
+                } else {
+                    selectedCards.delete(card.dataset.id);
+                    card.classList.remove('selected');
+                }
+                updateSelectAllCheckbox();
+                updateBatchButtons();
+            });
+        });
+
+        // 长按卡片复制
+        document.querySelectorAll('.express-card').forEach(card => {
+            let pressTimer;
+            card.addEventListener('touchstart', function() {
+                if (!isSelectionMode) {
+                    pressTimer = setTimeout(() => {
+                        const code = this.querySelector('.pickup-code').textContent;
+                        navigator.clipboard.writeText(code).then(() => {
+                            alert('已复制: ' + code);
+                        });
+                    }, 500);
+                }
+            });
+            card.addEventListener('touchend', function() {
+                clearTimeout(pressTimer);
+            });
+        });
+
+        // 折叠/展开分组
+        document.querySelectorAll('.date-group-title').forEach(title => {
+            title.addEventListener('click', function() {
+                const group = this.closest('.date-group');
+                group.classList.toggle('collapsed');
+            });
+        });
+
+        // 更新全选复选框状态
+        function updateSelectAllCheckbox() {
+            const allCards = document.querySelectorAll('.express-card');
+            const checkedCards = document.querySelectorAll('.express-card .card-checkbox:checked');
+            selectAllCheckbox.checked = allCards.length > 0 && allCards.length === checkedCards.length;
+        }
+
+        // 更新批量按钮状态
+        function updateBatchButtons() {
+            const hasSelection = selectedCards.size > 0;
+            batchCopyBtn.disabled = !hasSelection;
+            batchPickupBtn.disabled = !hasSelection;
+        }
+
+        // 批量复制
+        batchCopyBtn.addEventListener('click', function() {
+            const codes = [];
+            selectedCards.forEach(id => {
+                const card = document.querySelector(`[data-id="${id}"]`);
+                codes.push(card.querySelector('.pickup-code').textContent);
+            });
+            navigator.clipboard.writeText(codes.join('\n')).then(() => {
+                alert('已复制 ' + codes.length + ' 个取件码');
+            });
+        });
+
+        // 批量取出
+        batchPickupBtn.addEventListener('click', function() {
+            selectedCards.forEach(id => {
+                const card = document.querySelector(`[data-id="${id}"]`);
+                card.classList.add('picked');
+            });
+            alert('已标记 ' + selectedCards.size + ' 个快递为已取');
+            selectedCards.clear();
+            updateBatchButtons();
+            document.querySelectorAll('.card-checkbox').forEach(cb => cb.checked = false);
+            updateSelectAllCheckbox();
+        });
+    </script>
+</body>
+</html>
