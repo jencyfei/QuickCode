@@ -90,6 +90,35 @@ fun ExpressScreen() {
             item.receivedAt.takeLast(5) == today
         }
         
+        // Toast 提示
+        if (showToast.isNotEmpty()) {
+            LaunchedEffect(showToast) {
+                kotlinx.coroutines.delay(2000)
+                showToast = ""
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color.Black.copy(alpha = 0.8f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = showToast,
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+        
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -345,6 +374,32 @@ fun ExpressScreen() {
         }
     }
     
+    // 一键取件确认对话框
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(confirmDialogTitle) },
+            text = { Text(confirmDialogMessage) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        confirmDialogAction?.invoke()
+                        showConfirmDialog = false
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+    
     // 调试对话框
     if (showDebugDialog) {
         AlertDialog(
@@ -404,22 +459,22 @@ fun DateGroup(
     onSelectionChange: ((String, Boolean) -> Unit)? = null
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // 日期头部 - 简化，只显示日期（无折叠功能）
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 只显示日期，移除日期数量和折叠图标
-            Text(
-                text = date,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF333333)
-            )
-        }
+        // 日期头部 - 隐藏（不显示日期标题）
+        // Row(
+        //     modifier = Modifier
+        //         .fillMaxWidth()
+        //         .padding(horizontal = 4.dp),
+        //     horizontalArrangement = Arrangement.Start,
+        //     verticalAlignment = Alignment.CenterVertically
+        // ) {
+        //     // 只显示日期，移除日期数量和折叠图标
+        //     Text(
+        //         text = date,
+        //         fontSize = 14.sp,
+        //         fontWeight = FontWeight.SemiBold,
+        //         color = Color(0xFF333333)
+        //     )
+        // }
         
         // 快递卡片列表 - 按地址分组，始终显示
         val groupedByLocation = expressItems.groupBy { it.location ?: "未知地址" }
@@ -577,7 +632,7 @@ fun ExpressItemCard(
                         )
                     }
                     
-                    // 日期和时间框 - 美化显示
+                    // 日期和时间框 - 调整到中间位置
                     Column(
                         modifier = Modifier
                             .background(
@@ -585,7 +640,7 @@ fun ExpressItemCard(
                                 shape = RoundedCornerShape(4.dp)
                             )
                             .padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalAlignment = Alignment.End,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
                         Text(
