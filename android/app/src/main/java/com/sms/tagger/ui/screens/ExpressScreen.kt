@@ -75,7 +75,24 @@ fun ExpressScreen() {
             // 读取最近5000条短信，确保包含所有快递信息
             val smsList = reader.readLatestSms(5000)
             rawSmsList = smsList
-            expressList = ExpressExtractor.extractAllExpressInfo(smsList)
+            
+            // 1. 从短信提取快递信息
+            var extractedList = ExpressExtractor.extractAllExpressInfo(smsList)
+            
+            // 2. 从 SharedPreferences 读取保存的状态
+            val prefs = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
+            extractedList = extractedList.map { express ->
+                val statusKey = "pickup_${express.pickupCode}"
+                val isSaved = prefs.getBoolean(statusKey, false)
+                if (isSaved) {
+                    express.copy(status = PickupStatus.PICKED)
+                } else {
+                    express
+                }
+            }
+            
+            // 3. 更新内存
+            expressList = extractedList
             isLoading = false
         } catch (e: Exception) {
             e.printStackTrace()
@@ -84,6 +101,11 @@ fun ExpressScreen() {
     }
     
     GradientBackground {
+        // 获取 SharedPreferences 实例（统一读取，避免重复）
+        val statusPrefs = remember { 
+            context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
+        }
+        
         // 获取今日快递
         val today = java.time.LocalDate.now().toString().replace("-", "-").takeLast(5) // MM-DD
         val todayItems = expressList.filter { item ->
@@ -129,8 +151,25 @@ fun ExpressScreen() {
                             // 一键取件按钮
                             Button(
                                 onClick = {
-                                    // 获取未取快递列表
-                                    val pendingItems = expressList.filter { it.status != PickupStatus.PICKED }
+                                    // 获取当前页签的未取快递列表（已过滤）
+                                    val today = java.time.LocalDate.now()
+                                    val sevenDaysAgo = today.minusDays(7)
+                                    // 一键取件：使用 SharedPreferences 状态判断，确保与数量统计逻辑一致
+                                    val tempPrefs = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
+                                    val pendingItems = if (currentTab == "pending") {
+                                        expressList.filter { express ->
+                                            val statusKey = "pickup_${express.pickupCode}"
+                                            val isPicked = tempPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                                            !isPicked && try {
+                                                val expressDate = java.time.LocalDate.parse(express.date)
+                                                expressDate >= sevenDaysAgo
+                                            } catch (e: Exception) {
+                                                true
+                                            }
+                                        }
+                                    } else {
+                                        emptyList()
+                                    }
                                     
                                     if (pendingItems.isEmpty()) {
                                         showToast = "暂无未取快递"
@@ -141,17 +180,19 @@ fun ExpressScreen() {
                                         confirmDialogMessage = "确定要一键取件 ${pendingItems.size} 个快递吗？"
                                         confirmDialogAction = {
                                             // 标记所有未取快递为已取
+                                            val sharedPref = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
+                                            val editor = sharedPref.edit()
                                             pendingItems.forEach { express ->
                                                 val statusKey = "pickup_${express.pickupCode}"
-                                                context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
-                                                    .edit()
-                                                    .putBoolean(statusKey, true)
-                                                    .apply()
+                                                editor.putBoolean(statusKey, true)
                                             }
+                                            editor.apply()
                                             showToast = "已取件 ${pendingItems.size} 个快递"
-                                            // 刷新列表
+                                            // 刷新列表：更新 expressList 中对应快递的状态，确保 UI 立即反映变化
                                             expressList = expressList.map { express ->
-                                                if (express.status != PickupStatus.PICKED) {
+                                                val statusKey = "pickup_${express.pickupCode}"
+                                                val isPicked = sharedPref.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                                                if (isPicked) {
                                                     express.copy(status = PickupStatus.PICKED)
                                                 } else {
                                                     express
@@ -175,46 +216,15 @@ fun ExpressScreen() {
                                     color = Color(0xFF667EEA)
                                 )
                             }
-                            // 调试按钮
+                            // 设置按钮 - 打开规则管理
                             IconButton(
                                 onClick = { 
-                                    val debugText = buildString {
-                                        append("=== 原始短信数据 (JSON格式) ===\n")
-                                        append("[\n")
-                                        rawSmsList.take(10).forEachIndexed { index, sms ->
-                                            append("  {\n")
-                                            append("    \"收信时间\": \"${sms.receivedAt}\",\n")
-                                            append("    \"发信号码\": \"${sms.sender}\",\n")
-                                            append("    \"短信内容\": \"${sms.content.replace("\"", "\\\"")}\"\n")
-                                            append("  }")
-                                            if (index < rawSmsList.take(10).size - 1) {
-                                                append(",")
-                                            }
-                                            append("\n")
-                                        }
-                                        append("]\n\n")
-                                        append("=== 提取结果 ===\n")
-                                        append("总快递数: ${expressList.size}\n\n")
-                                        expressList.take(10).forEachIndexed { index, express ->
-                                            append("【快递 ${index + 1}】\n")
-                                            append("快递公司: ${express.company}\n")
-                                            append("取件码: ${express.pickupCode}\n")
-                                            append("提取日期: ${express.date}\n")
-                                            append("地址: ${express.location ?: "未提取"}\n")
-                                            append("发件人: ${express.sender}\n")
-                                            append("接收时间: ${express.receivedAt}\n")
-                                            append("取件状态: ${express.status}\n")
-                                            append("原始短信: ${express.fullContent.take(80)}\n")
-                                            append("\n")
-                                        }
-                                    }
-                                    debugInfo = debugText
-                                    showDebugDialog = true
+                                    showRuleManager = true
                                 }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Settings,
-                                    contentDescription = "调试信息",
+                                    contentDescription = "设置规则",
                                     tint = Color(0xFF333333)
                                 )
                             }
@@ -224,6 +234,39 @@ fun ExpressScreen() {
                         )
                     )
                     // 页签栏
+                    // 计算各选项卡的快递数量
+                    val today = java.time.LocalDate.now()
+                    val sevenDaysAgo = today.minusDays(7)
+                    val thirtyDaysAgo = today.minusDays(30)
+                    
+                    // 统计已取快递数量：
+                    // 1. 从 expressList 中找到所有在 SharedPreferences 中标记为已取的快递
+                    // 2. 过滤出符合30天显示范围的快递
+                    // 这样确保数量统计基于真实状态（SharedPreferences），但只统计可显示的快递（expressList + 30天过滤）
+                    val pickedCount = expressList.filter { express ->
+                        val statusKey = "pickup_${express.pickupCode}"
+                        val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                        isPicked && try {
+                            val expressDate = java.time.LocalDate.parse(express.date)
+                            expressDate >= thirtyDaysAgo
+                        } catch (e: Exception) {
+                            true
+                        }
+                    }.size
+                    
+                    // 统计未取快递数量：
+                    // expressList 中未在 SharedPreferences 中标记为已取，且符合7天显示范围的快递
+                    val pendingCount = expressList.filter { express ->
+                        val statusKey = "pickup_${express.pickupCode}"
+                        val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                        !isPicked && try {
+                            val expressDate = java.time.LocalDate.parse(express.date)
+                            expressDate >= sevenDaysAgo
+                        } catch (e: Exception) {
+                            true
+                        }
+                    }.size
+                    
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -248,7 +291,7 @@ fun ExpressScreen() {
                                 null
                         ) {
                             Text(
-                                text = "未取",
+                                text = "未取 ($pendingCount)",
                                 fontSize = 14.sp,
                                 fontWeight = if (currentTab == "pending") FontWeight.SemiBold else FontWeight.Normal,
                                 color = if (currentTab == "pending") Color(0xFF667EEA) else Color(0xFF333333)
@@ -272,7 +315,7 @@ fun ExpressScreen() {
                                 null
                         ) {
                             Text(
-                                text = "已取",
+                                text = "已取 ($pickedCount)",
                                 fontSize = 14.sp,
                                 fontWeight = if (currentTab == "picked") FontWeight.SemiBold else FontWeight.Normal,
                                 color = if (currentTab == "picked") Color(0xFF4CAF50) else Color(0xFF333333)
@@ -311,11 +354,14 @@ fun ExpressScreen() {
                 val todayStr = today.toString().substring(5).replace("-", "-")  // MM-DD 格式
                 
                 // 根据当前页签过滤数据
+                // 使用统一的 SharedPreferences 实例，确保显示逻辑与数量统计逻辑一致
                 val filteredList = if (currentTab == "pending") {
                     // 未取快递：默认显示最近7天的信息
                     val sevenDaysAgo = today.minusDays(7)
                     expressList.filter { express ->
-                        express.status != PickupStatus.PICKED && try {
+                        val statusKey = "pickup_${express.pickupCode}"
+                        val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                        !isPicked && try {
                             // 解析日期 (YYYY-MM-DD 格式)
                             val expressDate = java.time.LocalDate.parse(express.date)
                             expressDate >= sevenDaysAgo
@@ -327,7 +373,9 @@ fun ExpressScreen() {
                     // 已取快递：最多显示最近30天的信息
                     val thirtyDaysAgo = today.minusDays(30)
                     expressList.filter { express ->
-                        express.status == PickupStatus.PICKED && try {
+                        val statusKey = "pickup_${express.pickupCode}"
+                        val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                        isPicked && try {
                             val expressDate = java.time.LocalDate.parse(express.date)
                             expressDate >= thirtyDaysAgo
                         } catch (e: Exception) {
@@ -349,7 +397,7 @@ fun ExpressScreen() {
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // 日期分组
                     groupedByDate.forEach { (date, expressItems) ->
@@ -376,28 +424,38 @@ fun ExpressScreen() {
     
     // 一键取件确认对话框
     if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = { Text(confirmDialogTitle) },
-            text = { Text(confirmDialogMessage) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        confirmDialogAction?.invoke()
-                        showConfirmDialog = false
+        // 半透明遮罩背景
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable(enabled = false) { },
+            contentAlignment = Alignment.Center
+        ) {
+            AlertDialog(
+                onDismissRequest = { showConfirmDialog = false },
+                title = { Text(confirmDialogTitle) },
+                text = { Text(confirmDialogMessage) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            confirmDialogAction?.invoke()
+                            showConfirmDialog = false
+                        }
+                    ) {
+                        Text("确定")
                     }
-                ) {
-                    Text("确定")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showConfirmDialog = false }
-                ) {
-                    Text("取消")
-                }
-            }
-        )
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { showConfirmDialog = false }
+                    ) {
+                        Text("取消")
+                    }
+                },
+                containerColor = Color.White
+            )
+        }
     }
     
     // 调试对话框
@@ -593,7 +651,9 @@ fun ExpressItemCard(
                 else -> Color.White
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isPicked) 0.dp else 4.dp
+        )
     ) {
         Row(
             modifier = Modifier
