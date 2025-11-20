@@ -59,6 +59,9 @@ fun ExpressScreen() {
     var showDebugDialog by remember { mutableStateOf(false) }
     var debugInfo by remember { mutableStateOf("") }
     var currentTab by remember { mutableStateOf("pending") }
+    // 搜索和筛选状态
+    var searchText by remember { mutableStateOf("") }
+    var dateFilterType by remember { mutableStateOf("本月") }  // 本月、本周、本日、全部
     
     // 如果显示规则管理，则显示规则管理页面
     if (showRuleManager) {
@@ -322,6 +325,78 @@ fun ExpressScreen() {
                             )
                         }
                     }
+                    // 搜索栏和日期筛选（仅在已取选项卡显示）
+                    if (currentTab == "picked") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            TextField(
+                                value = searchText,
+                                onValueChange = { newValue -> searchText = newValue },
+                                placeholder = {
+                                    Text(
+                                        "搜索取件码或日期...",
+                                        color = Color(0xFF8A8A8A),
+                                        fontSize = 14.sp
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 48.dp)
+                                    .background(
+                                        color = Color(0xFFFFFFFF).copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color(0xFFFFFFFF).copy(alpha = 0.6f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedTextColor = Color(0xFF333333),
+                                    unfocusedTextColor = Color(0xFF333333),
+                                    cursorColor = Color(0xFF333333),
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
+                            )
+                            
+                            // 日期筛选按钮 - 单个按钮循环切换（与HTML模板一致）
+                            val filterOptions = listOf("本月", "本周", "本日", "全部")
+                            Button(
+                                onClick = { 
+                                    // 循环切换筛选选项
+                                    val currentIndex = filterOptions.indexOf(dateFilterType)
+                                    val nextIndex = (currentIndex + 1) % filterOptions.size
+                                    dateFilterType = filterOptions[nextIndex]
+                                },
+                                modifier = Modifier
+                                    .height(40.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFFFFFF).copy(alpha = 0.5f)
+                                ),
+                                border = BorderStroke(
+                                    1.dp, 
+                                    Color(0xFFFFFFFF).copy(alpha = 0.6f)
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    text = "📅 $dateFilterType",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF333333)
+                                )
+                            }
+                        }
+                    }
                 }
             },
             bottomBar = {}
@@ -370,22 +445,38 @@ fun ExpressScreen() {
                         }
                     }
                 } else {
-                    // 已取快递：最多显示最近30天的信息
-                    val thirtyDaysAgo = today.minusDays(30)
+                    // 已取快递：根据日期筛选类型过滤
+                    val cutoffDate = when (dateFilterType) {
+                        "本月" -> today.minusDays(30)
+                        "本周" -> today.minusDays(7)
+                        "本日" -> today.minusDays(0)
+                        "全部" -> java.time.LocalDate.of(2000, 1, 1)  // 显示所有
+                        else -> today.minusDays(30)
+                    }
                     expressList.filter { express ->
                         val statusKey = "pickup_${express.pickupCode}"
                         val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
                         isPicked && try {
                             val expressDate = java.time.LocalDate.parse(express.date)
-                            expressDate >= thirtyDaysAgo
+                            expressDate >= cutoffDate
                         } catch (e: Exception) {
                             true  // 如果解析失败，保留该项
                         }
                     }
                 }
                 
+                // 搜索过滤（如果是在已取选项卡且有搜索文本）
+                val searchFilteredList = if (currentTab == "picked" && searchText.isNotEmpty()) {
+                    filteredList.filter { express ->
+                        express.pickupCode.contains(searchText, ignoreCase = true) ||
+                        express.date.contains(searchText, ignoreCase = true)
+                    }
+                } else {
+                    filteredList
+                }
+                
                 // 按日期分组，然后按日期倒序（日期较新的在前）
-                val groupedByDate = filteredList
+                val groupedByDate = searchFilteredList
                     .groupBy { it.date }  // 按日期分组
                     .toSortedMap(compareBy<String> { it }.reversed())  // 日期倒序（日期较新的在前）
                 
