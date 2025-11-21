@@ -7257,5 +7257,17 @@ frontend\docs\MOBILE_ADAPTATION.md
 Get-ChildItem -Path . -Filter "*.md" -Recurse -File | Where-Object { $_.FullName -notmatch "\\node_modules\\|\\.git\\|\\.gradle\\|android\\build\\" } | Measure-Object | Select-Object Count
 ```
 
+```
+dle\\|android\\build\\" } | Measure-Object | Select-Object Count                
+
+Count
+-----
+   57
+```
+
+---
+
+
+
 ---
 
