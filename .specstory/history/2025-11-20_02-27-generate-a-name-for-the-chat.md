@@ -7130,7 +7130,132 @@ Count
 1. **版本记录文件**（VERSION_*.md）
 2. **问题分析和修复记录**（*_ANALYSIS.md, *_FIX_*.md）
 3. **历史版本记录**（*_SUMMARY.md, *_COMPLETE.md）
-4. **HT
+4. **HTML 预览文件**（express_*.html, preview_*.html）
+5. **过时的文档**（*_QUICK_*.md, *_REFERENCE.md）
+
+### 保留的核心文件
+
+**MD 文件**（根目录）:
+- `00_START_HERE.md` - 项目入口
+- `README_INSTALL.md` - 安装指南
+- `TROUBLESHOOTING.md` - 故障排除
+- `RULES_ARCHITECTURE_SUMMARY.md` - 规则架构
+- `SETTINGS_PAGE_UI_DESIGN.md` - 设置页面设计
+- `FINAL_SUMMARY_2025_11_14.md` - 最终总结
+- `DOCUMENTATION_INDEX.md` - 文档索引
+- `FILE_CLEANUP_ANALYSIS.md` - 清理分析报告
+
+**HTML 文件**（根目录）:
+- `feedback_suggestions.html` - 反馈页面
+- `software_statement.html` - 软件声明
+
+### Git 提交
+
+所有更改已提交到 Git：
+```
+[main 909979e] chore: 清理无用的MD和HTML文件
+ 481 files changed, 7998 insertions(+), 54572 deletions(-)
+```
+
+### 清理效果
+
+- 文件总数减少：154 → 31（减少 79.9%）
+- 项目更整洁，便于维护
+- 保留的核心文档更易查找
+- Git 仓库大小减小
+
+清理完成。所有建议删除的文件已移除，核心文档已保留。
+
+---
+
+_**User**_
+
+删除当前项目目录中的所有md文件
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+
+先查看项目中的所有 md 文件，再执行删除：
+
+
+---
+
+```bash
+Get-ChildItem -Path . -Filter "*.md" -Recurse -File | Where-Object { $_.FullName -notmatch "\\node_modules\\|\\.git\\|\\.gradle\\|android\\build\\" } | Select-Object FullName | ForEach-Object { $_.FullName.Replace((Get-Location).Path + '\', '') }
+```
+
+```
+e.Replace((Get-Location).Path + '\', '') }                                      
+00_START_HERE.md
+DOCUMENTATION_INDEX.md
+FILE_CLEANUP_ANALYSIS.md
+FINAL_SUMMARY_2025_11_14.md
+README_INSTALL.md
+RULES_ARCHITECTURE_SUMMARY.md
+SETTINGS_PAGE_UI_DESIGN.md
+TROUBLESHOOTING.md
+.pytest_cache\README.md
+.specstory\.what-is-this.md
+.specstory\history\2025-11-06_08-35-分析express-detail页面内容需求.md
+.specstory\history\2025-11-07_01-52-比如我导入的短信内容-【菜鸟驿站】您的包裹已 到站,凭7-5-3028到郑州市北文雅小区6号楼102店取件。-导入后,快递标签中没有显示。.md
+.specstory\history\2025-11-11_09-44-打包当前项目为apk.md
+.specstory\history\2025-11-12_08-45-打包apk文件的帮助.md
+.specstory\history\2025-11-20_02-27-generate-a-name-for-the-chat.md
+.specstory\history\2025-11-20_08-59-现在需要新增一个软件声明的页面,内容参照-软件声明-md-,帮我生成一个html。.md                                                  
+.specstory\history\反馈.md
+.specstory\history\软件声明.md
+android\ANDROID_UPDATES.md
+android\BUILD_STATUS.md
+android\CUSTOM_RULES_GUIDE.md
+android\QUICK_START.md
+android\README_BUILD.md
+android\README.md
+android\ui_previews\README.md
+backend\README.md
+docs\下一步优化.md
+docs\ANDROID_DEVELOPMENT_GUIDE.md
+docs\ANDROID_DEVELOPMENT_PLAN.md
+docs\ANDROID_PAGE_DESIGN.md
+docs\APP_IMPORT_FEATURE_TOGGLE.md
+docs\BACKEND_SERVICE_RESTART.md
+docs\BUILTIN_RULES_OPTIMIZATION.md
+docs\CLEANUP_PHASE2.md
+docs\CLEANUP_RECOMMENDATIONS.md
+docs\DATABASE_CONNECTION_FIX.md
+docs\EXPRESS_DETAIL_优化总结.md
+docs\EXPRESS_DETAIL_GUIDE.md
+docs\NEW_FEATURES.md
+docs\PAGE_UNRESPONSIVE_FIX.md
+docs\POSTGRESQL_SETUP.md
+docs\PROJECT_STATUS.md
+docs\QUICK_START_GUIDE.md
+docs\RULE_MANAGEMENT_GUIDE.md
+docs\SCRIPTS_CREATED.md
+docs\SINGLE_TAG_IMPLEMENTATION_SUMMARY.md
+docs\SINGLE_TAG_PER_SMS.md
+docs\SMART_DISPLAY_FEATURE.md
+docs\SMS_IMPORT_COMPLETE_GUIDE.md
+docs\SMS_IMPORT_TESTING.md
+docs\STARTUP_ERROR_SUMMARY.md
+docs\TAG_CLICK_BUG_FIX.md
+docs\TAG_MANAGE_OPTIMIZATION.md
+docs\TAG_MANAGE_UI_UPDATE.md
+frontend\README.md
+frontend\docs\DESIGN_GUIDE.md
+frontend\docs\MOBILE_ADAPTATION.md
+```
+
+---
+
+```bash
+Get-ChildItem -Path . -Filter "*.md" -Recurse -File | Where-Object { $_.FullName -notmatch "\\node_modules\\|\\.git\\|\\.gradle\\|android\\build\\" } | Measure-Object | Select-Object Count
+```
 
 ---
 
