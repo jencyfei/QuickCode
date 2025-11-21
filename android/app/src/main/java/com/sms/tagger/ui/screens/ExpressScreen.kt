@@ -94,7 +94,20 @@ fun ExpressScreen() {
                 }
             }
             
-            // 3. 更新内存
+            // 3. 按日期和取件码去重（保留第一条记录）
+            val seenKeys = mutableSetOf<String>()
+            extractedList = extractedList.filter { express ->
+                // 使用"日期_取件码"作为唯一键
+                val key = "${express.date}_${express.pickupCode}"
+                if (seenKeys.contains(key)) {
+                    false  // 已存在，过滤掉
+                } else {
+                    seenKeys.add(key)
+                    true   // 保留第一条
+                }
+            }
+            
+            // 4. 更新内存
             expressList = extractedList
             isLoading = false
         } catch (e: Exception) {
@@ -711,8 +724,15 @@ fun ExpressItemCard(
     // 从 SharedPreferences 读取状态
     val sharedPref = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
     val statusKey = "pickup_${express.pickupCode}"
-    var isPicked by remember { 
+    
+    // 实时从 SharedPreferences 读取状态，确保状态正确
+    var isPicked by remember(express.pickupCode) { 
         mutableStateOf(sharedPref.getBoolean(statusKey, express.status == PickupStatus.PICKED))
+    }
+    
+    // 当组件重新组合时，重新从 SharedPreferences 读取状态
+    LaunchedEffect(express.pickupCode) {
+        isPicked = sharedPref.getBoolean(statusKey, express.status == PickupStatus.PICKED)
     }
     
     // 提取时间信息

@@ -67,11 +67,13 @@ fun SmsListScreen(
                 return@LaunchedEffect
             }
             
-            // 读取最近5000条短信（按日期倒序）
+            // 读取所有短信（增加数量限制，确保显示完整）
             android.util.Log.d("SmsListScreen", "========== 开始加载短信列表 ==========")
             android.util.Log.d("SmsListScreen", "标签过滤: $tagFilter")
             
-            val allSms = smsReader.readAllSms(5000)
+            // 增加读取数量限制到20000条，确保能读取到所有短信（包括运营商短信等）
+            // 如果没有标签过滤，显示所有短信；否则只显示指定标签的短信
+            val allSms = smsReader.readAllSms(20000)
             
             android.util.Log.d("SmsListScreen", "✅ 读取到 ${allSms.size} 条短信")
             
@@ -242,7 +244,7 @@ private fun formatTime(isoTime: String): String {
             diff < 24 * 60 * 60 * 1000 -> "${diff / (60 * 60 * 1000)}小时前"
             else -> {
                 val displayFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
-                displayFormat.format(date)
+                displayFormat.format(date ?: Date())
             }
         }
     } catch (e: Exception) {

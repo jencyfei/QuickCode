@@ -45,35 +45,9 @@ import kotlinx.serialization.decodeFromString
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RuleManageScreen(onBack: (() -> Unit)? = null) {
-    // 初始化内置规则
+    // 初始化内置规则 - 只保留菜鸟驿站取件码规则
     val initialBuiltInRules = listOf(
-        // 优先级10：标准取件码格式
-        TagRule(
-            id = "builtin_pickup_01",
-            ruleName = "标准取件码格式",
-            tagName = "快递",
-            ruleType = RuleType.CONTENT,
-            condition = "取件码",
-            extractPosition = "取件码",
-            extractLength = 12,
-            isEnabled = true,
-            priority = 10,
-            isBuiltIn = true
-        ),
-        // 优先级9：提货码格式
-        TagRule(
-            id = "builtin_pickup_02",
-            ruleName = "提货码格式",
-            tagName = "快递",
-            ruleType = RuleType.CONTENT,
-            condition = "提货码",
-            extractPosition = "提货码",
-            extractLength = 12,
-            isEnabled = true,
-            priority = 9,
-            isBuiltIn = true
-        ),
-        // 优先级8：凭X-X-XXXX格式（优先匹配数字格式，如"凭2-4-2029"）✅ 新增
+        // 菜鸟驿站取件码（凭X-X-XXXX格式）
         TagRule(
             id = "builtin_cainiao_01",
             ruleName = "菜鸟驿站取件码（凭X-X-XXXX）",
@@ -81,22 +55,9 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
             ruleType = RuleType.CONTENT,
             condition = "【菜鸟驿站】",
             extractPosition = "凭",
-            extractLength = 12,  // 增加长度以支持"2-4-2029"格式
+            extractLength = 12,  // 支持"2-4-2029"格式
             isEnabled = true,
             priority = 8,
-            isBuiltIn = true
-        ),
-        // 优先级7：凭XX其他格式
-        TagRule(
-            id = "builtin_cainiao_02",
-            ruleName = "菜鸟驿站取件码（其他格式）",
-            tagName = "快递",
-            ruleType = RuleType.CONTENT,
-            condition = "凭",
-            extractPosition = "凭",
-            extractLength = 12,
-            isEnabled = true,
-            priority = 7,
             isBuiltIn = true
         )
     )
@@ -290,11 +251,17 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                         }
                     }
                 } else {
-                    // 添加新规则时，设置为非内置规则
-                    rules = rules + newRule.copy(
-                        id = System.currentTimeMillis().toString(),
-                        isBuiltIn = false
-                    )
+                    // 添加新规则时，确保ID不为空并设置为非内置规则
+                    // 如果对话框传来的ID为空，则生成新的唯一ID
+                    val finalRule = if (newRule.id.isBlank()) {
+                        newRule.copy(
+                            id = "custom_${System.currentTimeMillis()}_${(1000..9999).random()}",
+                            isBuiltIn = false
+                        )
+                    } else {
+                        newRule.copy(isBuiltIn = false)
+                    }
+                    rules = rules + finalRule
                 }
                 // 保存规则到 SharedPreferences
                 saveRulesToStorage(rules)
@@ -636,9 +603,12 @@ fun AddRuleDialog(
                             conditionKeyword
                         }
                         
+                        // 如果是新规则，生成唯一ID；否则使用原有ID
+                        val ruleId = rule?.id ?: "custom_${System.currentTimeMillis()}_${(1000..9999).random()}"
+                        
                         onSave(
                             TagRule(
-                                id = rule?.id ?: "",
+                                id = ruleId,
                                 ruleName = ruleName,
                                 tagName = tagName,
                                 ruleType = ruleType,
@@ -646,7 +616,8 @@ fun AddRuleDialog(
                                 extractPosition = extractPosition,
                                 extractLength = extractLength.toIntOrNull() ?: 0,
                                 isEnabled = rule?.isEnabled ?: true,
-                                priority = rule?.priority ?: 0
+                                priority = rule?.priority ?: 0,
+                                isBuiltIn = rule?.isBuiltIn ?: false
                             )
                         )
                     }

@@ -40,7 +40,7 @@ fun ExpressPickedScreen() {
     var searchText by remember { mutableStateOf("") }
     var filterType by remember { mutableStateOf("本月") }
     var showToast by remember { mutableStateOf("") }
-    
+
     // 获取 SharedPreferences 实例
     val statusPrefs = remember { 
         context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)

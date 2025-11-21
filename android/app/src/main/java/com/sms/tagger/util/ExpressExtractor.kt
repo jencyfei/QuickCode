@@ -28,7 +28,9 @@ object ExpressExtractor {
         "EMS" to "中国邮政",
         "德邦" to "德邦快递",
         "极兔" to "极兔速递",
-        "菜鸟" to "菜鸟驿站"
+        "菜鸟" to "菜鸟驿站",
+        "兔喜" to "兔喜生活",
+        "兔喜生活" to "兔喜生活"
     )
     
     // 取件码正则表达式
@@ -145,12 +147,22 @@ object ExpressExtractor {
                 return caiNiaoCodes
             }
         }
+
+        // 【新增规则】兔喜生活：支持包含连字符的取件码（如 00-7956）
+        if (content.contains("【兔喜生活】") || content.contains("兔喜生活")) {
+            val tuXiCodes = extractAllTuXiPickupCodes(content)
+            if (tuXiCodes.isNotEmpty()) {
+                return tuXiCodes
+            }
+        }
         
         // 其他规则
         for (pattern in pickupCodePatterns) {
             val matcher = pattern.matcher(content)
             while (matcher.find()) {
-                codes.add(matcher.group(1))
+                matcher.group(1)?.let { code ->
+                    codes.add(code)
+                }
             }
         }
         
@@ -209,6 +221,52 @@ object ExpressExtractor {
             }
             pureNumbers
         }
+    }
+
+    /**
+     * 【新增规则】兔喜生活取件码提取（支持包含连字符的编码）
+     * 示例：【兔喜生活】...取件码为00-7956
+     */
+    private fun extractAllTuXiPickupCodes(content: String): List<String> {
+        val codes = mutableListOf<String>()
+        
+        // 方案1：优先匹配"取件码为"或"取件码:"后面的连字符编码
+        // 示例：【兔喜生活】...取件码为00-7956
+        val pattern1 = Pattern.compile("取件码[为:：]\\s*([0-9A-Za-z]+-[0-9A-Za-z]+(?:-[0-9A-Za-z]+)*)")
+        val matcher1 = pattern1.matcher(content)
+        while (matcher1.find()) {
+            val code = matcher1.group(1)?.trim()
+            if (!code.isNullOrEmpty()) {
+                codes.add(code)
+            }
+        }
+        
+        // 方案2：如果方案1未匹配到，尝试匹配"凭"后面的连字符编码
+        if (codes.isEmpty()) {
+            val pattern2 = Pattern.compile("凭\\s*([0-9A-Za-z]+-[0-9A-Za-z]+(?:-[0-9A-Za-z]+)*)")
+            val matcher2 = pattern2.matcher(content)
+            while (matcher2.find()) {
+                val code = matcher2.group(1)?.trim()
+                if (!code.isNullOrEmpty()) {
+                    codes.add(code)
+                }
+            }
+        }
+        
+        // 方案3：兜底 - 如果上述规则未命中，但文本中存在"00-7956"样式的编码，也尝试提取
+        if (codes.isEmpty()) {
+            val fallbackPattern = Pattern.compile("([0-9A-Za-z]{2,}-[0-9A-Za-z]{2,}(?:-[0-9A-Za-z]{2,})*)")
+            val fallbackMatcher = fallbackPattern.matcher(content)
+            while (fallbackMatcher.find()) {
+                val code = fallbackMatcher.group(1)?.trim()
+                // 过滤掉明显不是取件码的匹配（如日期格式）
+                if (!code.isNullOrEmpty() && !code.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                    codes.add(code)
+                }
+            }
+        }
+
+        return codes.distinct()
     }
     
     /**
