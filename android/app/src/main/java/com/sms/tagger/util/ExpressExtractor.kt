@@ -181,7 +181,9 @@ object ExpressExtractor {
      * 【内置规则】菜鸟驿站取件码提取（支持多个）
      * 规则：在"凭"或"取件码为"之后提取数字和横杠组成的取件码
      * 支持多个取件码（逗号或中文逗号分隔）
-     * 示例：【菜鸟驿站】您有2个包裹在郑州市北文雅小区6号楼102店，取件码为6-5-3002, 6-2-3006。
+     * 示例：
+     * - 【菜鸟驿站】您有2个包裹在郑州市北文雅小区6号楼102店，取件码为6-5-3002, 6-2-3006。
+     * - 【菜鸟驿站】您的包裹已到站，凭1-4-4011到郑州市北文雅小区6号楼102店取件。
      */
     private fun extractAllCaiNiaoPickupCodes(content: String): List<String> {
         // 查找"凭"或"取件码为"的位置
@@ -198,28 +200,59 @@ object ExpressExtractor {
         
         val restContent = content.substring(startIndex)
         
-        // 匹配格式：数字-数字-数字 或 数字-数字-数字-数字 等
+        // 匹配格式：
+        // 1. 标准格式：数字-数字-数字（如：6-5-3002）
+        // 2. 标准格式：数字-数字-数字-数字（如：6-5-3-002）
+        // 3. 特殊格式：数字-数字-多位数字（如：1-4-4011，第三部分是2-4位数字）
         // 支持多个取件码（逗号或中文逗号分隔）
-        val codePattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]+(?:-[0-9]+)?)")
-        val matcher = codePattern.matcher(restContent)
         
         // 收集所有匹配的取件码
         val codes = mutableListOf<String>()
-        while (matcher.find()) {
-            codes.add(matcher.group(1)?.trim() ?: "")
+        
+        // 方案1：优先匹配标准格式（至少3段，每段至少1位数字）
+        // 例如：6-5-3002、1-4-4011、6-5-3-002
+        // 注意：[0-9]+可以匹配多位数字，所以"1-4-4011"也能匹配
+        // 修改：使用更精确的正则，确保能匹配"1-4-4011"这种格式
+        // 格式：数字-数字-数字（第三部分可以是1-6位数字）
+        val standardPattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]{1,6}(?:-[0-9]+)?)")
+        val standardMatcher = standardPattern.matcher(restContent)
+        while (standardMatcher.find()) {
+            val code = standardMatcher.group(1)?.trim() ?: ""
+            if (code.isNotEmpty()) {
+                // 过滤掉明显不是取件码的匹配（如日期格式：2025-11-20）
+                // 但保留"1-4-4011"这种格式
+                if (!code.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                    codes.add(code)
+                }
+            }
+        }
+        
+        // 方案2：如果标准格式未匹配到，尝试更宽松的格式匹配
+        // 匹配：数字-数字-数字的组合（第三部分可以是1-6位数字）
+        // 这样可以匹配各种变体格式
+        if (codes.isEmpty()) {
+            val fallbackPattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]{1,6}(?:-[0-9]+)?)")
+            val fallbackMatcher = fallbackPattern.matcher(restContent)
+            while (fallbackMatcher.find()) {
+                val code = fallbackMatcher.group(1)?.trim() ?: ""
+                // 过滤掉明显不是取件码的匹配（如日期格式）
+                if (code.isNotEmpty() && !code.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                    codes.add(code)
+                }
+            }
         }
         
         return if (codes.isNotEmpty()) {
-            codes
+            codes.distinct()  // 去重
         } else {
-            // 如果没有找到X-X-XXXX格式，尝试提取纯数字（4-8位）
+            // 如果所有格式都未匹配到，尝试提取纯数字（4-8位）
             val pureNumberPattern = Pattern.compile("([0-9]{4,8})")
             val numberMatcher = pureNumberPattern.matcher(restContent)
             val pureNumbers = mutableListOf<String>()
             while (numberMatcher.find()) {
                 pureNumbers.add(numberMatcher.group(1)?.trim() ?: "")
             }
-            pureNumbers
+            pureNumbers.distinct()
         }
     }
 
@@ -240,7 +273,7 @@ object ExpressExtractor {
                 codes.add(code)
             }
         }
-        
+
         // 方案2：如果方案1未匹配到，尝试匹配"凭"后面的连字符编码
         if (codes.isEmpty()) {
             val pattern2 = Pattern.compile("凭\\s*([0-9A-Za-z]+-[0-9A-Za-z]+(?:-[0-9A-Za-z]+)*)")

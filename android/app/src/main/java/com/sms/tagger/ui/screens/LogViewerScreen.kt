@@ -1,6 +1,8 @@
 package com.sms.tagger.ui.screens
 
-import androidx.compose.foundation.background
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,197 +22,158 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sms.tagger.ui.components.GradientBackground
+import com.sms.tagger.ui.theme.TextSecondary
 import com.sms.tagger.util.LogFileWriter
 import java.io.File
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 /**
  * 日志查看页面
- * 用于查看和导出应用日志
+ * 显示应用日志，便于用户查看和分享
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogViewerScreen(onBack: (() -> Unit)? = null) {
+fun LogViewerScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val logFileWriter = remember { LogFileWriter(context) }
     
-    var logFiles by remember { mutableStateOf<List<File>>(emptyList()) }
-    var selectedLogFile by remember { mutableStateOf<File?>(null) }
     var logContent by remember { mutableStateOf("") }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+    var showClearDialog by remember { mutableStateOf(false) }
     
-    // 加载日志文件列表
+    // 加载日志内容
     LaunchedEffect(Unit) {
-        logFiles = logFileWriter.getLogFiles()
-        if (logFiles.isNotEmpty()) {
-            selectedLogFile = logFiles.first()
-            logContent = logFileWriter.getLogContent(logFiles.first().name)
+        isLoading = true
+        try {
+            logContent = logFileWriter.getLatestLogContent()
+        } catch (e: Exception) {
+            logContent = "读取日志失败: ${e.message}"
+        } finally {
+            isLoading = false
         }
     }
     
     GradientBackground {
         Scaffold(
-            containerColor = Color.Transparent,
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text("日志查看器") },
+                    title = { Text("调试日志") },
                     navigationIcon = {
-                        if (onBack != null) {
-                            IconButton(onClick = onBack) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "返回")
-                            }
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                         }
                     },
                     actions = {
-                        // 删除按钮
-                        IconButton(
-                            onClick = { showDeleteDialog = true }
-                        ) {
+                        // 分享日志
+                        IconButton(onClick = {
+                            shareLog(context, logContent)
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "分享日志")
+                        }
+                        // 清空日志
+                        IconButton(onClick = {
+                            showClearDialog = true
+                        }) {
                             Icon(Icons.Default.Delete, contentDescription = "清空日志")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent
                     )
                 )
             }
         ) { paddingValues ->
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // 左侧：日志文件列表
-                Column(
+                // 日志目录提示
+                Card(
                     modifier = Modifier
-                        .width(200.dp)
-                        .fillMaxHeight()
-                        .background(Color.White.copy(alpha = 0.1f))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "日志文件 (${logFiles.size})",
-                        fontSize = 14.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        modifier = Modifier.padding(8.dp)
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF667EEA).copy(alpha = 0.1f)
                     )
-                    
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
-                        items(logFiles) { file ->
-                            Button(
-                                onClick = {
-                                    selectedLogFile = file
-                                    logContent = logFileWriter.getLogContent(file.name)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(40.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (selectedLogFile == file) {
-                                        Color(0xFF667EEA)
-                                    } else {
-                                        Color.White.copy(alpha = 0.3f)
-                                    }
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = file.name.replace("sms_agent_", "").replace(".log", ""),
-                                    fontSize = 11.sp,
-                                    maxLines = 1
-                                )
-                            }
-                        }
+                        Text(
+                            text = "📁 日志文件位置",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Color(0xFF667EEA)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = logFileWriter.getLogDirPath(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "提示：日志文件保存在下载目录，可以直接访问",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
                     }
                 }
                 
-                // 右侧：日志内容
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp)
-                ) {
-                    if (logFiles.isEmpty()) {
-                        Box(
+                // 日志内容
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (logContent.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "暂无日志",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextSecondary
+                        )
+                    }
+                } else {
+                    // 显示日志内容
+                    Card(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            contentPadding = PaddingValues(16.dp)
                         ) {
-                            Text("暂无日志文件")
-                        }
-                    } else {
-                        // 日志文件信息
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            // 按行分割日志
+                            val logLines = logContent.split("\n")
+                            items(logLines.size) { index ->
+                                val line = logLines[index]
                                 Text(
-                                    text = "文件: ${selectedLogFile?.name ?: ""}",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF666666)
+                                    text = line,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp,
+                                    color = when {
+                                        line.contains("ERROR", ignoreCase = true) -> Color(0xFFFF6B6B)
+                                        line.contains("WARN", ignoreCase = true) -> Color(0xFFFFA500)
+                                        line.contains("INFO", ignoreCase = true) -> Color(0xFF4ECDC4)
+                                        line.contains("DEBUG", ignoreCase = true) -> Color(0xFF95A5A6)
+                                        line.contains("🔍", ignoreCase = false) -> Color(0xFF4ECDC4)
+                                        line.contains("⚠️", ignoreCase = false) -> Color(0xFFFFA500)
+                                        line.contains("✅", ignoreCase = false) -> Color(0xFF4ECDC4)
+                                        line.contains("❌", ignoreCase = false) -> Color(0xFFFF6B6B)
+                                        else -> Color(0xFF2C3E50)
+                                    },
+                                    modifier = Modifier.padding(vertical = 2.dp)
                                 )
-                                Text(
-                                    text = "大小: ${formatFileSize(selectedLogFile?.length() ?: 0)}",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF666666)
-                                )
-                            }
-                            
-                            // 导出按钮
-                            Button(
-                                onClick = {
-                                    // TODO: 实现导出功能
-                                },
-                                modifier = Modifier.height(36.dp),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = "导出",
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("导出", fontSize = 12.sp)
-                            }
-                        }
-                        
-                        Divider(modifier = Modifier.padding(vertical = 8.dp))
-                        
-                        // 日志内容显示
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    color = Color(0xFF1E1E1E),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(12.dp)
-                        ) {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                items(logContent.split("\n")) { line ->
-                                    if (line.isNotEmpty()) {
-                                        Text(
-                                            text = line,
-                                            fontSize = 10.sp,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = when {
-                                                line.contains("[ERROR]") || line.contains("❌") -> Color(0xFFFF6B6B)
-                                                line.contains("[WARN]") || line.contains("⚠️") -> Color(0xFFFFD93D)
-                                                line.contains("[DEBUG]") || line.contains("✅") -> Color(0xFF6BCB77)
-                                                else -> Color(0xFFCCCCCC)
-                                            },
-                                            modifier = Modifier.padding(vertical = 2.dp)
-                                        )
-                                    }
-                                }
                             }
                         }
                     }
@@ -219,29 +182,25 @@ fun LogViewerScreen(onBack: (() -> Unit)? = null) {
         }
     }
     
-    // 删除确认对话框
-    if (showDeleteDialog) {
+    // 清空日志确认对话框
+    if (showClearDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("清空所有日志") },
-            text = { Text("确定要删除所有日志文件吗？此操作无法撤销。") },
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("清空日志") },
+            text = { Text("确定要清空所有日志吗？此操作不可恢复。") },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         logFileWriter.clearAllLogs()
-                        logFiles = emptyList()
-                        selectedLogFile = null
                         logContent = ""
-                        showDeleteDialog = false
+                        showClearDialog = false
                     }
                 ) {
-                    Text("确定")
+                    Text("确定", color = Color(0xFFFF6B6B))
                 }
             },
             dismissButton = {
-                Button(
-                    onClick = { showDeleteDialog = false }
-                ) {
+                TextButton(onClick = { showClearDialog = false }) {
                     Text("取消")
                 }
             }
@@ -250,12 +209,17 @@ fun LogViewerScreen(onBack: (() -> Unit)? = null) {
 }
 
 /**
- * 格式化文件大小
+ * 分享日志内容
  */
-private fun formatFileSize(bytes: Long): String {
-    return when {
-        bytes < 1024 -> "$bytes B"
-        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-        else -> "${bytes / (1024 * 1024)} MB"
+private fun shareLog(context: Context, logContent: String) {
+    try {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, logContent)
+            putExtra(Intent.EXTRA_SUBJECT, "SMS Agent 调试日志")
+        }
+        context.startActivity(Intent.createChooser(intent, "分享日志"))
+    } catch (e: Exception) {
+        android.util.Log.e("LogViewerScreen", "分享日志失败", e)
     }
 }
