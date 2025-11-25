@@ -220,6 +220,28 @@ class MainActivity : ComponentActivity() {
     fun MainAppScreen(onLogout: () -> Unit) {
         var selectedTab by remember { mutableStateOf(0) } // 默认显示快递页面
         
+        // 判断是否超过2025年11月24号（用于测试弹窗）
+        val isBetaExpired = remember {
+            val currentTime = java.util.Calendar.getInstance()
+            val expirationDate = java.util.Calendar.getInstance().apply {
+                set(2025, java.util.Calendar.NOVEMBER, 24, 0, 0, 0)
+            }
+            currentTime.after(expirationDate)
+        }
+        
+        var showBetaDialog by remember { mutableStateOf(isBetaExpired) } // 仅在过期时显示
+        
+        // Beta到期弹窗
+        if (showBetaDialog) {
+            BetaExpirationDialog(
+                onContinue = { showBetaDialog = false },
+                onFeedback = { 
+                    // 打开反馈链接或QQ群
+                    showBetaDialog = false
+                }
+            )
+        }
+        
         Box(modifier = Modifier.fillMaxSize()) {
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -327,5 +349,146 @@ class MainActivity : ComponentActivity() {
                 style = MaterialTheme.typography.headlineSmall
             )
         }
+    }
+    
+    @Composable
+    fun BetaExpirationDialog(
+        onContinue: () -> Unit,
+        onFeedback: () -> Unit
+    ) {
+        AlertDialog(
+            onDismissRequest = onContinue,
+            modifier = Modifier
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            containerColor = androidx.compose.ui.graphics.Color.White,
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "🔔 Beta 测试版到期提醒",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = androidx.compose.ui.graphics.Color(0xFF333333)
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "感谢你在这段时间使用这款离线短信筛选工具！",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.ui.graphics.Color(0xFF555555),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    Text(
+                        text = "当前版本的 Beta 测试期已结束（完全离线，不联网，不上传数据）。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.ui.graphics.Color(0xFF555555),
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    Text(
+                        text = "为了让工具更好用，我们非常希望收集你的体验反馈：",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = androidx.compose.ui.graphics.Color(0xFF333333),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    // 邮箱
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📧 邮箱：",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.ui.graphics.Color(0xFF667EEA),
+                            modifier = Modifier.width(80.dp)
+                        )
+                        Text(
+                            text = "ChazRussel@outlook.com",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.ui.graphics.Color(0xFF333333)
+                        )
+                    }
+                    
+                    // QQ群
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "💬 QQ 群：",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.ui.graphics.Color(0xFF667EEA),
+                            modifier = Modifier.width(80.dp)
+                        )
+                        Text(
+                            text = "1064696594",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.ui.graphics.Color(0xFF333333)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Text(
+                        text = "你可以选择继续使用当前功能，也可以加入群聊参与新版测试！",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.ui.graphics.Color(0xFF666666),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = onFeedback,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = androidx.compose.ui.graphics.Color(0xFF667EEA)
+                    )
+                ) {
+                    Text(
+                        text = "【提交反馈】",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = androidx.compose.ui.graphics.Color.White
+                    )
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = onContinue,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = androidx.compose.ui.graphics.Color(0xFFE8E8E8)
+                    )
+                ) {
+                    Text(
+                        text = "【继续使用 Beta 版本】",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = androidx.compose.ui.graphics.Color(0xFF333333)
+                    )
+                }
+            }
+        )
     }
 }

@@ -256,8 +256,8 @@ fun RuleManageScreen(onBack: (() -> Unit)? = null) {
                     val finalRule = if (newRule.id.isBlank()) {
                         newRule.copy(
                             id = "custom_${System.currentTimeMillis()}_${(1000..9999).random()}",
-                            isBuiltIn = false
-                        )
+                        isBuiltIn = false
+                    )
                     } else {
                         newRule.copy(isBuiltIn = false)
                     }

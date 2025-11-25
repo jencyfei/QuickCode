@@ -59,8 +59,8 @@ fun LogViewerScreen(onBack: () -> Unit) {
                 TopAppBar(
                     title = { Text("调试日志") },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                         }
                     },
                     actions = {
@@ -113,7 +113,7 @@ fun LogViewerScreen(onBack: () -> Unit) {
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
+                                Text(
                             text = "提示：日志文件保存在下载目录，可以直接访问",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
@@ -124,10 +124,10 @@ fun LogViewerScreen(onBack: () -> Unit) {
                 
                 // 日志内容
                 if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                         CircularProgressIndicator()
                     }
                 } else if (logContent.isEmpty()) {
@@ -135,7 +135,7 @@ fun LogViewerScreen(onBack: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
+                                Text(
                             text = "暂无日志",
                             style = MaterialTheme.typography.bodyLarge,
                             color = TextSecondary
@@ -144,8 +144,8 @@ fun LogViewerScreen(onBack: () -> Unit) {
                 } else {
                     // 显示日志内容
                     Card(
-                        modifier = Modifier
-                            .fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         LazyColumn(
@@ -156,12 +156,12 @@ fun LogViewerScreen(onBack: () -> Unit) {
                             val logLines = logContent.split("\n")
                             items(logLines.size) { index ->
                                 val line = logLines[index]
-                                Text(
-                                    text = line,
+                                        Text(
+                                            text = line,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontFamily = FontFamily.Monospace,
-                                    fontSize = 10.sp,
-                                    color = when {
+                                            fontSize = 10.sp,
+                                            color = when {
                                         line.contains("ERROR", ignoreCase = true) -> Color(0xFFFF6B6B)
                                         line.contains("WARN", ignoreCase = true) -> Color(0xFFFFA500)
                                         line.contains("INFO", ignoreCase = true) -> Color(0xFF4ECDC4)
@@ -171,9 +171,9 @@ fun LogViewerScreen(onBack: () -> Unit) {
                                         line.contains("✅", ignoreCase = false) -> Color(0xFF4ECDC4)
                                         line.contains("❌", ignoreCase = false) -> Color(0xFFFF6B6B)
                                         else -> Color(0xFF2C3E50)
-                                    },
-                                    modifier = Modifier.padding(vertical = 2.dp)
-                                )
+                                            },
+                                            modifier = Modifier.padding(vertical = 2.dp)
+                                        )
                             }
                         }
                     }

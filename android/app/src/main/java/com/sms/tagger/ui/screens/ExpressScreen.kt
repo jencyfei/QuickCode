@@ -75,8 +75,8 @@ fun ExpressScreen() {
     LaunchedEffect(Unit) {
         try {
             val reader = SmsReader(context)
-            // 读取最近5000条短信，确保包含所有快递信息
-            val smsList = reader.readLatestSms(5000)
+            // 读取最近50000条短信，确保包含所有快递信息（与SmsListScreen保持一致）
+            val smsList = reader.readLatestSms(50000)
             rawSmsList = smsList
             
             // 1. 从短信提取快递信息
@@ -162,7 +162,13 @@ fun ExpressScreen() {
             topBar = {
                 Column {
                     TopAppBar(
-                        title = { Text("未取快递") },
+                        title = { 
+                            Text(
+                                text = if (currentTab == "pending") "未取快递" else "已取快递",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium
+                            ) 
+                        },
                         actions = {
                             // 一键取件按钮
                             Button(
