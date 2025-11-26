@@ -8,7 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,6 +31,8 @@ import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.util.PreferencesManager
 import com.sms.tagger.util.LogFileWriter
 import com.sms.tagger.util.AppLogger
+import com.sms.tagger.util.ActivationManager
+import com.sms.tagger.BuildConfig
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -117,7 +121,7 @@ class MainActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(32.dp))
             
             Text(
-                text = "版本 1.0.0",
+                text = "版本 ${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -220,37 +224,45 @@ class MainActivity : ComponentActivity() {
     fun MainAppScreen(onLogout: () -> Unit) {
         var selectedTab by remember { mutableStateOf(0) } // 默认显示快递页面
         
-        // 判断是否超过2025年11月24号（用于测试弹窗）
-        val isBetaExpired = remember {
+        // 判断是否超过2026年1月1号（到期后再提示激活）
+        val isExpired = remember {
             val currentTime = java.util.Calendar.getInstance()
             val expirationDate = java.util.Calendar.getInstance().apply {
-                set(2025, java.util.Calendar.NOVEMBER, 24, 0, 0, 0)
+                set(2026, java.util.Calendar.JANUARY, 1, 0, 0, 0)
             }
             currentTime.after(expirationDate)
         }
         
-        var showBetaDialog by remember { mutableStateOf(isBetaExpired) } // 仅在过期时显示
-        
-        // Beta到期弹窗
-        if (showBetaDialog) {
-            BetaExpirationDialog(
-                onContinue = { showBetaDialog = false },
-                onFeedback = { 
-                    // 打开反馈链接或QQ群
-                    showBetaDialog = false
-                }
-            )
+        // 激活状态
+        val context = this
+        val isActivated by remember {
+            mutableStateOf(ActivationManager.isActivated(context))
         }
+        var showActivationDialog by remember { mutableStateOf(isExpired && !isActivated) }
         
         Box(modifier = Modifier.fillMaxSize()) {
+            // 到期且未激活时显示激活弹窗
+            if (showActivationDialog) {
+                ActivationDialog(
+                    onActivated = {
+                        showActivationDialog = false
+                    },
+                    onCancel = {
+                        // 取消后继续使用基础功能，但高级功能后续通过 ActivationManager.isActivated() 再做限制
+                        showActivationDialog = false
+                    }
+                )
+            }
+            
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 bottomBar = {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(64.dp)
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                            .navigationBarsPadding()
+                            .height(96.dp)
                             .background(
                                 color = androidx.compose.ui.graphics.Color(0x66FFFFFF),
                                 shape = RoundedCornerShape(24.dp)
@@ -272,26 +284,23 @@ class MainActivity : ComponentActivity() {
                             // 快递 - 第1个
                             GlassNavButton(
                                 emoji = "📦",
+                                label = "取件助手",
                                 isSelected = selectedTab == 0,
                                 onClick = { selectedTab = 0 }
                             )
-                            // 标签 - 第2个
+                            // 短信 - 第2个
                             GlassNavButton(
-                                emoji = "🏷️",
+                                emoji = "💬",
+                                label = "短信",
                                 isSelected = selectedTab == 1,
                                 onClick = { selectedTab = 1 }
                             )
-                            // 短信 - 第3个
-                            GlassNavButton(
-                                emoji = "💬",
-                                isSelected = selectedTab == 2,
-                                onClick = { selectedTab = 2 }
-                            )
-                            // 设置 - 第4个
+                            // 设置 - 第3个
                             GlassNavButton(
                                 emoji = "⚙️",
-                                isSelected = selectedTab == 3,
-                                onClick = { selectedTab = 3 }
+                                label = "设置",
+                                isSelected = selectedTab == 2,
+                                onClick = { selectedTab = 2 }
                             )
                         }
                     }
@@ -300,9 +309,8 @@ class MainActivity : ComponentActivity() {
                 Box(modifier = Modifier.padding(paddingValues)) {
                     when (selectedTab) {
                         0 -> ExpressScreen()
-                        1 -> TagManageScreen()
-                        2 -> SmsListScreen()
-                        3 -> SettingsScreen(onLogout = onLogout)
+                        1 -> SmsListScreen()
+                        2 -> SettingsScreen(onLogout = onLogout)
                     }
                 }
             }
@@ -312,41 +320,45 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun GlassNavButton(
         emoji: String,
+        label: String,
         isSelected: Boolean,
         onClick: () -> Unit
     ) {
-        Button(
-            onClick = onClick,
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    color = if (isSelected) 
-                        androidx.compose.ui.graphics.Color(0x4D667EEA) 
-                    else 
-                        androidx.compose.ui.graphics.Color(0x4DFFFFFF),
-                    shape = CircleShape
-                )
-                .border(
-                    width = 1.dp,
-                    color = androidx.compose.ui.graphics.Color(0x80FFFFFF),
-                    shape = CircleShape
-                ),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSelected) 
-                    androidx.compose.ui.graphics.Color(0x4D667EEA) 
-                else 
-                    androidx.compose.ui.graphics.Color(0x4DFFFFFF)
-            ),
-            contentPadding = PaddingValues(0.dp),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 0.dp,
-                pressedElevation = 0.dp
-            )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.clickable(onClick = onClick)
         ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = if (isSelected) 
+                            androidx.compose.ui.graphics.Color(0x4D667EEA) 
+                        else 
+                            androidx.compose.ui.graphics.Color(0x4DFFFFFF),
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = androidx.compose.ui.graphics.Color(0x80FFFFFF),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = emoji,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = emoji,
-                style = MaterialTheme.typography.headlineSmall
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(bottom = 6.dp),
+                color = if (isSelected) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

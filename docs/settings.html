@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>设置</title>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        background: #f6f6f9;
+        color: #333;
+    }
+
+    .container {
+        padding: 20px;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        font-size: 24px;
+        text-align: center;
+        font-weight: 700;
+        margin-top: 10px;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .title-row h2 {
+        font-size: 18px;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .small-text {
+        font-size: 13px;
+        color: #888;
+        margin-top: 4px;
+    }
+
+    .device-id-box {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f1f3f8;
+        border-radius: 10px;
+        font-size: 13px;
+        word-break: break-all;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .copy-btn {
+        border: none;
+        background: #e6e8ef;
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .btn-primary {
+        width: 100%;
+        background: #7b5cff;
+        padding: 14px 0;
+        text-align: center;
+        color: white;
+        border-radius: 12px;
+        margin-top: 18px;
+        font-size: 16px;
+        border: none;
+        outline: none;
+    }
+
+    .btn-primary:active {
+        background: #6546e8;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 0;
+        font-size: 16px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .menu-item:last-child {
+        border-bottom: none;
+    }
+
+    .menu-icon {
+        font-size: 20px;
+        width: 30px;
+    }
+
+    .menu-right {
+        margin-left: auto;
+        color: #aaa;
+        font-size: 14px;
+    }
+
+    .link {
+        color: #7b5cff;
+        cursor: pointer;
+    }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>设置</h1>
+
+    <!-- 购买激活状态卡片 -->
+    <div class="card">
+
+        <div class="title-row">
+            <h2>买断激活状态</h2>
+        </div>
+        <div class="small-text" id="statusText">
+            未激活 · 试用期结束后部分功能将受限
+        </div>
+
+        <!-- 设备 ID -->
+        <div class="small-text" style="margin-top: 14px;">设备 ID</div>
+        <div class="device-id-box">
+            <span id="deviceId">AF23-9CD1-8A72</span>
+            <button class="copy-btn" onclick="copyDeviceId()">复制</button>
+        </div>
+
+        <!-- 激活入口按钮 -->
+        <button class="btn-primary" onclick="openActivate()">立即激活</button>
+
+        <div class="small-text" style="margin-top: 12px; line-height: 1.6;">
+            买断价格 12 元，一码一机，最多支持 3 次激活。  
+            激活过程全离线，隐私安全不外发。  
+            如有问题请联系开发者获取激活码。
+        </div>
+    </div>
+
+    <!-- 短信助手信息 -->
+    <div class="card">
+        <div class="menu-item">
+            <span class="menu-icon">📨</span>
+            <span>短信助手</span>
+            <span class="menu-right" id="versionText">v1.2.0</span>
+        </div>
+
+        <div class="menu-item" onclick="openFeedback()">
+            <span class="menu-icon">💬</span>
+            <span>反馈与建议</span>
+        </div>
+
+        <div class="menu-item" onclick="openAbout()">
+            <span class="menu-icon">📄</span>
+            <span>软件声明</span>
+        </div>
+    </div>
+</div>
+
+
+<script>
+function copyDeviceId() {
+    const text = document.getElementById("deviceId").textContent;
+    navigator.clipboard.writeText(text);
+    alert("设备 ID 已复制");
+}
+
+function openActivate() {
+    // 这里改成你 App 内部 WebView 跳转方式
+    window.location.href = "activate.html";
+}
+
+function openFeedback() {
+    alert("请跳转到反馈界面（程序内实现）");
+}
+
+function openAbout() {
+    alert("请跳转到软件声明界面（程序内实现）");
+}
+</script>
+
+</body>
+</html>

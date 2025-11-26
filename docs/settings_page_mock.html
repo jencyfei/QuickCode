@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>短信助手 · 设置页面（方案稿）</title>
+    <style>
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f3f5f9;
+            margin: 0;
+            padding: 0;
+            color: #1f2a37;
+        }
+        .page {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 16px 16px 96px;
+        }
+        header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .section {
+            margin-bottom: 16px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            padding: 18px;
+        }
+        .card + .card {
+            margin-top: 12px;
+        }
+        .card h2 {
+            font-size: 17px;
+            margin: 0 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: rgba(79, 70, 229, 0.1);
+            color: #4f46e5;
+        }
+        .button {
+            width: 100%;
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 14px;
+            text-align: center;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .button-primary {
+            background: linear-gradient(135deg, #6366f1, #7c3aed);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.35);
+        }
+        .button-outline {
+            background: transparent;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #4f46e5;
+        }
+        .device-id {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px;
+            font-family: "SFMono-Regular", Consolas, monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .device-id span {
+            font-weight: 600;
+        }
+        .bullet-list {
+            padding-left: 16px;
+            margin: 0;
+            color: #4b5563;
+        }
+        .bullet-list li {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(148, 163, 184, 0.3);
+        }
+        nav ul {
+            display: flex;
+            margin: 0;
+            padding: 10px 20px;
+            list-style: none;
+            justify-content: space-around;
+        }
+        nav li {
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        nav li.active {
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        nav span {
+            display: block;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header>设置</header>
+
+        <section class="section">
+            <div class="card">
+                <h2>📨 短信助手</h2>
+                <p>本地工具（v1.2.0）</p>
+                <div class="tag">独立运行 · 无需登录</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="card">
+                <h2>🔐 升级与激活</h2>
+                <p>当前状态：<strong>未激活</strong>（到期后部分高级功能受限）</p>
+                <p class="tag">买断价 12 元 · 一次激活永久使用</p>
+                <button class="button button-primary">激活高级功能</button>
+
+                <div style="margin-top: 16px;">
+                    <p style="margin-bottom: 6px;">设备 ID（点击复制后发给开发者获取激活码）</p>
+                    <div class="device-id">
+                        <span>F096-72FF-8CC9</span>
+                        <button class="button button-outline" style="width:auto;padding:6px 12px;">复制</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="card">
+                <h2>💬 反馈与支持</h2>
+                <p>遇到问题或有想法？欢迎告诉我们！</p>
+                <button class="button button-outline">联系开发者</button>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="card">
+                <h2>📄 隐私说明与免责声明</h2>
+                <p>了解我们如何保护你的数据</p>
+                <button class="button button-outline">查看详细声明</button>
+            </div>
+        </section>
+
+    </div>
+
+    <nav>
+        <ul>
+            <li>
+                <span>📦</span>
+                取件助手
+            </li>
+            <li>
+                <span>💬</span>
+                短信
+            </li>
+            <li class="active">
+                <span>⚙</span>
+                设置
+            </li>
+        </ul>
+    </nav>
+</body>
+</html>
+

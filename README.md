@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Android-lightgrey.svg)
 
-一个基于 Android + FastAPI 的智能短信管理和分类应用，支持短信自动分类、快递取件码提取、标签管理等核心功能。
+一个基于 Android + FastAPI 的智能短信管理应用，专注于短信读取与快递取件码提取等核心功能。
 
 [功能特性](#-功能特性) • [快速开始](#-快速开始) • [技术栈](#-技术栈) • [项目结构](#-项目结构)
 
@@ -23,17 +23,9 @@
 - **搜索筛选** - 支持取件码和日期搜索
 - **多种快递平台支持** - 菜鸟驿站、兔喜生活、京东物流等
 
-### 🏷️ 智能分类
-- **自动标签分类** - 自动识别验证码、银行、快递、营销等短信类型
-- **自定义规则引擎** - 支持自定义分类规则，灵活配置
-- **规则优先级管理** - 支持规则优先级设置和启用/禁用
-- **内置规则模板** - 预置常用分类规则，开箱即用
-
 ### 💬 短信管理
 - **短信列表** - 清晰展示所有短信，按时间倒序排列
-- **标签过滤** - 点击标签快速过滤对应类型的短信
 - **搜索功能** - 支持短信内容搜索
-- **批量操作** - 支持批量标记、删除等操作
 
 ### 🎨 用户体验
 - **玻璃拟态设计** - 现代化的 UI 设计风格
@@ -78,7 +70,6 @@ sms_agent/
 │   │       ├── ui/screens/  # UI 界面
 │   │       │   ├── ExpressScreen.kt      # 快递管理页面
 │   │       │   ├── SmsListScreen.kt      # 短信列表页面
-│   │       │   ├── RuleManageScreen.kt   # 规则管理页面
 │   │       │   └── SettingsScreen.kt     # 设置页面
 │   │       └── util/        # 工具类
 │   │           ├── SmsReader.kt          # 短信读取
@@ -91,7 +82,6 @@ sms_agent/
 │   │   ├── routers/         # API 路由
 │   │   │   ├── auth.py      # 认证相关
 │   │   │   ├── sms.py       # 短信管理
-│   │   │   ├── tags.py      # 标签管理
 │   │   │   └── extraction_rules.py  # 规则管理
 │   │   ├── models/          # 数据模型
 │   │   ├── schemas/         # Pydantic 模式

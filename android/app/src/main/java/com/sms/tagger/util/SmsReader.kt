@@ -57,31 +57,49 @@ class SmsReader(private val context: Context) {
             var hasMore = true
             
             // 使用基于时间戳的迭代查询，确保读取所有短信
+            // 使用Set记录已读取的短信_ID，避免重复
+            val seenIds = mutableSetOf<Long>()
+            
             while (hasMore && smsList.size < limit) {
                 pageNum++
                 val pageLimit = minOf(PAGE_SIZE, limit - smsList.size)
                 
                 AppLogger.d(TAG, "读取第 $pageNum 页 (limit=$pageLimit, lastDate=${if (lastDate != null) java.util.Date(lastDate) else "null"}, lastId=${lastReadMinId ?: "null"})")
                 
-                val pageSms = readSmsPageByDate(lastDate, lastReadMinId, pageLimit)
-                AppLogger.d(TAG, "第 $pageNum 页读取到 ${pageSms.size} 条短信")
+                val pageSmsWithId = readSmsPageByDate(lastDate, lastReadMinId, pageLimit)
+                AppLogger.d(TAG, "第 $pageNum 页读取到 ${pageSmsWithId.size} 条短信（原始）")
                 
-                if (pageSms.isEmpty()) {
+                if (pageSmsWithId.isEmpty()) {
                     AppLogger.d(TAG, "已到达短信列表底部（无更多数据）")
                     hasMore = false
                     break
                 }
                 
-                smsList.addAll(pageSms)
+                // 去重：使用_ID作为唯一标识，避免重复添加
+                val newSmsWithId = pageSmsWithId.filterNot { smsWithId ->
+                    seenIds.contains(smsWithId.id)
+                }
+                
+                // 记录新短信的_ID
+                newSmsWithId.forEach { seenIds.add(it.id) }
+                
+                if (newSmsWithId.size < pageSmsWithId.size) {
+                    val duplicates = pageSmsWithId.size - newSmsWithId.size
+                    AppLogger.w(TAG, "⚠️ 第 $pageNum 页检测到 $duplicates 条重复短信（基于_ID），已过滤")
+                }
+                
+                // 提取SmsCreate并添加到列表
+                val newSms = newSmsWithId.map { it.sms }
+                smsList.addAll(newSms)
+                AppLogger.d(TAG, "第 $pageNum 页去重后添加 ${newSms.size} 条短信，累计 ${smsList.size} 条")
                 
                 // 更新最后一条短信的时间戳和_ID，用于下一页查询
                 // 使用 readSmsPageByDate 保存的 lastReadMinDate 和 lastReadMinId
-                // 不再减1毫秒，因为使用了组合条件，可以直接使用相同的时间戳
                 lastDate = if (lastReadMinDate != null && lastReadMinDate!! > 0) {
                     lastReadMinDate!!  // 直接使用，不再减1毫秒
                 } else {
                     // 如果无法获取，尝试从返回的短信列表中解析
-                    pageSms.minOfOrNull { sms ->
+                    newSms.minOfOrNull { sms ->
                         try {
                             dateFormat.parse(sms.receivedAt)?.time ?: Long.MAX_VALUE
                         } catch (e: Exception) {
@@ -94,7 +112,7 @@ class SmsReader(private val context: Context) {
                 }
                 
                 // 如果返回的数据少于 pageLimit，说明已经到底了
-                if (pageSms.size < pageLimit) {
+                if (pageSmsWithId.size < pageLimit) {
                     AppLogger.d(TAG, "已到达短信列表底部（返回数量少于限制）")
                     hasMore = false
                     break
@@ -145,11 +163,29 @@ class SmsReader(private val context: Context) {
                     it.content.contains("中国电信", ignoreCase = true) ||
                     it.sender.contains("10086", ignoreCase = true) ||
                     it.sender.contains("10010", ignoreCase = true) ||
-                    it.sender.contains("10000", ignoreCase = true)
+                    it.sender.contains("10000", ignoreCase = true) ||
+                    it.sender == "101906" ||
+                    it.sender.contains("106875", ignoreCase = true) ||
+                    it.content.contains("郑好停", ignoreCase = true)
                 }
-                AppLogger.d(TAG, "包含运营商相关的短信共 ${operatorSms.size} 条")
-                operatorSms.take(5).forEachIndexed { index, sms ->
-                    AppLogger.d(TAG, "  运营商短信示例 ${index + 1}: 发件人=${sms.sender}, 内容=${sms.content.take(50)}, 时间=${sms.receivedAt}")
+                AppLogger.d(TAG, "包含运营商/服务相关的短信共 ${operatorSms.size} 条")
+                operatorSms.take(10).forEachIndexed { index, sms ->
+                    AppLogger.d(TAG, "  运营商/服务短信 ${index + 1}: 发件人=${sms.sender}, 内容=${sms.content.take(80)}, 时间=${sms.receivedAt}")
+                }
+                
+                // 专门检查101906和10687542007747193的短信
+                val targetSenderSms = smsList.filter { 
+                    it.sender == "101906" || 
+                    it.sender.contains("10687542007747193", ignoreCase = true) ||
+                    (it.sender.contains("106875", ignoreCase = true) && it.content.contains("郑好停", ignoreCase = true))
+                }
+                if (targetSenderSms.isNotEmpty()) {
+                    AppLogger.w(TAG, "🔍 找到目标发件人的短信 ${targetSenderSms.size} 条:")
+                    targetSenderSms.forEachIndexed { index, sms ->
+                        AppLogger.w(TAG, "  目标发件人短信 ${index + 1}: 发件人=${sms.sender}, 内容=${sms.content}, 时间=${sms.receivedAt}")
+                    }
+                } else {
+                    AppLogger.w(TAG, "⚠️ 未找到目标发件人的短信（101906 或 10687542007747193）")
                 }
             }
             
@@ -166,15 +202,21 @@ class SmsReader(private val context: Context) {
     private var lastReadMinDate: Long? = null
     private var lastReadMinId: Long? = null  // 保存最后一条短信的_ID
     
+    // 临时数据类，用于在分页时携带_ID信息
+    private data class SmsWithId(
+        val id: Long,
+        val sms: SmsCreate
+    )
+    
     /**
      * 基于时间戳读取单页短信（避免使用OFFSET导致的查询问题）
      * @param beforeDate 在此时间之前的短信（毫秒时间戳，null表示从最新开始）
      * @param beforeId 当beforeDate相同时，使用此_ID作为辅助条件（null表示不使用）
      * @param limit 每页数量
-     * @return 短信列表
+     * @return 短信列表（包含_ID信息）
      */
-    private fun readSmsPageByDate(beforeDate: Long?, beforeId: Long?, limit: Int): List<SmsCreate> {
-        val smsList = mutableListOf<SmsCreate>()
+    private fun readSmsPageByDate(beforeDate: Long?, beforeId: Long?, limit: Int): List<SmsWithId> {
+        val smsList = mutableListOf<SmsWithId>()
         lastReadMinDate = null  // 重置
         lastReadMinId = null    // 重置
         
@@ -308,25 +350,29 @@ class SmsReader(private val context: Context) {
                             }
                         }
                         
-                        // 检查是否是运营商短信（用于调试）
+                        // 检查是否是运营商短信或目标短信（用于调试）
                         val isOperatorSms = body.contains("中国移动", ignoreCase = true) || 
                                            body.contains("中国联通", ignoreCase = true) ||
                                            body.contains("中国电信", ignoreCase = true) ||
                                            address.contains("10086", ignoreCase = true) ||
                                            address.contains("10010", ignoreCase = true) ||
                                            address.contains("10000", ignoreCase = true) ||
-                                           body.contains("郑好停", ignoreCase = true)
+                                           address == "101906" ||  // 中国联通短信服务号码
+                                           body.contains("郑好停", ignoreCase = true) ||
+                                           address.contains("10687542007747193", ignoreCase = true) ||
+                                           address.contains("106875", ignoreCase = true)  // 106开头的服务号码
                         
                         if (isOperatorSms) {
-                            val operatorLogMsg = "🔍 运营商/服务短信[第${rowCount}行]: _ID=$id, 发件人=$address, 内容=${body.take(60)}, 时间=$receivedAt"
+                            val operatorLogMsg = "🔍 运营商/服务短信[第${rowCount}行]: _ID=$id, 发件人=$address, 内容=${body.take(100)}, 时间=$receivedAt"
                             if (rowCount <= LOG_COUNT) {
                                 AppLogger.d(TAG, operatorLogMsg)
                             } else {
-                                // 运营商短信也记录到滑动窗口
-                                last20Entries.add(operatorLogMsg)
-                                if (last20Entries.size > LOG_COUNT) {
+                                // 运营商短信也记录到滑动窗口，但优先级较高
+                                // 替换掉最早的一条非运营商短信
+                                if (last20Entries.size >= LOG_COUNT) {
                                     last20Entries.removeAt(0)
                                 }
+                                last20Entries.add(operatorLogMsg)
                             }
                         }
                         
@@ -339,13 +385,16 @@ class SmsReader(private val context: Context) {
                             AppLogger.w(TAG, "🔍 找到目标短信！类型=$typeName, 发件人=$address, 完整内容=$body, 时间=$receivedAt")
                         }
                         
-                        // 添加所有短信（包括空内容的短信）
+                        // 添加所有短信（包括空内容的短信），携带_ID信息
                         smsList.add(
-                            SmsCreate(
+                            SmsWithId(
+                                id = id,
+                                sms = SmsCreate(
                                 sender = address,
                                 content = body,
                                 receivedAt = receivedAt,
                                 phoneNumber = address
+                                )
                             )
                         )
                     } catch (e: Exception) {

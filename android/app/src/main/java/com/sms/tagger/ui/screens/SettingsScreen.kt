@@ -1,21 +1,37 @@
 package com.sms.tagger.ui.screens
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -25,10 +41,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sms.tagger.ui.components.FrostedGlassCard
 import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
+import com.sms.tagger.util.ActivationManager
+import com.sms.tagger.util.DeviceIdManager
+import com.sms.tagger.BuildConfig
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private enum class SettingsPage {
     Main,
@@ -46,11 +74,34 @@ fun SettingsScreen(
     onLogout: () -> Unit
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.Main) }
+    val context = LocalContext.current
+    val deviceId = remember { ActivationManager.getDeviceIdForUser(context) }
+    val deviceIdShortCode = remember(deviceId) { DeviceIdManager.getDeviceIdShortCode(context) }
+    var activationInfo by remember { mutableStateOf(ActivationManager.getActivationInfo(context)) }
+    var isActivated by remember { mutableStateOf(ActivationManager.isActivated(context)) }
+    var showActivationDialog by remember { mutableStateOf(false) }
+
+    if (showActivationDialog) {
+        ActivationDialog(
+            onActivated = {
+                activationInfo = ActivationManager.getActivationInfo(context)
+                isActivated = ActivationManager.isActivated(context)
+                showActivationDialog = false
+            },
+            onCancel = { showActivationDialog = false }
+        )
+    }
 
     GradientBackground {
         Crossfade(targetState = currentPage, label = "settings_pages") { page ->
             when (page) {
                 SettingsPage.Main -> SettingsHome(
+                    isActivated = isActivated,
+                    remainingActivations = activationInfo?.remaining ?: 0,
+                    deviceId = deviceId,
+                    deviceIdShortCode = deviceIdShortCode,
+                    activatedAt = activationInfo?.activatedAt,
+                    onActivateClick = { showActivationDialog = true },
                     onFeedbackClick = { currentPage = SettingsPage.Feedback },
                     onStatementClick = { currentPage = SettingsPage.SoftwareStatement }
                 )
@@ -68,115 +119,321 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsHome(
+    isActivated: Boolean,
+    remainingActivations: Int,
+    deviceId: String,
+    deviceIdShortCode: String,
+    activatedAt: Long?,
+    onActivateClick: () -> Unit,
     onFeedbackClick: () -> Unit,
     onStatementClick: () -> Unit
 ) {
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        containerColor = Color.Transparent,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("设置") },
+                title = { Text("设置", fontWeight = FontWeight.SemiBold) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                    containerColor = Color.Transparent
                 )
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            FrostedGlassCard(
+            // 短信助手卡片
+            item { AppInfoCard() }
+            // 绑定设备卡片
+            item {
+                BindDeviceCard(
+                    isActivated = isActivated,
+                    remainingActivations = remainingActivations,
+                    deviceId = deviceId,
+                    deviceIdShortCode = deviceIdShortCode,
+                    activatedAt = activatedAt,
+                    onActivateClick = onActivateClick
+                )
+            }
+            // 反馈与支持卡片
+            item { SupportCard(onSupportClick = onFeedbackClick) }
+            // 隐私说明卡片
+            item { PrivacyCard(onStatementClick = onStatementClick) }
+        }
+    }
+}
+
+/**
+ * 短信助手卡片 - 对齐 settings_page_mock_v2.html
+ */
+@Composable
+private fun AppInfoCard() {
+    FrostedGlassCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // 标题行：📨 短信助手 v1.2.0
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "📨 短信助手",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "v${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF999999),
+                    fontSize = 13.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            // 标签
+            Surface(
+                color = Color(0xFFF0F1F5),
+                shape = RoundedCornerShape(999.dp)
+            ) {
+                Text(
+                    text = "独立运行 · 无需登录",
+                    color = Color(0xFF666666),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 绑定设备卡片 - 对齐 settings_page_mock_v2.html
+ */
+@Composable
+private fun BindDeviceCard(
+    isActivated: Boolean,
+    remainingActivations: Int,
+    deviceId: String,
+    deviceIdShortCode: String,
+    activatedAt: Long?,
+    onActivateClick: () -> Unit
+) {
+    val clipboardManager = LocalClipboardManager.current
+    val formattedDate = remember(activatedAt) {
+        activatedAt?.let {
+            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            formatter.format(Date(it))
+        }
+    }
+
+    FrostedGlassCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // 标题
+            Text(
+                text = "🔐 绑定设备",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            // 状态
+            Text(
+                text = if (isActivated) "状态：已激活" else "状态：未激活",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF999999),
+                fontSize = 13.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // 分割线
+            Divider(color = Color(0xFFF0F1F5), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 重点文案区
+            Text(
+                text = "🌟 一次授权 · 长期可用",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "为当前设备解锁完整功能",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF666666),
+                fontSize = 12.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "¥10",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4F46E5),
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 设备ID行 - 紧凑横向布局
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                    .background(
+                        color = Color(0xFFF8F9FB),
+                        shape = RoundedCornerShape(8.dp)
                     )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
+                    .height(44.dp)
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = deviceIdShortCode,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = Color(0xFF374151),
+                    modifier = Modifier.weight(1f)
+                )
+                // 复制按钮
+                OutlinedButton(
+                    onClick = { clipboardManager.setText(AnnotatedString(deviceId)) },
+                    modifier = Modifier.height(28.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "复制",
+                        fontSize = 12.sp,
+                        color = Color(0xFF4F46E5)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                // 激活按钮
+                Button(
+                    onClick = onActivateClick,
+                    modifier = Modifier.height(28.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1F2937)
+                    )
+                ) {
                         Text(
-                            text = "短信助手",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "版本 1.0.0 - 本地工具",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
+                        text = "激活",
+                        fontSize = 12.sp,
+                        color = Color.White
+                    )
                 }
             }
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
-
-            SettingItem(
-                icon = Icons.Default.Chat,
-                title = "反馈与建议",
-                subtitle = "分享您的想法或问题",
-                onClick = onFeedbackClick
-            )
-
-            SettingItem(
-                icon = Icons.Default.Description,
-                title = "软件声明",
-                subtitle = "了解隐私说明与免责条款",
-                onClick = onStatementClick
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "复制后通过「反馈与支持」联系开发者获取激活码",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF999999),
+                fontSize = 12.sp
             )
         }
     }
 }
 
+/**
+ * 反馈与支持卡片 - 对齐 settings_page_mock_v2.html
+ */
 @Composable
-fun SettingItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: (() -> Unit)? = null,
-    trailing: @Composable (() -> Unit)? = null
-) {
+private fun SupportCard(onSupportClick: () -> Unit) {
     FrostedGlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .clickable { onSupportClick() }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(36.dp),
-                tint = MaterialTheme.colorScheme.primary
+            Text(
+                text = "🤝",
+                fontSize = 24.sp
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium
+                    text = "反馈与支持",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
                 )
-                if (subtitle.isNotEmpty()) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
+                Text(
+                    text = "遇到问题或有想法？欢迎告诉我们！",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF666666),
+                    fontSize = 13.sp
+                )
             }
-            trailing?.invoke()
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/**
+ * 隐私说明卡片 - 对齐 settings_page_mock_v2.html
+ */
+@Composable
+private fun PrivacyCard(onStatementClick: () -> Unit) {
+    FrostedGlassCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onStatementClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "📄",
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "隐私说明与免责声明",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                    Text(
+                    text = "了解我们如何保护你的数据",
+                        style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF666666),
+                    fontSize = 13.sp
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
@@ -188,22 +445,21 @@ private fun SoftwareStatementScreen(
 ) {
     val features = listOf(
         "快递取件码" to "帮助您快速提取和查看快递短信中的取件码，支持复制和分享。",
-        "短信打标" to "根据短信内容自动或手动添加标签（如营销、通知、银行、快递、验证码），便于分类管理。",
-        "短信批量处理" to "针对同一标签的短信，支持批量删除、归档、转发或自动化回复等操作，提高效率。"
+        "短信管理" to "提供最新短信列表、搜索与筛选，方便快速定位关键信息。"
     )
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        containerColor = Color.Transparent,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("软件声明") },
+                title = { Text("隐私说明与免责声明") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                    containerColor = Color.Transparent
                 )
             )
         }
@@ -269,23 +525,23 @@ private fun FeedbackSuggestionsScreen(
     onBack: () -> Unit
 ) {
     val feedbackTypes = listOf(
-        "Bug 报告" to "如果发现应用崩溃、标签分类错误、批量处理失败或其他异常，请描述问题细节（设备型号、系统版本、操作步骤、短信示例等）。",
-        "新增功能需求" to "欢迎提出希望添加的标签类型（例如“医疗”“社交”）、自定义规则、第三方平台支持或 UI 改进等。",
+        "Bug 报告" to "如果发现应用崩溃、短信识别错误或其他异常，请描述问题细节（设备型号、系统版本、操作步骤、短信示例等）。",
+        "新增功能需求" to "欢迎提出希望添加的新功能（例如更多筛选方式、第三方平台支持或 UI 改进等）。",
         "其他建议" to "如性能优化、隐私增强、交互体验等任何想法，我们都乐于倾听。"
     )
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        containerColor = Color.Transparent,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("反馈与建议") },
+                title = { Text("反馈与支持") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                    containerColor = Color.Transparent
                 )
             )
         }
@@ -335,13 +591,18 @@ private fun FeedbackSuggestionsScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "请发送您的反馈到以下邮箱，并在主题中注明“[应用反馈] - [反馈类型]”，以便我们快速响应。",
+                        text = "请发送您的反馈到以下邮箱，并在主题中注明「应用反馈 - 反馈类型」，以便我们快速响应。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "邮箱：ChazRussel@outlook.com",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "企鹅群：1064696594",
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.height(4.dp))

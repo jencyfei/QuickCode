@@ -12,8 +12,8 @@ android {
         applicationId "com.sms.tagger"
         minSdk 23
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 3
+        versionName "1.2.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -39,6 +39,15 @@ android {
         }
     }
 
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (output.outputFileName != null && output.outputFileName.endsWith(".apk")) {
+                def baseName = "sms-agent-${variant.name}-${variant.versionName}.apk"
+                output.outputFileName = baseName
+            }
+        }
+    }
+
     lintOptions {
         abortOnError false
         checkReleaseBuilds false
@@ -55,6 +64,7 @@ android {
 
     buildFeatures {
         compose true
+        buildConfig true
     }
 
     composeOptions {
