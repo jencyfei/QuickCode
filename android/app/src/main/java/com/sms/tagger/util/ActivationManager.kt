@@ -10,14 +10,21 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Handles offline activation storage/validation.
- * Note: activation code decoding currently assumes Base64(deviceId:remaining:salt)
- * and can be strengthened once the Python generator is in place.
+ * 
+ * 激活码格式（由 Python 脚本生成）:
+ * - 明文: "{device_id}:{max_activations}:{salt}"
+ * - 加密: Fernet(key).encrypt(plaintext)
+ * - 输出: base64.urlsafe_b64encode(encrypted)
  */
 object ActivationManager {
 
     private const val PREF_NAME = "sms_activation_prefs"
     private const val KEY_ACTIVATION = "activation_payload"
     private const val HASH_ALGORITHM = "SHA-256"
+
+    // Fernet 密钥（与 Python 端 tools/activation.key 保持一致）
+    // 注意：生产环境中应该做混淆处理
+    private const val FERNET_KEY = "7n24jlz6St4P__berMBC8KFygY_t4RKdESLGZuenfaE="
 
     private val gson = Gson()
     private val cache = AtomicReference<ActivationData?>()
@@ -108,13 +115,32 @@ object ActivationManager {
         val salt: String
     )
 
+    /**
+     * 解码激活码
+     * 
+     * 激活码格式:
+     * - 外层: base64.urlsafe_b64encode(fernet_token)
+     * - 内层: Fernet 加密的 "{device_id}:{max_activations}:{salt}"
+     */
     private fun decodeActivationCode(rawCode: String): Result<ActivationPayload> = runCatching {
         val normalized = rawCode.trim()
-        val decoded = String(Base64.decode(normalized, Base64.DEFAULT))
-        val parts = decoded.split(":")
-        require(parts.size >= 3) { "激活码格式错误，请重新确认。" }
+        
+        // 使用 Fernet 解密
+        val plaintext = try {
+            FernetDecryptor.decrypt(FERNET_KEY, normalized)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("激活码格式错误或已损坏：${e.message}")
+        }
+        
+        // 解析明文: "device_id:max_activations:salt"
+        val parts = plaintext.split(":")
+        if (parts.size < 3) {
+            throw IllegalArgumentException("激活码内容格式错误，请重新确认。")
+        }
+        
         val allowed = parts[1].toIntOrNull()
             ?: throw IllegalArgumentException("激活码中激活次数无效。")
+        
         ActivationPayload(
             deviceId = parts[0],
             allowedActivations = allowed,
@@ -140,4 +166,3 @@ object ActivationManager {
         prefs(context).edit().putString(KEY_ACTIVATION, gson.toJson(data)).apply()
     }
 }
-
