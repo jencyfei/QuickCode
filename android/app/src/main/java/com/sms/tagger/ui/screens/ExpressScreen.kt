@@ -1,5 +1,6 @@
 package com.sms.tagger.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,41 +10,52 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sms.tagger.R
 import com.sms.tagger.util.ExpressExtractor
 import com.sms.tagger.util.ExpressInfo
 import com.sms.tagger.util.PickupStatus
 import com.sms.tagger.util.SmsReader
+import com.sms.tagger.util.UsageLimitManager
+import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.ui.components.GradientBackground
+import com.sms.tagger.ui.components.DailyLimitDialog
+import com.sms.tagger.ui.components.HistoryLimitDialog
 import com.sms.tagger.ui.theme.TextSecondary
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.filled.Settings
+import kotlinx.coroutines.delay
+import java.util.Locale
 import java.util.regex.Pattern
 
 /**
  * 快递信息页面
+ * 
+ * @param onNavigateToActivation 跳转到激活页面的回调（可选）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpressScreen() {
+fun ExpressScreen(
+    onNavigateToActivation: (() -> Unit)? = null
+) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     var expressList by remember { mutableStateOf<List<ExpressInfo>>(emptyList()) }
@@ -63,10 +75,41 @@ fun ExpressScreen() {
     var searchText by remember { mutableStateOf("") }
     var dateFilterType by remember { mutableStateOf("本月") }  // 本月、本周、本日、全部
     
+    // 限制策略相关状态
+    var showDailyLimitDialog by remember { mutableStateOf(false) }
+    var showHistoryLimitDialog by remember { mutableStateOf(false) }
+    val isActivated = remember { ActivationManager.isActivated(context) }
+    
     // 如果显示规则管理，则显示规则管理页面
     if (showRuleManager) {
         RuleManageScreen(onBack = { showRuleManager = false })
         return
+    }
+    
+    // 每日识别次数限制对话框
+    if (showDailyLimitDialog) {
+        DailyLimitDialog(
+            onDismiss = { showDailyLimitDialog = false },
+            onActivate = {
+                showDailyLimitDialog = false
+                onNavigateToActivation?.invoke()
+            }
+        )
+    }
+    
+    // 历史记录限制对话框
+    if (showHistoryLimitDialog) {
+        HistoryLimitDialog(
+            onDismiss = { 
+                showHistoryLimitDialog = false
+                UsageLimitManager.markHistoryLimitHintShown(context)
+            },
+            onActivate = {
+                showHistoryLimitDialog = false
+                UsageLimitManager.markHistoryLimitHintShown(context)
+                onNavigateToActivation?.invoke()
+            }
+        )
     }
     
     var rawSmsList by remember { mutableStateOf<List<com.sms.tagger.data.model.SmsCreate>>(emptyList()) }
@@ -74,13 +117,29 @@ fun ExpressScreen() {
     // 加载快递信息
     LaunchedEffect(Unit) {
         try {
+            // 【限制策略】检查每日识别次数限制
+            if (UsageLimitManager.isDailyLimitReached(context)) {
+                showDailyLimitDialog = true
+                isLoading = false
+                return@LaunchedEffect
+            }
+            
             val reader = SmsReader(context)
             // 读取最近50000条短信，确保包含所有快递信息（与SmsListScreen保持一致）
             val smsList = reader.readLatestSms(50000)
             rawSmsList = smsList
             
+            // 【限制策略】免费版识别延迟
+            val delayMs = UsageLimitManager.getIdentifyDelayMs(context)
+            if (delayMs > 0) {
+                delay(delayMs)
+            }
+            
             // 1. 从短信提取快递信息
             var extractedList = ExpressExtractor.extractAllExpressInfo(smsList)
+            
+            // 【限制策略】增加识别次数计数
+            UsageLimitManager.incrementIdentifyCount(context)
             
             // 2. 从 SharedPreferences 读取保存的状态
             val prefs = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
@@ -106,6 +165,15 @@ fun ExpressScreen() {
                     true   // 保留第一条
                 }
             }
+            
+            // 【限制策略】检查历史记录限制提示
+            if (UsageLimitManager.shouldShowHistoryLimitHint(context, extractedList.size)) {
+                showHistoryLimitDialog = true
+            }
+            
+            // 【限制策略】免费版限制历史记录条数
+            // 注意：这里不直接截断列表，而是在显示时根据激活状态过滤
+            // 因为用户可能需要查看已取快递的完整历史
             
             // 4. 更新内存
             expressList = extractedList
@@ -170,85 +238,129 @@ fun ExpressScreen() {
                             ) 
                         },
                         actions = {
-                            // 一键取件按钮
-                            Button(
-                                onClick = {
-                                    // 获取当前页签的未取快递列表（已过滤）
-                                    val today = java.time.LocalDate.now()
-                                    val sevenDaysAgo = today.minusDays(7)
-                                    // 一键取件：使用 SharedPreferences 状态判断，确保与数量统计逻辑一致
-                                    val tempPrefs = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
-                                    val pendingItems = if (currentTab == "pending") {
-                                        expressList.filter { express ->
-                                            val statusKey = "pickup_${express.pickupCode}"
-                                            val isPicked = tempPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
-                                            !isPicked && try {
-                                                val expressDate = java.time.LocalDate.parse(express.date)
-                                                expressDate >= sevenDaysAgo
-                                            } catch (e: Exception) {
-                                                true
-                                            }
-                                        }
-                                    } else {
-                                        emptyList()
-                                    }
-                                    
-                                    if (pendingItems.isEmpty()) {
-                                        showToast = "暂无未取快递"
-                                    } else {
-                                        // 显示确认对话框
-                                        showConfirmDialog = true
-                                        confirmDialogTitle = "一键取件"
-                                        confirmDialogMessage = "确定要一键取件 ${pendingItems.size} 个快递吗？"
-                                        confirmDialogAction = {
-                                            // 标记所有未取快递为已取
-                                            val sharedPref = context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
-                                            val editor = sharedPref.edit()
-                                            pendingItems.forEach { express ->
+                            // 右上角操作按钮
+                            if (currentTab == "pending") {
+                                // "未取快递"页面显示"批量"、"一键"和"设置"按钮
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(end = 4.dp)
+                                ) {
+                                    // 批量复制按钮
+                                    Button(
+                                        onClick = {
+                                            // 批量复制逻辑：复制当前显示的未取快递取件码（应用相同的筛选和限制策略）
+                                            val today = java.time.LocalDate.now()
+                                            val sevenDaysAgo = today.minusDays(7)
+                                            // 1. 先筛选出7天内未取的快递
+                                            val filteredList = expressList.filter { express ->
                                                 val statusKey = "pickup_${express.pickupCode}"
-                                                editor.putBoolean(statusKey, true)
-                                            }
-                                            editor.apply()
-                                            showToast = "已取件 ${pendingItems.size} 个快递"
-                                            // 刷新列表：更新 expressList 中对应快递的状态，确保 UI 立即反映变化
-                                            expressList = expressList.map { express ->
-                                                val statusKey = "pickup_${express.pickupCode}"
-                                                val isPicked = sharedPref.getBoolean(statusKey, express.status == PickupStatus.PICKED)
-                                                if (isPicked) {
-                                                    express.copy(status = PickupStatus.PICKED)
-                                                } else {
-                                                    express
+                                                val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                                                !isPicked && try {
+                                                    val expressDate = java.time.LocalDate.parse(express.date)
+                                                    expressDate >= sevenDaysAgo
+                                                } catch (e: Exception) {
+                                                    true
                                                 }
                                             }
-                                        }
+                                            // 2. 应用限制策略（免费版只显示3条）
+                                            val pendingList = UsageLimitManager.limitHistoryList(context, filteredList)
+                                            if (pendingList.isNotEmpty()) {
+                                                val codes = pendingList.map { it.pickupCode }.joinToString("\n")
+                                                clipboardManager.setText(AnnotatedString(codes))
+                                                showToast = "已复制 ${pendingList.size} 个取件码"
+                                            } else {
+                                                showToast = "没有未取快递"
+                                            }
+                                        },
+                                        modifier = Modifier.height(28.dp),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0x10059669)
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(
+                                            text = "📋 批量",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF059669)
+                                        )
                                     }
-                                },
-                                modifier = Modifier
-                                    .padding(end = 8.dp)
-                                    .height(36.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF667EEA).copy(alpha = 0.1f)
-                                )
-                            ) {
-                                Text(
-                                    text = "一键取件",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF667EEA)
-                                )
-                            }
-                            // 设置按钮 - 打开规则管理
-                            IconButton(
-                                onClick = { 
-                                    showRuleManager = true
+                                    // 一键取件按钮
+                                    Button(
+                                        onClick = {
+                                            // 一键取件逻辑：标记当前显示的未取快递为已取（应用相同的筛选和限制策略）
+                                            val today = java.time.LocalDate.now()
+                                            val sevenDaysAgo = today.minusDays(7)
+                                            // 1. 先筛选出7天内未取的快递
+                                            val filteredList = expressList.filter { express ->
+                                                val statusKey = "pickup_${express.pickupCode}"
+                                                val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
+                                                !isPicked && try {
+                                                    val expressDate = java.time.LocalDate.parse(express.date)
+                                                    expressDate >= sevenDaysAgo
+                                                } catch (e: Exception) {
+                                                    true
+                                                }
+                                            }
+                                            // 2. 应用限制策略（免费版只显示3条）
+                                            val pendingList = UsageLimitManager.limitHistoryList(context, filteredList)
+                                            if (pendingList.isNotEmpty()) {
+                                                confirmDialogTitle = "一键取件"
+                                                confirmDialogMessage = "确定要将 ${pendingList.size} 个快递标记为已取吗？"
+                                                confirmDialogAction = {
+                                                    pendingList.forEach { express ->
+                                                        val statusKey = "pickup_${express.pickupCode}"
+                                                        statusPrefs.edit().putBoolean(statusKey, true).apply()
+                                                    }
+                                                    showToast = "已取件 ${pendingList.size} 个快递"
+                                                }
+                                                showConfirmDialog = true
+                                            } else {
+                                                showToast = "没有未取快递"
+                                            }
+                                        },
+                                        modifier = Modifier.height(28.dp),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0x10667EEA)
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(
+                                            text = "⚡ 一键",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF667EEA)
+                                        )
+                                    }
+                                    // 设置按钮
+                                    IconButton(
+                                        onClick = { showRuleManager = true },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = "设置",
+                                            tint = Color(0xFF333333),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = "设置规则",
-                                    tint = Color(0xFF333333)
-                                )
+                            } else {
+                                // "已取快递"页面只显示设置按钮
+                                IconButton(
+                                    onClick = { showRuleManager = true },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = "设置",
+                                        tint = Color(0xFF333333),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -289,59 +401,65 @@ fun ExpressScreen() {
                         }
                     }.size
                     
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
-                        Button(
-                            onClick = { currentTab = "pending" },
+                        // 选项卡按钮
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (currentTab == "pending") 
-                                    Color(0xFF667EEA).copy(alpha = 0.15f) 
-                                else 
-                                    Color.White.copy(alpha = 0.3f)
-                            ),
-                            border = if (currentTab == "pending") 
-                                BorderStroke(1.dp, Color(0xFF667EEA).copy(alpha = 0.3f))
-                            else
-                                null
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "未取 ($pendingCount)",
-                                fontSize = 14.sp,
-                                fontWeight = if (currentTab == "pending") FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (currentTab == "pending") Color(0xFF667EEA) else Color(0xFF333333)
-                            )
-                        }
-                        Button(
-                            onClick = { currentTab = "picked" },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (currentTab == "picked") 
-                                    Color(0xFF4CAF50).copy(alpha = 0.15f) 
-                                else 
-                                    Color.White.copy(alpha = 0.3f)
-                            ),
-                            border = if (currentTab == "picked") 
-                                BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f))
-                            else
-                                null
-                        ) {
-                            Text(
-                                text = "已取 ($pickedCount)",
-                                fontSize = 14.sp,
-                                fontWeight = if (currentTab == "picked") FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (currentTab == "picked") Color(0xFF4CAF50) else Color(0xFF333333)
-                            )
+                            Button(
+                                onClick = { currentTab = "pending" },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (currentTab == "pending") 
+                                        Color(0xFF667EEA).copy(alpha = 0.15f) 
+                                    else 
+                                        Color.White.copy(alpha = 0.3f)
+                                ),
+                                border = if (currentTab == "pending") 
+                                    BorderStroke(1.dp, Color(0xFF667EEA).copy(alpha = 0.3f))
+                                else
+                                    null
+                            ) {
+                                Text(
+                                    text = "未取 ($pendingCount)",
+                                    fontSize = 14.sp,
+                                    fontWeight = if (currentTab == "pending") FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (currentTab == "pending") Color(0xFF667EEA) else Color(0xFF333333)
+                                )
+                            }
+                            Button(
+                                onClick = { currentTab = "picked" },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (currentTab == "picked") 
+                                        Color(0xFF4CAF50).copy(alpha = 0.15f) 
+                                    else 
+                                        Color.White.copy(alpha = 0.3f)
+                                ),
+                                border = if (currentTab == "picked") 
+                                    BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f))
+                                else
+                                    null
+                            ) {
+                                Text(
+                                    text = "已取 ($pickedCount)",
+                                    fontSize = 14.sp,
+                                    fontWeight = if (currentTab == "picked") FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (currentTab == "picked") Color(0xFF4CAF50) else Color(0xFF333333)
+                                )
+                            }
                         }
                     }
                     // 搜索栏和日期筛选（仅在已取选项卡显示）
@@ -494,8 +612,15 @@ fun ExpressScreen() {
                     filteredList
                 }
                 
+                // 【限制策略】免费版限制未取快递历史记录条数
+                val limitedList = if (currentTab == "pending" && !isActivated) {
+                    UsageLimitManager.limitHistoryList(context, searchFilteredList)
+                } else {
+                    searchFilteredList
+                }
+                
                 // 按日期分组，然后按日期倒序（日期较新的在前）
-                val groupedByDate = searchFilteredList
+                val groupedByDate = limitedList
                     .groupBy { it.date }  // 按日期分组
                     .toSortedMap(compareBy<String> { it }.reversed())  // 日期倒序（日期较新的在前）
                 
@@ -752,6 +877,9 @@ fun ExpressItemCard(
         }
     }
     
+    val dateDisplay = remember(express.date) { formatDateLabel(express.date) }
+    val timeDisplay = remember(timeStr) { formatTimeLabel(timeStr) }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -779,71 +907,57 @@ fun ExpressItemCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 取件码和日期时间
+            CourierIcon(
+                expressType = express.expressType,
+                contentDescription = express.company
+            )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // 取件码和日期时间框
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Text(
-                            text = "取件码",
-                            fontSize = 11.sp,
-                            color = Color(0xFF999999),
-                            fontWeight = FontWeight.Normal
-                        )
                         Text(
                             text = express.pickupCode,
-                            fontSize = 16.sp,
+                        fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF333333),
+                        color = Color(0xFF1F2937),
                             letterSpacing = 1.sp
                         )
-                    }
-                    
-                    // 日期和时间框 - 调整到中间位置
                     Column(
                         modifier = Modifier
                             .background(
-                                color = Color(0xFF667EEA).copy(alpha = 0.08f),
-                                shape = RoundedCornerShape(4.dp)
+                                color = Color(0xFF667EEA).copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(6.dp)
                             )
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = express.date,
+                            text = dateDisplay,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF667EEA)
                         )
                         Text(
-                            text = timeStr,
+                            text = timeDisplay,
                             fontSize = 10.sp,
-                            color = Color(0xFFAAAAAA)
+                            color = Color(0xFF9CA3AF)
                         )
                     }
                 }
-                
-                // 状态标签
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Icon(
                         imageVector = if (isPicked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                         contentDescription = if (isPicked) "已取" else "未取",
                         tint = if (isPicked) Color(0xFF4CAF50) else Color(0xFFFF9800),
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = if (isPicked) "已取" else "未取",
@@ -853,8 +967,6 @@ fun ExpressItemCard(
                     )
                 }
             }
-            
-            // 状态按钮 - 始终显示
             IconButton(
                 onClick = {
                     isPicked = !isPicked
@@ -862,10 +974,10 @@ fun ExpressItemCard(
                     sharedPref.edit().putBoolean(statusKey, isPicked).apply()
                 },
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(38.dp)
                     .background(
-                        color = if (isPicked) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color(0xFF667EEA).copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(50)
+                        color = if (isPicked) Color(0xFF4CAF50).copy(alpha = 0.15f) else Color(0xFF667EEA).copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(12.dp)
                     )
             ) {
                 Icon(
@@ -880,4 +992,63 @@ fun ExpressItemCard(
             }
         }
     }
+}
+
+@Composable
+private fun CourierIcon(
+    expressType: String,
+    contentDescription: String
+) {
+    val iconRes = remember(expressType) { courierIconRes(expressType) }
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(10.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = iconRes),
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(6.dp))
+        )
+    }
+}
+
+private fun courierIconRes(expressType: String): Int {
+    return when (expressType.lowercase(Locale.ROOT)) {
+        "sf" -> R.drawable.sf
+        "jd" -> R.drawable.jd
+        "zto" -> R.drawable.zto
+        "yto" -> R.drawable.yto
+        "sto" -> R.drawable.sto
+        "cainiao" -> R.drawable.cainiao
+        "fengchao" -> R.drawable.fengchao
+        "ems" -> R.drawable.ems
+        else -> R.drawable.default_box
+    }
+}
+
+private fun formatDateLabel(raw: String): String {
+    return try {
+        val date = java.time.LocalDate.parse(raw)
+        String.format(Locale.getDefault(), "%02d-%02d", date.monthValue, date.dayOfMonth)
+    } catch (e: Exception) {
+        raw
+    }
+}
+
+private fun formatTimeLabel(raw: String): String {
+    val trimmed = raw.trim()
+    return if (trimmed.length >= 5) trimmed.substring(0, 5) else trimmed
 }

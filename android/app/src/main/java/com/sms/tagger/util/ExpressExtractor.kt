@@ -8,31 +8,6 @@ import java.util.regex.Pattern
  */
 object ExpressExtractor {
     
-    // 快递公司关键词
-    private val expressCompanies = mapOf(
-        "顺丰" to "顺丰速运",
-        "SF" to "顺丰速运",
-        "中通" to "中通快递",
-        "ZTO" to "中通快递",
-        "圆通" to "圆通速递",
-        "YTO" to "圆通速递",
-        "申通" to "申通快递",
-        "STO" to "申通快递",
-        "韵达" to "韵达快递",
-        "YD" to "韵达快递",
-        "百世" to "百世快递",
-        "BEST" to "百世快递",
-        "京东" to "京东物流",
-        "JD" to "京东物流",
-        "邮政" to "中国邮政",
-        "EMS" to "中国邮政",
-        "德邦" to "德邦快递",
-        "极兔" to "极兔速递",
-        "菜鸟" to "菜鸟驿站",
-        "兔喜" to "兔喜生活",
-        "兔喜生活" to "兔喜生活"
-    )
-    
     // 取件码正则表达式
     private val pickupCodePatterns = listOf(
         // 菜鸟驿站格式：货2-4-2029 或 货6-5-5011 等
@@ -54,9 +29,7 @@ object ExpressExtractor {
      */
     fun extractExpressInfo(sms: SmsCreate): ExpressInfo? {
         val content = sms.content
-        
-        // 检查是否包含快递关键词
-        val company = detectExpressCompany(content) ?: return null
+        val detection = ExpressCompanyDetector.detect(sms.sender, content) ?: return null
         
         // 提取取件码
         val pickupCode = extractPickupCode(content) ?: return null
@@ -71,7 +44,8 @@ object ExpressExtractor {
         val status = detectPickupStatus(content)
         
         return ExpressInfo(
-            company = company,
+            company = detection.displayName,
+            expressType = detection.type,
             pickupCode = pickupCode,
             location = location,
             sender = sms.sender,
@@ -91,7 +65,7 @@ object ExpressExtractor {
         
         for (sms in smsList) {
             // 检查是否包含快递关键词
-            val company = detectExpressCompany(sms.content) ?: continue
+            val detection = ExpressCompanyDetector.detect(sms.sender, sms.content) ?: continue
             
             // 提取所有取件码
             val pickupCodes = extractAllPickupCodes(sms.content)
@@ -106,7 +80,8 @@ object ExpressExtractor {
             for (pickupCode in pickupCodes) {
                 allExpressInfo.add(
                     ExpressInfo(
-                        company = company,
+                        company = detection.displayName,
+                        expressType = detection.type,
                         pickupCode = pickupCode,
                         location = location,
                         sender = sms.sender,
@@ -120,18 +95,6 @@ object ExpressExtractor {
         }
         
         return allExpressInfo
-    }
-    
-    /**
-     * 检测快递公司
-     */
-    private fun detectExpressCompany(content: String): String? {
-        for ((keyword, company) in expressCompanies) {
-            if (content.contains(keyword, ignoreCase = true)) {
-                return company
-            }
-        }
-        return null
     }
     
     /**
@@ -442,6 +405,7 @@ object ExpressExtractor {
  */
 data class ExpressInfo(
     val company: String,           // 快递公司
+    val expressType: String,       // 快递类型（用于图标）
     val pickupCode: String,        // 取件码
     val location: String?,         // 取件地点
     val sender: String,            // 短信发送者

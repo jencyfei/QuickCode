@@ -163,14 +163,6 @@ fun ActivationDialog(
                         modifier = Modifier.padding(12.dp)
                     ) {
                         Text(
-                            text = "☕ 请我喝一杯奶茶（¥10）· 永久使用",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF0369A1),
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(bottom = 6.dp)
-                        )
-                        Text(
                             text = "• 全离线运行，不联网更安全",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF0C4A6E),

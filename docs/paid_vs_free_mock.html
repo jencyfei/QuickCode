@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短信助手 · 免费 vs 付费</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            color: #1f2a37;
+            line-height: 1.5;
+        }
+        .page {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 12px 16px 120px;
+        }
+        header {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 12px 0 20px;
+            color: #111827;
+        }
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 10px;
+        }
+        .flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .flow-step {
+            flex: 1;
+            text-align: center;
+            background: #f8f9fb;
+            border-radius: 10px;
+            padding: 8px 6px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .flow-arrow {
+            flex: 0;
+            padding: 0 4px;
+            font-size: 16px;
+            color: #9ca3af;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 360px;
+        }
+        th, td {
+            padding: 10px;
+            font-size: 13px;
+            text-align: center;
+        }
+        th {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .feature {
+            text-align: left;
+            color: #374151;
+            font-weight: 600;
+        }
+        .free {
+            background: #f4f4f5;
+            color: #4b5563;
+            border-radius: 8px;
+        }
+        .paid {
+            background: #ecfdf5;
+            color: #047857;
+            font-weight: 700;
+            border-radius: 8px;
+        }
+        tr + tr td {
+            border-top: 1px solid #f1f2f6;
+        }
+        .cta {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0));
+        }
+        .cta button {
+            width: 100%;
+            background: #111827;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 0;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .cta button span {
+            font-size: 13px;
+            color: #9ca3af;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header>免费 vs 付费（激活后）</header>
+
+        <div class="card">
+            <div class="card-title">流程示意</div>
+            <div class="flow">
+                <div class="flow-step">免费体验</div>
+                <div class="flow-arrow">➜</div>
+                <div class="flow-step">激活设备</div>
+                <div class="flow-arrow">➜</div>
+                <div class="flow-step">完整功能</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">核心差异</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>功能</th>
+                            <th>免费版</th>
+                            <th>付费版</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="feature">⏱️ 每日识别次数</td>
+                            <td class="free">2 次/天</td>
+                            <td class="paid">不限</td>
+                        </tr>
+                        <tr>
+                            <td class="feature">🗂️ 历史记录</td>
+                            <td class="free">最近 3 条</td>
+                            <td class="paid">全部记录</td>
+                        </tr>
+                        <tr>
+                            <td class="feature">📋 批量操作</td>
+                            <td class="free">部分记录</td>
+                            <td class="paid">全部记录</td>
+                        </tr>
+                        <tr>
+                            <td class="feature">🎛️ UI 提示</td>
+                            <td class="free">显示限制横幅</td>
+                            <td class="paid">UI 更简洁</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="cta">
+        <button>
+            立即激活 🔐
+            <span>¥10 · 永久使用</span>
+        </button>
+    </div>
+</body>
+</html>
+

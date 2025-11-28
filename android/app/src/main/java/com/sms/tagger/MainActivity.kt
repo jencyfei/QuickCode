@@ -32,8 +32,11 @@ import com.sms.tagger.util.PreferencesManager
 import com.sms.tagger.util.LogFileWriter
 import com.sms.tagger.util.AppLogger
 import com.sms.tagger.util.ActivationManager
+import com.sms.tagger.util.PrivacyPolicyManager
+import com.sms.tagger.ui.components.PrivacyPolicyDialog
 import com.sms.tagger.BuildConfig
 import kotlinx.coroutines.launch
+import android.os.Process
 
 class MainActivity : ComponentActivity() {
     
@@ -88,12 +91,32 @@ class MainActivity : ComponentActivity() {
     
     @Composable
     fun MainScreen() {
-        // 直接显示主应用（无需登录）
-        MainAppScreen(
-            onLogout = {
-                // 本地应用，无需登出
-            }
-        )
+        val context = this
+        var showPrivacyDialog by remember { 
+            mutableStateOf(!PrivacyPolicyManager.isPrivacyAccepted(context))
+        }
+        
+        // 隐私政策对话框
+        if (showPrivacyDialog) {
+            PrivacyPolicyDialog(
+                onAccept = {
+                    PrivacyPolicyManager.acceptPrivacy(context)
+                    showPrivacyDialog = false
+                },
+                onReject = {
+                    // 用户拒绝，退出应用
+                    finish()
+                    Process.killProcess(Process.myPid())
+                }
+            )
+        } else {
+            // 直接显示主应用（无需登录）
+            MainAppScreen(
+                onLogout = {
+                    // 本地应用，无需登出
+                }
+            )
+        }
     }
     
     @Composable
@@ -254,6 +277,12 @@ class MainActivity : ComponentActivity() {
                 )
             }
             
+            // 跳转到激活页面的回调
+            val navigateToActivation: () -> Unit = {
+                selectedTab = 2  // 切换到设置页
+                showActivationDialog = true  // 显示激活弹窗
+            }
+            
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                 bottomBar = {
@@ -308,7 +337,9 @@ class MainActivity : ComponentActivity() {
             ) { paddingValues ->
                 Box(modifier = Modifier.padding(paddingValues)) {
                     when (selectedTab) {
-                        0 -> ExpressScreen()
+                        0 -> ExpressScreen(
+                            onNavigateToActivation = navigateToActivation
+                        )
                         1 -> SmsListScreen()
                         2 -> SettingsScreen(onLogout = onLogout)
                     }
