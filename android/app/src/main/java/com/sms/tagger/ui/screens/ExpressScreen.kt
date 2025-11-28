@@ -247,29 +247,29 @@ fun ExpressScreen(
                                     modifier = Modifier.padding(end = 4.dp)
                                 ) {
                                     // 批量复制按钮
-                                    Button(
-                                        onClick = {
+                            Button(
+                                onClick = {
                                             // 批量复制逻辑：复制当前显示的未取快递取件码（应用相同的筛选和限制策略）
-                                            val today = java.time.LocalDate.now()
-                                            val sevenDaysAgo = today.minusDays(7)
+                                    val today = java.time.LocalDate.now()
+                                    val sevenDaysAgo = today.minusDays(7)
                                             // 1. 先筛选出7天内未取的快递
                                             val filteredList = expressList.filter { express ->
                                                 val statusKey = "pickup_${express.pickupCode}"
                                                 val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
                                                 !isPicked && try {
-                                                    val expressDate = java.time.LocalDate.parse(express.date)
-                                                    expressDate >= sevenDaysAgo
-                                                } catch (e: Exception) {
-                                                    true
-                                                }
+                                                val expressDate = java.time.LocalDate.parse(express.date)
+                                                expressDate >= sevenDaysAgo
+                                            } catch (e: Exception) {
+                                                true
                                             }
+                                        }
                                             // 2. 应用限制策略（免费版只显示3条）
                                             val pendingList = UsageLimitManager.limitHistoryList(context, filteredList)
                                             if (pendingList.isNotEmpty()) {
                                                 val codes = pendingList.map { it.pickupCode }.joinToString("\n")
                                                 clipboardManager.setText(AnnotatedString(codes))
                                                 showToast = "已复制 ${pendingList.size} 个取件码"
-                                            } else {
+                                    } else {
                                                 showToast = "没有未取快递"
                                             }
                                         },
@@ -307,36 +307,36 @@ fun ExpressScreen(
                                             // 2. 应用限制策略（免费版只显示3条）
                                             val pendingList = UsageLimitManager.limitHistoryList(context, filteredList)
                                             if (pendingList.isNotEmpty()) {
-                                                confirmDialogTitle = "一键取件"
+                                        confirmDialogTitle = "一键取件"
                                                 confirmDialogMessage = "确定要将 ${pendingList.size} 个快递标记为已取吗？"
-                                                confirmDialogAction = {
+                                        confirmDialogAction = {
                                                     pendingList.forEach { express ->
-                                                        val statusKey = "pickup_${express.pickupCode}"
+                                                val statusKey = "pickup_${express.pickupCode}"
                                                         statusPrefs.edit().putBoolean(statusKey, true).apply()
                                                     }
                                                     showToast = "已取件 ${pendingList.size} 个快递"
                                                 }
                                                 showConfirmDialog = true
-                                            } else {
+                                                } else {
                                                 showToast = "没有未取快递"
                                             }
                                         },
                                         modifier = Modifier.height(28.dp),
                                         shape = RoundedCornerShape(20.dp),
-                                        colors = ButtonDefaults.buttonColors(
+                                colors = ButtonDefaults.buttonColors(
                                             containerColor = Color(0x10667EEA)
                                         ),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                                    ) {
-                                        Text(
+                            ) {
+                                Text(
                                             text = "⚡ 一键",
                                             fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = Color(0xFF667EEA)
-                                        )
-                                    }
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF667EEA)
+                                )
+                            }
                                     // 设置按钮
-                                    IconButton(
+                            IconButton(
                                         onClick = { showRuleManager = true },
                                         modifier = Modifier.size(32.dp)
                                     ) {
@@ -353,13 +353,13 @@ fun ExpressScreen(
                                 IconButton(
                                     onClick = { showRuleManager = true },
                                     modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Settings,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
                                         contentDescription = "设置",
                                         tint = Color(0xFF333333),
                                         modifier = Modifier.size(18.dp)
-                                    )
+                                )
                                 }
                             }
                         },
@@ -410,55 +410,55 @@ fun ExpressScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { currentTab = "pending" },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (currentTab == "pending") 
+                                    Color(0xFF667EEA).copy(alpha = 0.15f) 
+                                else 
+                                    Color.White.copy(alpha = 0.3f)
+                            ),
+                            border = if (currentTab == "pending") 
+                                BorderStroke(1.dp, Color(0xFF667EEA).copy(alpha = 0.3f))
+                            else
+                                null
                         ) {
-                            Button(
-                                onClick = { currentTab = "pending" },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(44.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (currentTab == "pending") 
-                                        Color(0xFF667EEA).copy(alpha = 0.15f) 
-                                    else 
-                                        Color.White.copy(alpha = 0.3f)
-                                ),
-                                border = if (currentTab == "pending") 
-                                    BorderStroke(1.dp, Color(0xFF667EEA).copy(alpha = 0.3f))
-                                else
-                                    null
-                            ) {
-                                Text(
-                                    text = "未取 ($pendingCount)",
-                                    fontSize = 14.sp,
-                                    fontWeight = if (currentTab == "pending") FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (currentTab == "pending") Color(0xFF667EEA) else Color(0xFF333333)
-                                )
-                            }
-                            Button(
-                                onClick = { currentTab = "picked" },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(44.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (currentTab == "picked") 
-                                        Color(0xFF4CAF50).copy(alpha = 0.15f) 
-                                    else 
-                                        Color.White.copy(alpha = 0.3f)
-                                ),
-                                border = if (currentTab == "picked") 
-                                    BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f))
-                                else
-                                    null
-                            ) {
-                                Text(
-                                    text = "已取 ($pickedCount)",
-                                    fontSize = 14.sp,
-                                    fontWeight = if (currentTab == "picked") FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (currentTab == "picked") Color(0xFF4CAF50) else Color(0xFF333333)
-                                )
+                            Text(
+                                text = "未取 ($pendingCount)",
+                                fontSize = 14.sp,
+                                fontWeight = if (currentTab == "pending") FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (currentTab == "pending") Color(0xFF667EEA) else Color(0xFF333333)
+                            )
+                        }
+                        Button(
+                            onClick = { currentTab = "picked" },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (currentTab == "picked") 
+                                    Color(0xFF4CAF50).copy(alpha = 0.15f) 
+                                else 
+                                    Color.White.copy(alpha = 0.3f)
+                            ),
+                            border = if (currentTab == "picked") 
+                                BorderStroke(1.dp, Color(0xFF4CAF50).copy(alpha = 0.3f))
+                            else
+                                null
+                        ) {
+                            Text(
+                                text = "已取 ($pickedCount)",
+                                fontSize = 14.sp,
+                                fontWeight = if (currentTab == "picked") FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (currentTab == "picked") Color(0xFF4CAF50) else Color(0xFF333333)
+                            )
                             }
                         }
                     }
