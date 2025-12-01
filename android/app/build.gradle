@@ -12,8 +12,8 @@ android {
         applicationId "com.sms.tagger"
         minSdk 23
         targetSdk 34
-        versionCode 4
-        versionName "1.3.0"
+        versionCode 5
+        versionName "1.4.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -74,6 +74,20 @@ android {
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+
+    flavorDimensions += "version"
+    productFlavors {
+        full {
+            dimension "version"
+            buildConfigField "boolean", "IS_TRIAL", "false"
+        }
+        trial {
+            dimension "version"
+            applicationIdSuffix ".trial"
+            versionNameSuffix "-trial"
+            buildConfigField "boolean", "IS_TRIAL", "true"
         }
     }
 }

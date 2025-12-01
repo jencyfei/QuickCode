@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.WRITE_SMS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     
     <!-- 硬件功能 -->
@@ -28,9 +30,21 @@
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.SmsAgent">
+            <!-- Launcher入口 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- 默认短信应用入口 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
             </intent-filter>
         </activity>
 
@@ -39,10 +53,30 @@
             android:name=".util.SmsReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
+            <!-- 普通短信接收（非默认短信应用） -->
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
+            <!-- 默认短信应用专用（SMS_DELIVER） -->
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER_ACTION" />
+            </intent-filter>
         </receiver>
+        
+        <!-- 短信发送服务（Stub实现，满足系统检查） -->
+        <service
+            android:name=".util.SmsSendService"
+            android:exported="true"
+            android:permission="android.permission.SEND_SMS">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </service>
 
     </application>
 

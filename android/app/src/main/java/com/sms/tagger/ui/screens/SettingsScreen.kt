@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +56,8 @@ import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
 import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.util.DeviceIdManager
+import com.sms.tagger.util.SmsDefaultAppChecker
+import com.sms.tagger.util.TrialManager
 import com.sms.tagger.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,7 +67,9 @@ private enum class SettingsPage {
     Main,
     Feedback,
     SoftwareStatement,
-    PaidVsFree
+    PaidVsFree,
+    DebugLog,
+    DefaultSmsGuide
 }
 
 /**
@@ -78,13 +83,22 @@ fun SettingsScreen(
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.Main) }
     val context = LocalContext.current
+    val isTrial = BuildConfig.IS_TRIAL
     val deviceId = remember { ActivationManager.getDeviceIdForUser(context) }
     val deviceIdShortCode = remember(deviceId) { DeviceIdManager.getDeviceIdShortCode(context) }
     var activationInfo by remember { mutableStateOf(ActivationManager.getActivationInfo(context)) }
     var isActivated by remember { mutableStateOf(ActivationManager.isActivated(context)) }
     var showActivationDialog by remember { mutableStateOf(false) }
+    var trialRemainingDays by remember { mutableStateOf(if (isTrial) TrialManager.getRemainingDays(context) else 0) }
 
-    if (showActivationDialog) {
+    LaunchedEffect(isTrial) {
+        if (isTrial) {
+            TrialManager.ensureTrialStartTime(context)
+            trialRemainingDays = TrialManager.getRemainingDays(context)
+        }
+    }
+
+    if (!isTrial && showActivationDialog) {
         ActivationDialog(
             onActivated = {
                 activationInfo = ActivationManager.getActivationInfo(context)
@@ -99,6 +113,8 @@ fun SettingsScreen(
         Crossfade(targetState = currentPage, label = "settings_pages") { page ->
             when (page) {
                 SettingsPage.Main -> SettingsHome(
+                    isTrial = isTrial,
+                    trialRemainingDays = trialRemainingDays,
                     isActivated = isActivated,
                     remainingActivations = activationInfo?.remaining ?: 0,
                     deviceId = deviceId,
@@ -107,7 +123,10 @@ fun SettingsScreen(
                     onActivateClick = { showActivationDialog = true },
                     onFeedbackClick = { currentPage = SettingsPage.Feedback },
                     onStatementClick = { currentPage = SettingsPage.SoftwareStatement },
-                    onPaidDiffClick = { currentPage = SettingsPage.PaidVsFree }
+                    onPaidDiffClick = { currentPage = SettingsPage.PaidVsFree },
+                    onContactDeveloper = { currentPage = SettingsPage.Feedback },
+                    onDebugLogClick = { currentPage = SettingsPage.DebugLog },
+                    onDefaultSmsClick = { currentPage = SettingsPage.DefaultSmsGuide }
                 )
                 SettingsPage.Feedback -> FeedbackSuggestionsScreen(
                     onBack = { currentPage = SettingsPage.Main }
@@ -115,9 +134,36 @@ fun SettingsScreen(
                 SettingsPage.SoftwareStatement -> SoftwareStatementScreen(
                     onBack = { currentPage = SettingsPage.Main }
                 )
-                SettingsPage.PaidVsFree -> PaidVsFreeScreen(
-                    onBack = { currentPage = SettingsPage.Main },
-                    onActivateClick = { showActivationDialog = true }
+                SettingsPage.DebugLog -> DebugLogScreen(
+                    onBack = { currentPage = SettingsPage.Main }
+                )
+                SettingsPage.PaidVsFree -> {
+                    if (!isTrial) {
+                        PaidVsFreeScreen(
+                            onBack = { currentPage = SettingsPage.Main },
+                            onActivateClick = { showActivationDialog = true }
+                        )
+                    } else {
+                        SettingsHome(
+                            isTrial = true,
+                            trialRemainingDays = trialRemainingDays,
+                            isActivated = false,
+                            remainingActivations = 0,
+                            deviceId = deviceId,
+                            deviceIdShortCode = deviceIdShortCode,
+                            activatedAt = null,
+                            onActivateClick = {},
+                            onFeedbackClick = { currentPage = SettingsPage.Feedback },
+                            onStatementClick = { currentPage = SettingsPage.SoftwareStatement },
+                            onPaidDiffClick = {},
+                            onContactDeveloper = { currentPage = SettingsPage.Feedback },
+                            onDebugLogClick = { currentPage = SettingsPage.DebugLog },
+                            onDefaultSmsClick = { currentPage = SettingsPage.DefaultSmsGuide }
+                        )
+                    }
+                }
+                SettingsPage.DefaultSmsGuide -> DefaultSmsGuideScreen(
+                    onBack = { currentPage = SettingsPage.Main }
                 )
             }
         }
@@ -127,6 +173,8 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsHome(
+    isTrial: Boolean,
+    trialRemainingDays: Int,
     isActivated: Boolean,
     remainingActivations: Int,
     deviceId: String,
@@ -135,7 +183,10 @@ private fun SettingsHome(
     onActivateClick: () -> Unit,
     onFeedbackClick: () -> Unit,
     onStatementClick: () -> Unit,
-    onPaidDiffClick: () -> Unit
+    onPaidDiffClick: () -> Unit,
+    onContactDeveloper: () -> Unit,
+    onDebugLogClick: () -> Unit,
+    onDefaultSmsClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -155,53 +206,153 @@ private fun SettingsHome(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 短信助手卡片
+            // QuickCode 卡片
             item { AppInfoCard() }
-            // 绑定设备卡片
-            item {
-                BindDeviceCard(
-                    isActivated = isActivated,
-                    remainingActivations = remainingActivations,
-                    deviceId = deviceId,
-                    deviceIdShortCode = deviceIdShortCode,
-                    activatedAt = activatedAt,
-                    onActivateClick = onActivateClick,
-                    onPaidDiffClick = onPaidDiffClick
-                )
+            if (isTrial) {
+                item {
+                    TrialInfoCard(
+                        remainingDays = trialRemainingDays,
+                        onContactDeveloper = onContactDeveloper
+                    )
+                }
+            } else {
+                item {
+                    BindDeviceCard(
+                        isActivated = isActivated,
+                        remainingActivations = remainingActivations,
+                        deviceId = deviceId,
+                        deviceIdShortCode = deviceIdShortCode,
+                        activatedAt = activatedAt,
+                        onActivateClick = onActivateClick,
+                        onPaidDiffClick = onPaidDiffClick
+                    )
+                }
             }
+            // 默认短信应用卡片
+            item { DefaultSmsCard(onDefaultSmsClick = onDefaultSmsClick) }
             // 反馈与支持卡片
             item { SupportCard(onSupportClick = onFeedbackClick) }
             // 隐私说明卡片
             item { PrivacyCard(onStatementClick = onStatementClick) }
+            // 调试日志卡片
+            item { DebugLogCard(onDebugLogClick = onDebugLogClick) }
+        }
+    }
+}
+
+@Composable
+private fun TrialInfoCard(
+    remainingDays: Int,
+    onContactDeveloper: () -> Unit
+) {
+    FrostedGlassCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "🧪 当前版本：体验版 Trial",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+            Text(
+                text = if (remainingDays > 0) "有效期剩余：${remainingDays} 天" else "有效期：已到期",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF9CA3AF),
+                fontSize = 13.sp
+            )
+            Surface(
+                color = Color(0xFFEEF2FF),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "体验版仅供测试，部分功能与高级能力已做限制。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF4C1D95),
+                        lineHeight = 18.sp
+                    )
+                    Text(
+                        text = "如需续期或获取完整版，请联系开发者获取帮助。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF4C1D95),
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "技术支持：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF4F46E5),
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "QQ 709662224",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF374151)
+                )
+                Text(
+                    text = "邮箱 ChazRussel@outlook.com",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF374151)
+                )
+            }
+            Button(
+                onClick = onContactDeveloper,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1F2937)
+                )
+            ) {
+                Text(
+                    text = "联系开发者",
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
 
 /**
- * 短信助手卡片 - 对齐 settings_page_mock_v2.html
+ * QuickCode 卡片 - 对齐 settings_page_mock_v2.html
  */
 @Composable
 private fun AppInfoCard() {
     FrostedGlassCard {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            // 标题行：📨 短信助手 v1.2.0
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                Text(
-                    text = "📨 短信助手",
+            // 标题行：📨 QuickCode v1.2.0
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                        Text(
+                    text = "📨 QuickCode",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
+                        Text(
                     text = "v${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF999999),
                     fontSize = 13.sp
                 )
@@ -306,7 +457,7 @@ private fun BindDeviceCard(
                     )
                     .height(44.dp)
                     .padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = deviceIdShortCode,
@@ -458,6 +609,103 @@ private fun PrivacyCard(onStatementClick: () -> Unit) {
                     text = "了解我们如何保护你的数据",
                         style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF666666),
+                    fontSize = 13.sp
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/**
+ * 默认短信应用卡片
+ */
+@Composable
+private fun DefaultSmsCard(onDefaultSmsClick: () -> Unit) {
+    val context = LocalContext.current
+    var isDefaultSmsApp by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        isDefaultSmsApp = com.sms.tagger.util.SmsDefaultAppChecker.isDefaultSmsApp(context)
+    }
+    
+    FrostedGlassCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onDefaultSmsClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "📱",
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "默认短信应用",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = if (isDefaultSmsApp) "已设置为默认，可读取所有短信" else "未设置，可能无法读取部分短信",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isDefaultSmsApp) Color(0xFF10B981) else Color(0xFFF59E0B),
+                    fontSize = 13.sp
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/**
+ * 调试日志卡片
+ */
+@Composable
+private fun DebugLogCard(onDebugLogClick: () -> Unit) {
+    FrostedGlassCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onDebugLogClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "🔍",
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "调试日志",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "查看应用运行日志，排查问题",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
                     fontSize = 13.sp
                 )
             }
@@ -667,7 +915,7 @@ private fun SoftwareStatementScreen(
 
             // 更新日期
             item {
-                Text(
+                    Text(
                     text = "更新日期：2025-11-28 | 生效日期：2025-11-28",
                     fontSize = 11.sp,
                     color = Color(0xFF9CA3AF),
@@ -722,7 +970,7 @@ private fun PrivacySectionCard(
 
             // 高亮框内容
             if (highlightContent != null && highlightContent.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(6.dp),
@@ -735,7 +983,7 @@ private fun PrivacySectionCard(
                         highlightContent.forEachIndexed { index, line ->
                             if (line.isNotEmpty()) {
                                 if (line.startsWith("📱") || line.startsWith("路径示例")) {
-                                    Text(
+                    Text(
                                         text = line,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold,
@@ -882,7 +1130,7 @@ private fun PaidVsFreeScreen(
 ) {
     val flowSteps = listOf("免费体验", "激活设备", "完整功能")
     val diffRows = listOf(
-        Triple("⏱️ 每日识别次数", "2 次/天", "不限"),
+        Triple("⏱️ 每日识别次数", "5 次/天", "不限"),
         Triple("🗂️ 历史记录", "最近 3 条", "全部记录"),
         Triple("📋 批量操作", "部分记录", "全部记录"),
         Triple("🎛️ UI 提示", "显示限制横幅", "UI 更简洁")
