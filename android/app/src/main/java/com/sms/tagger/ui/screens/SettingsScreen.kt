@@ -41,6 +41,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -67,6 +69,9 @@ import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
 import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.util.DeviceIdManager
+import com.sms.tagger.util.TimeWindowSettings
+import com.sms.tagger.util.LogControlSettings
+import com.sms.tagger.util.AppLogger
 import com.sms.tagger.util.TrialManager
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -234,6 +239,8 @@ private fun SettingsHome(
             item { PermissionSettingsEntryCard(onPermissionSettingsClick) }
             // 反馈与支持卡片
             item { SupportCard(onSupportClick = onFeedbackClick) }
+            // 时间窗口 & 日志配置
+            item { TimeWindowDiagnosticsCard() }
             // 隐私说明卡片
             item { PrivacyCard(onStatementClick = onStatementClick) }
         }
@@ -371,6 +378,141 @@ private fun AppInfoCard() {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TimeWindowDiagnosticsCard() {
+    val context = LocalContext.current
+    var expressDays by remember { mutableStateOf(TimeWindowSettings.getExpressDays(context)) }
+    var smsDays by remember { mutableStateOf(TimeWindowSettings.getSmsDays(context)) }
+    var verboseLogging by remember { mutableStateOf(LogControlSettings.isVerboseLoggingEnabled(context)) }
+
+    LaunchedEffect(Unit) {
+        AppLogger.setVerboseOverride(verboseLogging)
+    }
+
+    FrostedGlassCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "⚙️ 数据时间窗口 & 日志",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "可调整快递/短信展示范围，并控制诊断日志输出",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "快递展示范围",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TimeWindowSettings.expressOptions().forEach { days ->
+                        TimeWindowOptionChip(
+                            label = "近${days}天",
+                            selected = expressDays == days
+                        ) {
+                            expressDays = days
+                            TimeWindowSettings.setExpressDays(context, days)
+                        }
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Text(
+                            text = "短信展示范围",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "当前仅展示近 ${smsDays} 天，如需更早请手动扩展",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TimeWindowSettings.smsOptions().forEach { days ->
+                        TimeWindowOptionChip(
+                            label = "近${days}天",
+                            selected = smsDays == days
+                        ) {
+                            smsDays = days
+                            TimeWindowSettings.setSmsDays(context, days)
+                        }
+                    }
+                }
+            }
+
+            Divider(color = Color(0x1A000000))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "诊断日志开关",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "默认关闭，仅在排查问题时开启以捕获详细日志",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
+                Switch(
+                    checked = verboseLogging,
+                    onCheckedChange = { enabled ->
+                        verboseLogging = enabled
+                        LogControlSettings.setVerboseLoggingEnabled(context, enabled)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeWindowOptionChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        border = BorderStroke(1.dp, if (selected) Color(0xFF4F46E5) else Color(0xFFE5E7EB)),
+        color = if (selected) Color(0x1A4F46E5) else Color.White,
+        modifier = Modifier
+            .clickable { onClick() }
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color(0xFF312E81) else Color(0xFF6B7280),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
     }
 }
 

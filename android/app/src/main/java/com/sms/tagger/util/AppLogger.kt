@@ -1,6 +1,7 @@
 package com.sms.tagger.util
 
 import android.util.Log
+import com.sms.tagger.BuildConfig
 
 /**
  * 应用日志工具类
@@ -8,12 +9,25 @@ import android.util.Log
  */
 object AppLogger {
     private var logFileWriter: LogFileWriter? = null
+    @Volatile private var verboseOverride: Boolean = false
     
     /**
      * 初始化日志系统
      */
     fun init(writer: LogFileWriter) {
         logFileWriter = writer
+    }
+
+    fun setVerboseOverride(enabled: Boolean) {
+        verboseOverride = enabled
+    }
+
+    fun isVerboseEnabled(): Boolean = BuildConfig.DEBUG || verboseOverride
+
+    inline fun debug(tag: String, block: () -> String) {
+        if (isVerboseEnabled()) {
+            d(tag, block())
+        }
     }
     
     /**

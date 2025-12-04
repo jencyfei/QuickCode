@@ -604,6 +604,111 @@ class SmsReader(private val context: Context) {
     }
     
     /**
+     * 最新短信元信息
+     */
+    data class SmsMeta(
+        val id: Long,
+        val timestamp: String
+    )
+    
+    /**
+     * 获取短信数据库中最新一条短信的元信息（_ID + 时间）
+     */
+    fun getLatestSmsMeta(): SmsMeta? {
+        if (!hasPermission()) {
+            return null
+        }
+        return try {
+            val allSmsUri = Uri.parse("content://sms")
+            context.contentResolver.query(
+                allSmsUri,
+                arrayOf(Telephony.Sms._ID, Telephony.Sms.DATE),
+                null,
+                null,
+                "${Telephony.Sms.DATE} DESC, ${Telephony.Sms._ID} DESC LIMIT 1"
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val id = cursor.getLong(cursor.getColumnIndexOrThrow(Telephony.Sms._ID))
+                    val dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(Telephony.Sms.DATE))
+                    SmsMeta(id = id, timestamp = dateFormat.format(Date(dateMillis)))
+                } else {
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "获取最新短信元信息失败", e)
+            null
+        }
+    }
+    
+    /**
+     * 获取短信数据库中最新一条短信的时间戳字符串
+     * 用于判断缓存是否仍然有效
+     */
+    fun getLatestSmsTimestamp(): String? {
+        return getLatestSmsMeta()?.timestamp
+    }
+    
+    /**
+     * 获取短信数据库中最新一条短信的_ID
+     */
+    fun getLatestSmsId(): Long? {
+        return getLatestSmsMeta()?.id
+    }
+    
+    /**
+     * 读取指定 _ID 之后的新短信（用于增量更新）
+     */
+    fun readSmsAfterId(lastId: Long, limit: Int = 500): List<SmsCreate> {
+        val smsList = mutableListOf<SmsCreate>()
+        
+        try {
+            val allSmsUri = Uri.parse("content://sms")
+            val selection = "${Telephony.Sms._ID} > ?"
+            val selectionArgs = arrayOf(lastId.toString())
+            
+            val cursor = context.contentResolver.query(
+                allSmsUri,
+                arrayOf(
+                    Telephony.Sms._ID,
+                    Telephony.Sms.ADDRESS,
+                    Telephony.Sms.BODY,
+                    Telephony.Sms.DATE
+                ),
+                selection,
+                selectionArgs,
+                "${Telephony.Sms._ID} DESC LIMIT $limit"
+            )
+            
+            cursor?.use {
+                val addressIndex = it.getColumnIndex(Telephony.Sms.ADDRESS)
+                val bodyIndex = it.getColumnIndex(Telephony.Sms.BODY)
+                val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
+                
+                while (it.moveToNext()) {
+                    val address = it.getString(addressIndex) ?: "未知"
+                    val body = it.getString(bodyIndex) ?: ""
+                    val date = it.getLong(dateIndex)
+                    
+                    val receivedAt = dateFormat.format(Date(date))
+                    smsList.add(
+                        SmsCreate(
+                            sender = address,
+                            content = body,
+                            receivedAt = receivedAt,
+                            phoneNumber = address
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "增量读取短信失败: ${e.message}", e)
+        }
+        
+        return smsList
+    }
+    
+    /**
      * 检查是否有短信权限
      * 注意：此方法只检查权限和能否访问SMS提供者，不检查是否有数据
      */
