@@ -4,7 +4,7 @@ import android.util.Log
 
 /**
  * 应用日志工具类
- * 统一管理日志输出，同时输出到 Logcat 和日志文件
+ * 统一管理日志输出，同时输出到 Logcat、日志文件和内存日志管理器
  */
 object AppLogger {
     private var logFileWriter: LogFileWriter? = null
@@ -22,6 +22,7 @@ object AppLogger {
     fun d(tag: String, message: String, throwable: Throwable? = null) {
         Log.d(tag, message, throwable)
         logFileWriter?.writeLog(tag, "DEBUG", message, throwable)
+        InMemoryLogger.addLog("DEBUG", tag, message, throwable)
     }
     
     /**
@@ -30,6 +31,7 @@ object AppLogger {
     fun i(tag: String, message: String, throwable: Throwable? = null) {
         Log.i(tag, message, throwable)
         logFileWriter?.writeLog(tag, "INFO", message, throwable)
+        InMemoryLogger.addLog("INFO", tag, message, throwable)
     }
     
     /**
@@ -38,6 +40,7 @@ object AppLogger {
     fun w(tag: String, message: String, throwable: Throwable? = null) {
         Log.w(tag, message, throwable)
         logFileWriter?.writeLog(tag, "WARN", message, throwable)
+        InMemoryLogger.addLog("WARN", tag, message, throwable)
     }
     
     /**
@@ -46,6 +49,7 @@ object AppLogger {
     fun e(tag: String, message: String, throwable: Throwable? = null) {
         Log.e(tag, message, throwable)
         logFileWriter?.writeLog(tag, "ERROR", message, throwable)
+        InMemoryLogger.addLog("ERROR", tag, message, throwable)
     }
 }
 

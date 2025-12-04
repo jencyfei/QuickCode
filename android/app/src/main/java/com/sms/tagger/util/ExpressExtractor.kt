@@ -28,8 +28,16 @@ object ExpressExtractor {
      * 从短信中提取快递信息
      */
     fun extractExpressInfo(sms: SmsCreate): ExpressInfo? {
+        // 【严格过滤】使用评分模型判断是否为快递短信
+        val (isExpress, score) = StrictExpressFilter.isExpressSms(sms)
+        if (!isExpress) {
+            return null
+        }
+        
         val content = sms.content
-        val detection = ExpressCompanyDetector.detect(sms.sender, content) ?: return null
+        val detection = ExpressCompanyDetector.detect(sms.sender, content)
+        val companyName = detection?.displayName ?: "包裹"
+        val companyType = detection?.type ?: "default"
         
         // 提取取件码
         val pickupCode = extractPickupCode(content) ?: return null
@@ -44,8 +52,8 @@ object ExpressExtractor {
         val status = detectPickupStatus(content)
         
         return ExpressInfo(
-            company = detection.displayName,
-            expressType = detection.type,
+            company = companyName,
+            expressType = companyType,
             pickupCode = pickupCode,
             location = location,
             sender = sms.sender,
@@ -56,6 +64,8 @@ object ExpressExtractor {
         )
     }
     
+    private const val TAG = "ExpressExtractor"
+    
     /**
      * 从短信列表中提取所有快递信息
      * 支持从一条短信中提取多个快递（多个取件码）
@@ -63,13 +73,67 @@ object ExpressExtractor {
     fun extractAllExpressInfo(smsList: List<SmsCreate>): List<ExpressInfo> {
         val allExpressInfo = mutableListOf<ExpressInfo>()
         
+        AppLogger.d(TAG, "========== 开始提取快递信息 ==========")
+        AppLogger.d(TAG, "短信总数: ${smsList.size}")
+        
+        // 检查是否包含目标短信
+        val targetSms = smsList.filter { 
+            it.sender.startsWith("10684") && it.content.contains("9-5-5038")
+        }
+        if (targetSms.isNotEmpty()) {
+            AppLogger.w(TAG, "🎯🎯🎯 找到包含9-5-5038的10684发件人短信，共${targetSms.size}条")
+            targetSms.forEachIndexed { index, sms ->
+                AppLogger.w(TAG, "  目标短信${index + 1}: 发件人=${sms.sender}, 内容=${sms.content}")
+            }
+        }
+        
         for (sms in smsList) {
-            // 检查是否包含快递关键词
-            val detection = ExpressCompanyDetector.detect(sms.sender, sms.content) ?: continue
+            // 检查是否是10684发件人
+            val is10684Sender = sms.sender.startsWith("10684")
+            if (is10684Sender) {
+                AppLogger.d(TAG, "📦 处理10684发件人短信: 内容=${sms.content.take(150)}")
+            }
+            
+            // 检查是否包含目标取件码
+            val containsTargetCode = sms.content.contains("9-5-5038")
+            if (containsTargetCode) {
+                AppLogger.w(TAG, "🎯 发现包含9-5-5038的短信！发件人=${sms.sender}, 内容=${sms.content}")
+            }
+            
+            // 【严格过滤】使用评分模型判断是否为快递短信
+            val (isExpress, score) = StrictExpressFilter.isExpressSms(sms)
+            if (!isExpress) {
+                if (is10684Sender || containsTargetCode) {
+                    AppLogger.w(TAG, "⚠️ 严格过滤未通过: 评分=$score, 发件人=${sms.sender}, 内容=${sms.content.take(200)}")
+                }
+                continue
+            }
+            
+            if (is10684Sender || containsTargetCode) {
+                AppLogger.d(TAG, "✅ 严格过滤通过: 评分=$score")
+            }
+            
+            // 检查快递公司（用于显示）
+            val detection = ExpressCompanyDetector.detect(sms.sender, sms.content)
+            val companyName = detection?.displayName ?: "包裹"
+            val companyType = detection?.type ?: "default"
+            
+            if (is10684Sender || containsTargetCode) {
+                AppLogger.d(TAG, "✅ 检测到快递公司: $companyName, 类型=$companyType")
+            }
             
             // 提取所有取件码
             val pickupCodes = extractAllPickupCodes(sms.content)
-            if (pickupCodes.isEmpty()) continue
+            if (pickupCodes.isEmpty()) {
+                if (is10684Sender || containsTargetCode) {
+                    AppLogger.w(TAG, "❌ 未能提取到取件码！发件人=${sms.sender}, 内容=${sms.content}")
+                }
+                continue
+            }
+            
+            if (is10684Sender || containsTargetCode || pickupCodes.any { it == "9-5-5038" }) {
+                AppLogger.w(TAG, "✅✅✅ 成功提取取件码: ${pickupCodes.joinToString(", ")}")
+            }
             
             // 提取地址和日期（对所有取件码都相同）
             val location = extractLocation(sms.content)
@@ -80,8 +144,8 @@ object ExpressExtractor {
             for (pickupCode in pickupCodes) {
                 allExpressInfo.add(
                     ExpressInfo(
-                        company = detection.displayName,
-                        expressType = detection.type,
+                        company = companyName,
+                        expressType = companyType,
                         pickupCode = pickupCode,
                         location = location,
                         sender = sms.sender,
@@ -93,6 +157,14 @@ object ExpressExtractor {
                 )
             }
         }
+        
+        AppLogger.d(TAG, "✅ 成功提取 ${allExpressInfo.size} 条快递信息")
+        if (allExpressInfo.any { it.pickupCode == "9-5-5038" }) {
+            AppLogger.w(TAG, "✅✅✅ 最终结果中包含9-5-5038取件码！")
+        } else {
+            AppLogger.w(TAG, "⚠️⚠️⚠️ 最终结果中未包含9-5-5038取件码！")
+        }
+        AppLogger.d(TAG, "========== 快递信息提取完成 ==========")
         
         return allExpressInfo
     }
@@ -147,54 +219,89 @@ object ExpressExtractor {
      * 示例：
      * - 【菜鸟驿站】您有2个包裹在郑州市北文雅小区6号楼102店，取件码为6-5-3002, 6-2-3006。
      * - 【菜鸟驿站】您的包裹已到站，凭1-4-4011到郑州市北文雅小区6号楼102店取件。
+     * - 【菜鸟驿站】您的包裹已到站，凭9-5-5038到郑州市北文雅小区6号楼102店取件。
      */
     private fun extractAllCaiNiaoPickupCodes(content: String): List<String> {
+        val containsTarget = content.contains("9-5-5038")
+        if (containsTarget) {
+            AppLogger.w(TAG, "🎯 开始提取菜鸟驿站取件码，内容包含9-5-5038: ${content.take(200)}")
+        }
+        
         // 查找"凭"或"取件码为"的位置
         var startIndex = -1
         var bengIndex = content.indexOf("凭")
         var codeIndex = content.indexOf("取件码为")
         
+        if (containsTarget) {
+            AppLogger.d(TAG, "  查找关键词: '凭'在位置$bengIndex, '取件码为'在位置$codeIndex")
+        }
+        
         // 优先使用"凭"，其次使用"取件码为"
         startIndex = when {
             bengIndex != -1 -> bengIndex + 1
             codeIndex != -1 -> codeIndex + 4
-            else -> return emptyList()
+            else -> {
+                if (containsTarget) {
+                    AppLogger.w(TAG, "❌ 未找到'凭'或'取件码为'关键词！")
+                }
+                return emptyList()
+            }
+        }
+        
+        if (containsTarget) {
+            AppLogger.d(TAG, "  使用开始位置: $startIndex")
         }
         
         val restContent = content.substring(startIndex)
         
+        if (containsTarget) {
+            AppLogger.d(TAG, "  提取后的内容: ${restContent.take(100)}")
+        }
+        
         // 匹配格式：
-        // 1. 标准格式：数字-数字-数字（如：6-5-3002）
+        // 1. 标准格式：数字-数字-数字（如：6-5-3002、9-5-5038）
         // 2. 标准格式：数字-数字-数字-数字（如：6-5-3-002）
-        // 3. 特殊格式：数字-数字-多位数字（如：1-4-4011，第三部分是2-4位数字）
+        // 3. 特殊格式：数字-数字-多位数字（如：1-4-4011，第三部分是2-6位数字）
         // 支持多个取件码（逗号或中文逗号分隔）
         
         // 收集所有匹配的取件码
         val codes = mutableListOf<String>()
         
         // 方案1：优先匹配标准格式（至少3段，每段至少1位数字）
-        // 例如：6-5-3002、1-4-4011、6-5-3-002
-        // 注意：[0-9]+可以匹配多位数字，所以"1-4-4011"也能匹配
-        // 修改：使用更精确的正则，确保能匹配"1-4-4011"这种格式
-        // 格式：数字-数字-数字（第三部分可以是1-6位数字）
-        val standardPattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]{1,6}(?:-[0-9]+)?)")
+        // 例如：6-5-3002、1-4-4011、6-5-3-002、9-5-5038
+        // 格式：数字-数字-数字（第三部分可以是1-8位数字，支持更长的取件码）
+        // 使用非贪婪匹配，遇到非数字字符时停止
+        val standardPattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]{1,8}(?:-[0-9]+)?)")
         val standardMatcher = standardPattern.matcher(restContent)
+        var matchCount = 0
         while (standardMatcher.find()) {
             val code = standardMatcher.group(1)?.trim() ?: ""
             if (code.isNotEmpty()) {
                 // 过滤掉明显不是取件码的匹配（如日期格式：2025-11-20）
-                // 但保留"1-4-4011"这种格式
+                // 但保留"1-4-4011"、"9-5-5038"这种格式
                 if (!code.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
                     codes.add(code)
+                    matchCount++
+                    if (containsTarget || code == "9-5-5038") {
+                        AppLogger.w(TAG, "  ✅ 匹配到取件码: $code (标准格式)")
+                    }
+                } else {
+                    if (containsTarget) {
+                        AppLogger.d(TAG, "  ⏭️ 跳过日期格式: $code")
+                    }
                 }
             }
         }
         
+        if (containsTarget) {
+            AppLogger.d(TAG, "  标准格式匹配结果: 找到 $matchCount 个，去重后 ${codes.size} 个")
+        }
+        
         // 方案2：如果标准格式未匹配到，尝试更宽松的格式匹配
-        // 匹配：数字-数字-数字的组合（第三部分可以是1-6位数字）
+        // 匹配：数字-数字-数字的组合（第三部分可以是1-8位数字）
         // 这样可以匹配各种变体格式
         if (codes.isEmpty()) {
-            val fallbackPattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]{1,6}(?:-[0-9]+)?)")
+            val fallbackPattern = Pattern.compile("([0-9]+-[0-9]+-[0-9]{1,8}(?:-[0-9]+)?)")
             val fallbackMatcher = fallbackPattern.matcher(restContent)
             while (fallbackMatcher.find()) {
                 val code = fallbackMatcher.group(1)?.trim() ?: ""

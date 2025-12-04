@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">短信助手</string>
+    <string name="app_name">QuickCode</string>
     
     <!-- 通用 -->
     <string name="ok">确定</string>

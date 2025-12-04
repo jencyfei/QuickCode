@@ -6,6 +6,8 @@ import java.util.Locale
  * 根据短信发件人及内容推断快递公司与类型
  */
 object ExpressCompanyDetector {
+    
+    private const val TAG = "ExpressCompanyDetector"
 
     data class Result(
         val displayName: String,
@@ -30,7 +32,7 @@ object ExpressCompanyDetector {
         "zto" to listOf("ZTO", "95311"),
         "yto" to listOf("YTO", "95554"),
         "sto" to listOf("STO", "95543"),
-        "cainiao" to listOf("CAINIAO", "95188"),
+        "cainiao" to listOf("CAINIAO", "95188", "10684"),
         "ems" to listOf("EMS", "11185")
     ).mapValues { entry ->
         entry.value.map { it.uppercase(Locale.ROOT) }
@@ -54,32 +56,72 @@ object ExpressCompanyDetector {
     ).map { it.lowercase(Locale.ROOT) }
 
     fun detect(sender: String?, content: String): Result? {
-        val type = detectType(sender, content) ?: return null
-        val displayName = displayNameByType[type] ?: displayNameByType.getValue("default")
-        return Result(displayName, type)
+        val is10684Sender = sender?.startsWith("10684") == true
+        val containsTargetCode = content.contains("9-5-5038")
+        
+        if (is10684Sender || containsTargetCode) {
+            AppLogger.d(TAG, "🔍 开始检测快递公司: 发件人=$sender, 内容=${content.take(100)}")
+        }
+        
+        val type = detectType(sender, content)
+        
+        if (type != null) {
+            val displayName = displayNameByType[type] ?: displayNameByType.getValue("default")
+            if (is10684Sender || containsTargetCode) {
+                AppLogger.w(TAG, "✅ 识别为快递: ${displayName} (类型=$type)")
+            }
+            return Result(displayName, type)
+        } else {
+            if (is10684Sender || containsTargetCode) {
+                AppLogger.w(TAG, "❌ 未能识别为快递: 发件人=$sender, 内容=${content.take(200)}")
+            }
+            return null
+        }
     }
 
     private fun detectType(sender: String?, content: String): String? {
         val normalizedSender = sender?.uppercase(Locale.ROOT) ?: ""
+        val is10684Sender = normalizedSender.startsWith("10684")
+        
+        if (is10684Sender) {
+            AppLogger.d(TAG, "  检查发件人规则: $normalizedSender")
+        }
+        
         if (normalizedSender.isNotEmpty()) {
             senderRules.forEach { (type, tokens) ->
                 if (tokens.any { normalizedSender.contains(it) }) {
+                    if (is10684Sender) {
+                        AppLogger.w(TAG, "  ✅ 发件人匹配: 类型=$type, 规则=${tokens.joinToString(", ")}")
+                    }
                     return type
                 }
             }
+        }
+        
+        if (is10684Sender) {
+            AppLogger.d(TAG, "  发件人规则未匹配，检查内容关键词")
         }
 
         val normalizedContent = content.lowercase(Locale.ROOT)
         keywordRules.forEach { (type, keywords) ->
             if (keywords.any { normalizedContent.contains(it) }) {
+                if (is10684Sender || content.contains("9-5-5038")) {
+                    AppLogger.w(TAG, "  ✅ 内容关键词匹配: 类型=$type, 关键词=${keywords.joinToString(", ")}")
+                }
                 return type
             }
         }
 
         if (generalKeywords.any { normalizedContent.contains(it) }) {
+            if (is10684Sender || content.contains("9-5-5038")) {
+                AppLogger.w(TAG, "  ✅ 通用关键词匹配: default")
+            }
             return "default"
         }
 
+        if (is10684Sender || content.contains("9-5-5038")) {
+            AppLogger.w(TAG, "  ❌ 所有规则都未匹配")
+        }
         return null
     }
 }

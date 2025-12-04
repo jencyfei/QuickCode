@@ -45,11 +45,11 @@ class SmsReader(private val context: Context) {
         
         // 检查权限
         if (!hasPermission()) {
-            AppLogger.e(TAG, "❌ 权限检查失败: 没有短信读取权限")
+            AppLogger.e(TAG, "❌ 权限检查失败: 没有短信读取权限或无法访问SMS提供者")
             return smsList
         }
         
-        AppLogger.d(TAG, "✅ 权限检查通过")
+        AppLogger.d(TAG, "✅ 权限检查通过，开始读取短信数据")
         
         try {
             var lastDate: Long? = null
@@ -68,6 +68,61 @@ class SmsReader(private val context: Context) {
                 
                 val pageSmsWithId = readSmsPageByDate(lastDate, lastReadMinId, pageLimit)
                 AppLogger.d(TAG, "第 $pageNum 页读取到 ${pageSmsWithId.size} 条短信（原始）")
+                
+                // 记录这一页的时间范围（总是输出）
+                if (pageSmsWithId.isNotEmpty()) {
+                    val pageDates = pageSmsWithId.mapNotNull { smsWithId ->
+                        try {
+                            dateFormat.parse(smsWithId.sms.receivedAt)?.time
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    if (pageDates.isNotEmpty()) {
+                        val minDate = pageDates.minOrNull()
+                        val maxDate = pageDates.maxOrNull()
+                        val minDateStr = if (minDate != null) java.util.Date(minDate).toString() else "未知"
+                        val maxDateStr = if (maxDate != null) java.util.Date(maxDate).toString() else "未知"
+                        AppLogger.w(TAG, "📅 第 $pageNum 页时间范围: 最新=$maxDateStr, 最早=$minDateStr")
+                        
+                        // 检查是否包含11月28日
+                        val containsNov28 = maxDate != null && minDate != null && 
+                            minDate <= 1732800000000L && maxDate >= 1732800000000L  // 2025-11-28的时间戳范围
+                        if (containsNov28) {
+                            AppLogger.w(TAG, "✅ 第 $pageNum 页时间范围包含11月28日")
+                        } else {
+                            AppLogger.w(TAG, "❌ 第 $pageNum 页时间范围不包含11月28日")
+                        }
+                    }
+                    
+                    // 检查这一页是否有10684发件人（总是输出结果）
+                    val page10684Sms = pageSmsWithId.filter { 
+                        it.sms.sender.startsWith("10684") || it.sms.sender.contains("10684") 
+                    }
+                    if (page10684Sms.isNotEmpty()) {
+                        AppLogger.w(TAG, "🎯 第 $pageNum 页发现 ${page10684Sms.size} 条10684发件人短信:")
+                        page10684Sms.forEach { smsWithId ->
+                            AppLogger.w(TAG, "  10684短信: _ID=${smsWithId.id}, 发件人=${smsWithId.sms.sender}, 内容=${smsWithId.sms.content.take(200)}, 时间=${smsWithId.sms.receivedAt}")
+                        }
+                    } else {
+                        AppLogger.w(TAG, "❌ 第 $pageNum 页未发现10684发件人短信")
+                    }
+                    
+                    // 检查这一页是否有11月28日的短信（总是输出结果）
+                    val pageNov28Sms = pageSmsWithId.filter { 
+                        it.sms.receivedAt.contains("2025-11-28")
+                    }
+                    if (pageNov28Sms.isNotEmpty()) {
+                        AppLogger.w(TAG, "📆 第 $pageNum 页发现 ${pageNov28Sms.size} 条11月28日的短信:")
+                        pageNov28Sms.forEach { smsWithId ->
+                            AppLogger.w(TAG, "  11-28短信: _ID=${smsWithId.id}, 发件人=${smsWithId.sms.sender}, 内容=${smsWithId.sms.content.take(200)}, 时间=${smsWithId.sms.receivedAt}")
+                        }
+                    } else {
+                        AppLogger.w(TAG, "❌ 第 $pageNum 页未发现11月28日的短信")
+                    }
+                } else {
+                    AppLogger.w(TAG, "⚠️ 第 $pageNum 页为空，无法检查时间范围")
+                }
                 
                 if (pageSmsWithId.isEmpty()) {
                     AppLogger.d(TAG, "已到达短信列表底部（无更多数据）")
@@ -126,6 +181,27 @@ class SmsReader(private val context: Context) {
             }
             
             AppLogger.d(TAG, "✅ 成功读取 ${smsList.size} 条短信（共 $pageNum 页）")
+            
+            // 记录读取的时间范围
+            if (smsList.isNotEmpty()) {
+                val firstSmsDate = smsList.first().receivedAt
+                val lastSmsDate = smsList.last().receivedAt
+                AppLogger.w(TAG, "📅 读取时间范围: 最新=$firstSmsDate, 最早=$lastSmsDate")
+            }
+            
+            // 统计106开头发件人的数量
+            val count106 = smsList.count { it.sender.startsWith("106") }
+            val count10684 = smsList.count { it.sender.startsWith("10684") || it.sender.contains("10684") }
+            if (count106 > 0) {
+                AppLogger.w(TAG, "📊 统计: 106开头发件人短信共 ${count106} 条，其中10684开头共 ${count10684} 条")
+                
+                // 打印所有106开头发件人的短信
+                smsList.filter { it.sender.startsWith("106") }.forEachIndexed { index, sms ->
+                    AppLogger.w(TAG, "📞 106开头短信 ${index + 1}: 发件人=${sms.sender}, 内容=${sms.content.take(150)}, 时间=${sms.receivedAt}")
+                }
+            } else {
+                AppLogger.w(TAG, "⚠️ 警告: 读取的 ${smsList.size} 条短信中，没有106开头的发件人！")
+            }
             
             // 打印前5条短信的详细信息
             smsList.take(5).forEachIndexed { index, sms ->
@@ -350,6 +426,25 @@ class SmsReader(private val context: Context) {
                             }
                         }
                         
+                        // 检查是否是106开头的发件人（包括10684等所有106号码）
+                        val is106Sender = address.startsWith("106")
+                        if (is106Sender) {
+                            // 记录所有106开头的发件人，不限制在日志数量内
+                            AppLogger.w(TAG, "📞📞📞 发现106开头发件人短信！[第${rowCount}行] _ID=$id, 发件人=$address, 内容=${body.take(200)}, 时间=$receivedAt, 类型=$typeName")
+                            
+                            // 特别关注10684开头的发件人
+                            val is10684Sender = address.startsWith("10684") || address.contains("10684")
+                            if (is10684Sender) {
+                                AppLogger.w(TAG, "🔍🔍🔍 发现10684发件人短信！[第${rowCount}行] _ID=$id, 发件人=$address, 完整内容=$body, 时间=$receivedAt, 类型=$typeName")
+                                if (body.contains("菜鸟驿站", ignoreCase = true)) {
+                                    AppLogger.w(TAG, "✅✅✅ 10684发件人短信包含'菜鸟驿站'！完整内容: $body")
+                                }
+                                if (body.contains("9-5-5038", ignoreCase = false)) {
+                                    AppLogger.w(TAG, "🎯🎯🎯 找到目标取件码9-5-5038！发件人=$address, 完整内容: $body")
+                                }
+                            }
+                        }
+                        
                         // 检查是否是运营商短信或目标短信（用于调试）
                         val isOperatorSms = body.contains("中国移动", ignoreCase = true) || 
                                            body.contains("中国联通", ignoreCase = true) ||
@@ -379,10 +474,18 @@ class SmsReader(private val context: Context) {
                         // 检查是否是目标短信（用于调试）
                         val isTargetSms = body.contains("1-4-4011") || 
                                          body.contains("凭1-4-4011", ignoreCase = true) ||
-                                         (body.contains("菜鸟驿站", ignoreCase = true) && body.contains("4011"))
+                                         body.contains("9-5-5038") ||
+                                         body.contains("凭9-5-5038", ignoreCase = true) ||
+                                         (body.contains("菜鸟驿站", ignoreCase = true) && body.contains("4011")) ||
+                                         (body.contains("菜鸟驿站", ignoreCase = true) && body.contains("5038"))
                         
                         if (isTargetSms) {
                             AppLogger.w(TAG, "🔍 找到目标短信！类型=$typeName, 发件人=$address, 完整内容=$body, 时间=$receivedAt")
+                        }
+                        
+                        // 检查是否包含"菜鸟驿站"关键词
+                        if (body.contains("菜鸟驿站", ignoreCase = true)) {
+                            AppLogger.d(TAG, "📦 包含'菜鸟驿站'的短信: 发件人=$address, 内容=${body.take(150)}, 时间=$receivedAt")
                         }
                         
                         // 添加所有短信（包括空内容的短信），携带_ID信息
@@ -502,6 +605,7 @@ class SmsReader(private val context: Context) {
     
     /**
      * 检查是否有短信权限
+     * 注意：此方法只检查权限和能否访问SMS提供者，不检查是否有数据
      */
     fun hasPermission(): Boolean {
         AppLogger.d(TAG, "========== 开始权限检查 ==========")
@@ -519,7 +623,7 @@ class SmsReader(private val context: Context) {
             return false
         }
         
-        // 2. 检查是否能访问 SMS 提供者
+        // 2. 检查是否能访问 SMS 提供者（只要能访问就返回true，不检查是否有数据）
         return try {
             val allSmsUri = Uri.parse("content://sms")
             AppLogger.d(TAG, "尝试访问SMS提供者: $allSmsUri")
@@ -533,21 +637,32 @@ class SmsReader(private val context: Context) {
             )
             
             if (cursor == null) {
-                AppLogger.e(TAG, "❌ SMS提供者访问失败: Cursor为null")
+                AppLogger.e(TAG, "❌ SMS提供者访问失败: Cursor为null（可能是权限问题或系统限制）")
                 return false
             }
             
+            // 检查是否有数据（仅用于日志，不影响返回结果）
             val hasData = cursor.moveToFirst() == true
+            
+            // 统计总记录数（用于诊断） - 在关闭cursor之前获取count
+            val totalCount = if (hasData) cursor.count else 0
             cursor.close()
             
-            if (hasData) {
-                AppLogger.d(TAG, "✅ SMS提供者访问成功，存在短信数据")
+            if (hasData && totalCount > 0) {
+                AppLogger.d(TAG, "✅ SMS提供者访问成功，存在短信数据（共 $totalCount 条）")
             } else {
-                AppLogger.w(TAG, "⚠️ SMS提供者访问成功，但无短信数据")
+                AppLogger.w(TAG, "⚠️ SMS提供者访问成功，但当前无短信数据（这是正常的，不影响权限判断）")
             }
             
+            AppLogger.d(TAG, "✅ 权限检查完成：权限已授予且可以访问SMS提供者")
             AppLogger.d(TAG, "========== 权限检查完成 ==========")
-            hasData
+            // 只要权限已授予且cursor不为null（能访问提供者），就返回true
+            // 即使没有数据，也应该返回true，因为权限本身是正常的
+            true
+        } catch (e: SecurityException) {
+            AppLogger.e(TAG, "❌ SMS提供者访问权限异常: ${e.message}", e)
+            e.printStackTrace()
+            false
         } catch (e: Exception) {
             AppLogger.e(TAG, "❌ SMS提供者访问异常: ${e.message}", e)
             e.printStackTrace()

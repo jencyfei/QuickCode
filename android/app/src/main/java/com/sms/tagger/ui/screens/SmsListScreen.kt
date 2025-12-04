@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.sms.tagger.ui.components.FrostedGlassCard
 import com.sms.tagger.ui.components.GradientBackground
@@ -69,19 +70,23 @@ fun SmsListScreen(
             
             // 先检查是否能访问短信
             if (!smsReader.hasPermission()) {
-                errorMessage = "无法访问短信，请检查权限设置"
+                errorMessage = "无法访问短信数据库，请检查是否已授予短信读取权限"
                 isLoading = false
                 return@LaunchedEffect
             }
             
-            // 读取所有短信（增加数量限制，确保显示完整）
+            // 读取所有短信（增加数量限制，避免一次性读取过多）
             AppLogger.d("SmsListScreen", "========== 开始加载短信列表 ==========")
             
-            // 增加读取数量限制到50000条，确保能读取到所有短信（包括运营商短信等）
-            // 如果没有标签过滤，显示所有短信；否则只显示指定标签的短信
-            val allSms = smsReader.readAllSms(50000)
+            // 默认限制最多读取 5000 条，已足够覆盖最近较长时间的短信记录
+            val allSms = smsReader.readAllSms(5000)
             
             AppLogger.d("SmsListScreen", "✅ 读取到 ${allSms.size} 条短信")
+            
+            // 如果权限已授予但读取不到短信，给出更明确的提示
+            if (allSms.isEmpty()) {
+                AppLogger.w("SmsListScreen", "⚠️ 权限已授予但未读取到任何短信，可能是设备上没有短信数据或需要设置为默认短信应用")
+            }
             
             // 打印前3条短信的详细信息
             allSms.take(3).forEachIndexed { index, sms ->
@@ -104,57 +109,55 @@ fun SmsListScreen(
             
             AppLogger.d("SmsListScreen", "排序后短信数: ${sortedSms.size} 条")
             
-            // 临时调整：只显示最近7天的短信，用于检测短信是否有缺失
-            val sevenDaysAgo = java.time.LocalDate.now().minusDays(7)
-            val recentSms = sortedSms.filter { sms ->
-                try {
-                    val smsDate = java.time.LocalDate.parse(sms.receivedAt.substring(0, 10))
-                    smsDate >= sevenDaysAgo
-                } catch (e: Exception) {
-                    AppLogger.w("SmsListScreen", "⚠️ 日期解析失败: ${sms.receivedAt}")
-                    true  // 日期解析失败时保留该短信
-                }
-            }
+            // 显示所有短信（不再限制为7天），确保能显示所有读取到的短信，包括10684开头的短信
+            smsCreateList = sortedSms
             
-            AppLogger.d("SmsListScreen", "最近7天的短信数: ${recentSms.size} 条（总共 ${sortedSms.size} 条）")
-            AppLogger.d("SmsListScreen", "过滤时间范围: $sevenDaysAgo 至今")
-            
-            // 统计最近7天内各发件人的短信数
-            val senderStats = recentSms.groupingBy { it.sender }.eachCount()
-            AppLogger.d("SmsListScreen", "最近7天发件人统计:")
-            senderStats.forEach { (sender, count) ->
+            // 统计各发件人的短信数（包括10684开头）
+            val senderStats = sortedSms.groupingBy { it.sender }.eachCount()
+            val count10684 = sortedSms.count { it.sender.startsWith("10684") || it.sender.contains("10684") }
+            AppLogger.d("SmsListScreen", "发件人统计:")
+            AppLogger.d("SmsListScreen", "  - 10684开头发件人: $count10684 条")
+            senderStats.filter { it.key.startsWith("10684") || it.key.contains("10684") }.forEach { (sender, count) ->
                 AppLogger.d("SmsListScreen", "  - $sender: $count 条")
             }
             
-            // 打印排序后的前3条短信
-            recentSms.take(3).forEachIndexed { index, sms ->
-                AppLogger.d("SmsListScreen", "最近7天短信 ${index + 1}: 发件人=${sms.sender}, 时间=${sms.receivedAt}")
+            // 打印排序后的前10条短信（用于调试）
+            sortedSms.take(10).forEachIndexed { index, sms ->
+                AppLogger.d("SmsListScreen", "短信 ${index + 1}: 发件人=${sms.sender}, 时间=${sms.receivedAt}")
             }
             
-            // 搜索目标短信（用于调试）- 只在未找到时记录警告
-            val targetSms = recentSms.filter { 
-                it.content.contains("菜鸟驿站", ignoreCase = true) && 
-                (it.content.contains("1-4-4011") || it.content.contains("凭1-4-4011"))
+            // 检查10684开头的短信（用于调试）
+            val sms10684 = sortedSms.filter { 
+                val sender = it.sender
+                sender.startsWith("10684") || sender.contains("10684") || sender.matches(Regex(".*10684.*"))
             }
-            if (targetSms.isNotEmpty()) {
-                AppLogger.w("SmsListScreen", "🔍 在最近7天的短信中找到 ${targetSms.size} 条目标短信（包含'菜鸟驿站'和'1-4-4011'）")
-                // 只记录第一条目标短信的详细信息
-                targetSms.firstOrNull()?.let { sms ->
-                    AppLogger.w("SmsListScreen", "  目标短信: 发件人=${sms.sender}, 内容=${sms.content.take(80)}, 时间=${sms.receivedAt}")
+            AppLogger.w("SmsListScreen", "========== 10684短信检查结果 ==========")
+            AppLogger.w("SmsListScreen", "总短信数: ${sortedSms.size}")
+            AppLogger.w("SmsListScreen", "10684开头的短信数: ${sms10684.size}")
+            if (sms10684.isNotEmpty()) {
+                AppLogger.w("SmsListScreen", "🔍 找到 ${sms10684.size} 条10684开头的短信:")
+                sms10684.take(10).forEachIndexed { index, sms ->
+                    AppLogger.w("SmsListScreen", "  10684短信 ${index + 1}: 发件人='${sms.sender}', 时间=${sms.receivedAt}, 内容=${sms.content.take(100)}")
                 }
             } else {
-                AppLogger.w("SmsListScreen", "⚠️ 在最近7天的 ${recentSms.size} 条短信中未找到目标短信")
-                // 只统计数量，不列出所有短信（减少日志量）
-                val cainiaoSms = recentSms.filter { it.content.contains("菜鸟驿站", ignoreCase = true) }
-            AppLogger.d("SmsListScreen", "最近7天内包含'菜鸟驿站'的短信共 ${cainiaoSms.size} 条")
+                AppLogger.w("SmsListScreen", "⚠️ 未找到10684开头的短信")
+                // 检查是否有类似的发件人
+                val similarSenders = sortedSms.map { it.sender }.distinct().filter { 
+                    it.contains("106") || it.contains("84") || it.length > 10 
+                }.take(20)
+                AppLogger.w("SmsListScreen", "相似的发送人（包含106或84的）: ${similarSenders.joinToString(", ")}")
             }
-            
-            smsCreateList = recentSms
+            AppLogger.w("SmsListScreen", "=====================================")
             
             AppLogger.d("SmsListScreen", "========== 短信列表加载完成 ==========")
             
+            // 改进空列表提示信息
             if (smsCreateList.isEmpty()) {
-                errorMessage = "暂无短信"
+                if (allSms.isEmpty()) {
+                    errorMessage = "未读取到任何短信\n\n可能的原因：\n1. 设备上没有短信数据\n2. 需要在系统设置中授予完整的短信读取权限\n3. 某些设备可能需要将应用设置为默认短信应用"
+                } else {
+                    errorMessage = "未读取到任何短信\n\n共尝试读取 ${allSms.size} 条短信，但筛选后为空"
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -262,15 +265,20 @@ fun SmsListScreen(
                 ) {
                     Text(
                         text = errorMessage ?: "加载失败",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFFFF6B6B),
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        lineHeight = 20.sp
                     )
+                    // 只在权限相关错误时显示提示
+                    if (errorMessage?.contains("权限") == true || errorMessage?.contains("无法访问") == true) {
                     Text(
                         text = "提示：请确保已在系统设置中授予短信读取权限",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                            color = TextSecondary,
+                            modifier = Modifier.padding(top = 8.dp)
                     )
+                    }
                 }
             }
                 } else {
@@ -282,6 +290,21 @@ fun SmsListScreen(
                         }
                     } else {
                         smsCreateList
+                    }
+                    
+                    // 诊断：检查10684短信是否在显示列表中
+                    val displayed10684 = filteredSmsList.filter { 
+                        val sender = it.sender
+                        sender.startsWith("10684") || sender.contains("10684") || sender.matches(Regex(".*10684.*", RegexOption.IGNORE_CASE))
+                    }
+                    if (displayed10684.isNotEmpty() || filteredSmsList.size > 0) {
+                        AppLogger.d("SmsListScreen", "显示列表统计: 总计 ${filteredSmsList.size} 条，其中10684短信 ${displayed10684.size} 条")
+                        if (displayed10684.isNotEmpty()) {
+                            AppLogger.w("SmsListScreen", "✅ 10684短信已包含在显示列表中")
+                            displayed10684.take(3).forEachIndexed { index, sms ->
+                                AppLogger.w("SmsListScreen", "  显示的第${index+1}条10684短信: 发件人='${sms.sender}', 内容=${sms.content.take(50)}")
+                            }
+                        }
                     }
                     
                     if (filteredSmsList.isEmpty() && appliedSearchText.isNotBlank()) {

@@ -29,8 +29,10 @@ class LogFileWriter(private val context: Context) {
         private val fileNameFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
     }
     
-    // 使用下载目录，方便用户直接访问
-    private val logDir: File = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), LOG_DIR)
+    // 优先使用下载目录，失败时使用应用私有目录
+    private val logDir: File by lazy { 
+        getLogDirectory()
+    }
     private var currentLogFile: File? = null
     
     // 日志缓冲区（线程安全）
@@ -40,17 +42,75 @@ class LogFileWriter(private val context: Context) {
     private val writeScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var flushJob: Job? = null
     
-    init {
-        // 创建日志目录
-        if (!logDir.exists()) {
-            logDir.mkdirs()
+    // 是否初始化成功
+    private var isInitialized = false
+    
+    /**
+     * 获取日志目录（优先外部存储，失败时使用私有目录）
+     */
+    private fun getLogDirectory(): File {
+        // 方法1: 尝试使用外部存储的下载目录
+        try {
+            val externalDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (externalDir != null) {
+                val dir = File(externalDir, LOG_DIR)
+                if (dir.exists() || dir.mkdirs()) {
+                    Log.d(TAG, "使用外部存储目录: ${dir.absolutePath}")
+                    return dir
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "无法使用外部存储目录: ${e.message}")
         }
         
-        // 初始化当前日志文件
-        currentLogFile = getOrCreateLogFile()
+        // 方法2: 使用应用私有目录（更可靠，不需要权限）
+        try {
+            val privateDir = File(context.filesDir, LOG_DIR)
+            if (!privateDir.exists()) {
+                privateDir.mkdirs()
+            }
+            Log.d(TAG, "使用应用私有目录: ${privateDir.absolutePath}")
+            return privateDir
+        } catch (e: Exception) {
+            Log.e(TAG, "无法创建日志目录: ${e.message}", e)
+        }
         
-        // 启动后台刷新任务
-        startFlushTask()
+        // 最后的备选方案：使用缓存目录
+        return try {
+            val cacheDir = File(context.cacheDir, LOG_DIR)
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs()
+            }
+            Log.d(TAG, "使用缓存目录: ${cacheDir.absolutePath}")
+            cacheDir
+        } catch (e: Exception) {
+            Log.e(TAG, "无法使用缓存目录，使用临时目录: ${e.message}", e)
+            // 最后的最后：使用临时目录
+            File(context.cacheDir, "logs").also { 
+                if (!it.exists()) it.mkdirs() 
+            }
+        }
+    }
+    
+    init {
+        try {
+            // 创建日志目录（lazy初始化，在这里触发）
+            logDir.exists()
+            
+            // 初始化当前日志文件
+            currentLogFile = getOrCreateLogFile()
+            
+            // 启动后台刷新任务
+            startFlushTask()
+            
+            isInitialized = true
+            Log.d(TAG, "日志系统初始化成功")
+        } catch (e: Exception) {
+            // 初始化失败不应该导致应用崩溃，只是禁用文件日志
+            Log.e(TAG, "日志系统初始化失败，将只使用Logcat: ${e.message}", e)
+            isInitialized = false
+            // 继续运行，只是不写文件
+        }
     }
     
     /**
@@ -69,7 +129,7 @@ class LogFileWriter(private val context: Context) {
      * 刷新缓冲区（将缓冲的日志写入文件）
      */
     private fun flushBuffer() {
-        if (logBuffer.isEmpty()) return
+        if (!isInitialized || logBuffer.isEmpty()) return
         
         val logsToWrite = mutableListOf<String>()
         // 批量取出缓冲区中的日志
@@ -118,6 +178,11 @@ class LogFileWriter(private val context: Context) {
      * 写入日志（异步，非阻塞）
      */
     fun writeLog(tag: String, level: String, message: String, throwable: Throwable? = null) {
+        // 如果未初始化成功，直接返回，避免崩溃
+        if (!isInitialized) {
+            return
+        }
+        
         try {
             val timestamp = dateFormat.format(Date())
             val logMessage = "[$timestamp] [$level] [$tag] $message\n"
@@ -138,6 +203,7 @@ class LogFileWriter(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
+            // 日志写入失败不应该影响应用运行
             Log.e(TAG, "添加日志到缓冲区失败", e)
         }
     }

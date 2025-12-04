@@ -10,11 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.sms.tagger.util.UsageLimitManager
+import com.sms.tagger.BuildConfig
 
 /**
  * 每日识别次数限制对话框
@@ -26,6 +28,7 @@ fun DailyLimitDialog(
     onDismiss: () -> Unit,
     onActivate: () -> Unit
 ) {
+    val isTrial = BuildConfig.IS_TRIAL
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -44,49 +47,44 @@ fun DailyLimitDialog(
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-                // 标题
                 Text(
-                    text = "⏰ 今日识别次数已用完",
+                    text = if (isTrial) "体验版识别次数已用完" else "⏰ 今日识别次数已用完",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF111827)
                 )
-                
                 Spacer(modifier = Modifier.height(4.dp))
-                
-                // 副标题
                 Text(
-                    text = "免费版每天可识别 ${UsageLimitManager.FREE_DAILY_IDENTIFY_LIMIT} 次",
+                    text = if (isTrial) {
+                        "体验版每天可识别 ${UsageLimitManager.TRIAL_DAILY_IDENTIFY_LIMIT} 次"
+                    } else {
+                        "免费版每天可识别 ${UsageLimitManager.FULL_FREE_DAILY_IDENTIFY_LIMIT} 次"
+                    },
                     fontSize = 13.sp,
                     color = Color(0xFF666666)
                 )
-                
-                // 分割线
                 Spacer(modifier = Modifier.height(16.dp))
                 Divider(color = Color(0xFFE5E7EB), thickness = 1.dp)
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                // 消息内容
                 Text(
-                    text = "激活专业版后，即可享受无限识别、无延迟、无限历史记录等特权。",
+                    text = if (isTrial) {
+                        "体验版仅供测试，识别次数受限。如需持续使用，请联系开发者获取技术支持。"
+                    } else {
+                        "激活专业版后，即可享受无限识别、无延迟、无限历史记录等特权。"
+                    },
                     fontSize = 14.sp,
                     color = Color(0xFF374151),
                     lineHeight = 22.sp
                 )
-                
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                // 版本对比
-                VersionCompareBox()
-                
-                Spacer(modifier = Modifier.height(20.dp))
-                
-                // 按钮区
+                if (!isTrial) {
+                    VersionCompareBox()
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // 取消按钮
                     Button(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -98,14 +96,14 @@ fun DailyLimitDialog(
                         )
                     ) {
                         Text(
-                            text = "明天再来",
+                            text = if (isTrial) "稍后继续" else "明天再来",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF6B7280)
+                            color = Color(0xFF6B7280),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                    
-                    // 激活按钮
                     Button(
                         onClick = onActivate,
                         modifier = Modifier
@@ -117,10 +115,12 @@ fun DailyLimitDialog(
                         )
                     ) {
                         Text(
-                            text = "立即激活",
-                            fontSize = 15.sp,
+                            text = if (isTrial) "联系开发者" else "立即激活",
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -139,6 +139,7 @@ fun HistoryLimitDialog(
     onDismiss: () -> Unit,
     onActivate: () -> Unit
 ) {
+    val isTrial = BuildConfig.IS_TRIAL
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -159,7 +160,7 @@ fun HistoryLimitDialog(
             ) {
                 // 标题
                 Text(
-                    text = "📦 历史记录已满",
+                    text = if (isTrial) "📦 体验版历史记录已达上限" else "📦 历史记录已满",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF111827)
@@ -169,7 +170,11 @@ fun HistoryLimitDialog(
                 
                 // 副标题
                 Text(
-                    text = "免费版最多保留 ${UsageLimitManager.FREE_HISTORY_LIMIT} 条记录",
+                    text = if (isTrial) {
+                        "体验版最多保留 ${UsageLimitManager.FREE_HISTORY_LIMIT} 条记录"
+                    } else {
+                        "免费版最多保留 ${UsageLimitManager.FREE_HISTORY_LIMIT} 条记录"
+                    },
                     fontSize = 13.sp,
                     color = Color(0xFF666666)
                 )
@@ -181,7 +186,11 @@ fun HistoryLimitDialog(
                 
                 // 消息内容
                 Text(
-                    text = "新增快递将覆盖最早的记录。\n激活专业版后，可保存全部历史记录。",
+                    text = if (isTrial) {
+                        "新增快递将覆盖最早的记录。如需保留更多内容，请联系开发者获取帮助。"
+                    } else {
+                        "新增快递将覆盖最早的记录。\n激活专业版后，可保存全部历史记录。"
+                    },
                     fontSize = 14.sp,
                     color = Color(0xFF374151),
                     lineHeight = 22.sp
@@ -190,30 +199,34 @@ fun HistoryLimitDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 // 提示框
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFF0F9FF)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp)
+                if (!isTrial) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFF0F9FF)
                     ) {
-                        Text(
-                            text = "🎁 一次激活，永久使用",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF0369A1)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "仅需 ¥10，解锁全部功能",
-                            fontSize = 12.sp,
-                            color = Color(0xFF0C4A6E)
-                        )
+                        Column(
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            Text(
+                                text = "🎁 一次激活，永久使用",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0369A1)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "仅需 ¥10，解锁全部功能",
+                                fontSize = 12.sp,
+                                color = Color(0xFF0C4A6E)
+                            )
+                        }
                     }
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(20.dp))
                 
                 // 按钮区
                 Row(
@@ -232,14 +245,15 @@ fun HistoryLimitDialog(
                         )
                     ) {
                         Text(
-                            text = "继续使用",
+                            text = if (isTrial) "知道了" else "继续使用",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF6B7280)
+                            color = Color(0xFF6B7280),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     
-                    // 激活按钮
                     Button(
                         onClick = onActivate,
                         modifier = Modifier
@@ -251,10 +265,12 @@ fun HistoryLimitDialog(
                         )
                     ) {
                         Text(
-                            text = "去激活",
-                            fontSize = 15.sp,
+                            text = if (isTrial) "联系开发者" else "去激活",
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -275,6 +291,7 @@ fun SimpleLimitDialog(
     onDismiss: () -> Unit,
     onActivate: () -> Unit
 ) {
+    val isTrial = BuildConfig.IS_TRIAL
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -358,7 +375,7 @@ fun SimpleLimitDialog(
                         )
                     ) {
                         Text(
-                            text = "立即激活",
+                            text = if (isTrial) "联系开发者" else "立即激活",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
@@ -394,7 +411,7 @@ private fun VersionCompareBox() {
             // 每日识别
             VersionCompareRow(
                 label = "每日识别",
-                freeValue = "${UsageLimitManager.FREE_DAILY_IDENTIFY_LIMIT}次",
+                freeValue = "${UsageLimitManager.FULL_FREE_DAILY_IDENTIFY_LIMIT}次",
                 proValue = "无限"
             )
             

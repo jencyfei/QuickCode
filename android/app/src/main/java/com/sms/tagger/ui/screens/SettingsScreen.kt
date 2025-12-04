@@ -1,5 +1,11 @@
 package com.sms.tagger.ui.screens
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -22,6 +28,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Sms
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -36,14 +44,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -51,14 +60,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
+import com.sms.tagger.BuildConfig
 import com.sms.tagger.ui.components.FrostedGlassCard
 import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
 import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.util.DeviceIdManager
-import com.sms.tagger.util.SmsDefaultAppChecker
 import com.sms.tagger.util.TrialManager
-import com.sms.tagger.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -68,8 +77,7 @@ private enum class SettingsPage {
     Feedback,
     SoftwareStatement,
     PaidVsFree,
-    DebugLog,
-    DefaultSmsGuide
+    PermissionSettings
 }
 
 /**
@@ -125,16 +133,12 @@ fun SettingsScreen(
                     onStatementClick = { currentPage = SettingsPage.SoftwareStatement },
                     onPaidDiffClick = { currentPage = SettingsPage.PaidVsFree },
                     onContactDeveloper = { currentPage = SettingsPage.Feedback },
-                    onDebugLogClick = { currentPage = SettingsPage.DebugLog },
-                    onDefaultSmsClick = { currentPage = SettingsPage.DefaultSmsGuide }
+                    onPermissionSettingsClick = { currentPage = SettingsPage.PermissionSettings }
                 )
                 SettingsPage.Feedback -> FeedbackSuggestionsScreen(
                     onBack = { currentPage = SettingsPage.Main }
                 )
                 SettingsPage.SoftwareStatement -> SoftwareStatementScreen(
-                    onBack = { currentPage = SettingsPage.Main }
-                )
-                SettingsPage.DebugLog -> DebugLogScreen(
                     onBack = { currentPage = SettingsPage.Main }
                 )
                 SettingsPage.PaidVsFree -> {
@@ -157,12 +161,11 @@ fun SettingsScreen(
                             onStatementClick = { currentPage = SettingsPage.SoftwareStatement },
                             onPaidDiffClick = {},
                             onContactDeveloper = { currentPage = SettingsPage.Feedback },
-                            onDebugLogClick = { currentPage = SettingsPage.DebugLog },
-                            onDefaultSmsClick = { currentPage = SettingsPage.DefaultSmsGuide }
+                            onPermissionSettingsClick = { currentPage = SettingsPage.PermissionSettings }
                         )
                     }
                 }
-                SettingsPage.DefaultSmsGuide -> DefaultSmsGuideScreen(
+                SettingsPage.PermissionSettings -> PermissionSettingsScreen(
                     onBack = { currentPage = SettingsPage.Main }
                 )
             }
@@ -185,8 +188,7 @@ private fun SettingsHome(
     onStatementClick: () -> Unit,
     onPaidDiffClick: () -> Unit,
     onContactDeveloper: () -> Unit,
-    onDebugLogClick: () -> Unit,
-    onDefaultSmsClick: () -> Unit = {}
+    onPermissionSettingsClick: () -> Unit,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -228,14 +230,12 @@ private fun SettingsHome(
                     )
                 }
             }
-            // 默认短信应用卡片
-            item { DefaultSmsCard(onDefaultSmsClick = onDefaultSmsClick) }
+            // 权限设置入口
+            item { PermissionSettingsEntryCard(onPermissionSettingsClick) }
             // 反馈与支持卡片
             item { SupportCard(onSupportClick = onFeedbackClick) }
             // 隐私说明卡片
             item { PrivacyCard(onStatementClick = onStatementClick) }
-            // 调试日志卡片
-            item { DebugLogCard(onDebugLogClick = onDebugLogClick) }
         }
     }
 }
@@ -622,22 +622,14 @@ private fun PrivacyCard(onStatementClick: () -> Unit) {
     }
 }
 
-/**
- * 默认短信应用卡片
- */
 @Composable
-private fun DefaultSmsCard(onDefaultSmsClick: () -> Unit) {
-    val context = LocalContext.current
-    var isDefaultSmsApp by remember { mutableStateOf(false) }
-    
-    LaunchedEffect(Unit) {
-        isDefaultSmsApp = com.sms.tagger.util.SmsDefaultAppChecker.isDefaultSmsApp(context)
-    }
-    
+private fun PermissionSettingsEntryCard(
+    onClick: () -> Unit
+) {
     FrostedGlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onDefaultSmsClick() }
+            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
@@ -646,64 +638,19 @@ private fun DefaultSmsCard(onDefaultSmsClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "📱",
+                text = "🔐",
                 fontSize = 24.sp
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "默认短信应用",
+                    text = "权限设置",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
                 Text(
-                    text = if (isDefaultSmsApp) "已设置为默认，可读取所有短信" else "未设置，可能无法读取部分短信",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isDefaultSmsApp) Color(0xFF10B981) else Color(0xFFF59E0B),
-                    fontSize = 13.sp
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color(0xFF9CA3AF),
-                modifier = Modifier.size(18.dp)
-            )
-        }
-    }
-}
-
-/**
- * 调试日志卡片
- */
-@Composable
-private fun DebugLogCard(onDebugLogClick: () -> Unit) {
-    FrostedGlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onDebugLogClick() }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "🔍",
-                fontSize = 24.sp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "调试日志",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = "查看应用运行日志，排查问题",
+                    text = "查看短信读取等必需权限的开启方法",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                     fontSize = 13.sp
@@ -1379,3 +1326,285 @@ private fun FeatureRow(
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PermissionSettingsScreen(
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val showToast = remember(context) {
+        { message: String ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
+    val permissionGuides = listOf(
+        PermissionGuide(
+            icon = Icons.Outlined.Sms,
+            title = "读取短信",
+            description = "允许应用读取手机短信内容",
+            purpose = "解析短信内容，提取快递取件码、验证码等信息。",
+            badgeText = "✔ 已授予",
+            badgeType = PermissionBadgeType.Granted,
+            actionLabel = "⚙️ 打开短信权限设置",
+            onAction = {
+                if (!openSmsPermissionSettings(context)) {
+                showToast("请前往 系统设置 → 应用管理 → 短信助手 → 权限 → 短信，并选择「始终允许」。")
+            }
+            }
+        )
+    )
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("权限设置", fontSize = 18.sp) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                FrostedGlassCard {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "权限说明",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = "为保证快递取件码识别、短信标签功能正常运行，请开启必要权限。本应用所有数据均在本地处理，不上传不分享。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+            }
+
+            item {
+                FrostedGlassCard {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "正确设置 2 个关键点",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
+                        val highlights = listOf(
+                            "短信权限需选择「始终允许」，不要选择拒绝。",
+                            "关闭「空白通行证」，避免系统返回空白短信内容。"
+                        )
+                        highlights.forEach { line ->
+                            Text(
+                                text = "• $line",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF4B5563),
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text(
+                    text = "核心权限（必需）",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TextSecondary,
+                    letterSpacing = 0.08.em
+                )
+            }
+
+            item {
+                FrostedGlassCard {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        permissionGuides.forEachIndexed { index, guide ->
+                            PermissionDetailItem(guide)
+                            if (index != permissionGuides.lastIndex) {
+                                Divider(
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    color = Color(0x1AFFFFFF)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text(
+                    text = "🔒 本应用所有数据仅在本地处理。如需了解更多请查看《隐私政策》。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionDetailItem(
+    guide: PermissionGuide
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = Color.White.copy(alpha = 0.45f),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.6f))
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = guide.icon,
+                        contentDescription = guide.title,
+                        tint = Color(0xFF64748B)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = guide.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = guide.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    fontSize = 13.sp
+                )
+            }
+            PermissionStatusBadge(
+                label = guide.badgeText,
+                type = guide.badgeType
+            )
+        }
+
+        Text(
+            text = guide.purpose,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF6B7280),
+            lineHeight = 20.sp
+        )
+
+        Button(
+            onClick = guide.onAction,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White.copy(alpha = 0.65f),
+                contentColor = Color(0xFF1F2937)
+            )
+        ) {
+            Text(
+                text = guide.actionLabel,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun PermissionStatusBadge(
+    label: String,
+    type: PermissionBadgeType
+) {
+    val (background, content) = when (type) {
+        PermissionBadgeType.Granted -> Color(0x2622C55E) to Color(0xFF2F7655)
+        PermissionBadgeType.Attention -> Color(0x33FBBF24) to Color(0xFF9A5A00)
+    }
+    Surface(
+        color = background,
+        shape = RoundedCornerShape(999.dp)
+    ) {
+        Text(
+            text = label,
+            color = content,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+        )
+    }
+}
+
+private data class PermissionGuide(
+    val icon: ImageVector,
+    val title: String,
+    val description: String,
+    val purpose: String,
+    val badgeText: String,
+    val badgeType: PermissionBadgeType,
+    val actionLabel: String,
+    val onAction: () -> Unit
+)
+
+private enum class PermissionBadgeType {
+    Granted,
+    Attention
+}
+
+private fun openSmsPermissionSettings(context: Context): Boolean {
+    return openAppDetailsSettings(context)
+}
+
+private fun openAppDetailsSettings(context: Context): Boolean {
+    return try {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+        true
+    } catch (e: Exception) {
+        false
+    }
+}
+

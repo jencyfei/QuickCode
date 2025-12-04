@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短信助手 · 权限设置</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        :root {
+            --bg-base: #f9f8ff;
+            --gradient-pink: #fad0c4;
+            --gradient-purple: #d9c8ff;
+            --glass-fill: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --text-primary: #333333;
+            --text-secondary: #8a8a8a;
+            --icon-stroke: #6b7280;
+        }
+        body {
+            font-family: "Inter", "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+            background: var(--bg-base);
+            margin: 0;
+            padding: 0;
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.7;
+        }
+        body::before {
+            background: var(--gradient-pink);
+            top: -120px;
+            left: -120px;
+        }
+        body::after {
+            background: var(--gradient-purple);
+            bottom: -160px;
+            right: -100px;
+        }
+        .page {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 28px 28px 120px;
+            position: relative;
+            z-index: 1;
+        }
+        header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 0 20px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        .back-btn {
+            position: absolute;
+            left: 16px;
+            top: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .card {
+            background: var(--glass-fill);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(137, 129, 181, 0.15);
+            padding: 18px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+        }
+        .tip-card {
+            background: var(--glass-fill);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        .tip-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 6px;
+        }
+        .tip-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.6;
+        }
+        .note-card {
+            background: #eef2ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #3730a3;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 32px 0 12px;
+            letter-spacing: 0.08em;
+        }
+        .permission-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .permission-item:last-child {
+            border-bottom: none;
+        }
+        .permission-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            border: 1.5px solid var(--glass-border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.6);
+        }
+        .permission-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .permission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+        .permission-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+        }
+        .permission-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            margin-left: 8px;
+        }
+        .badge-granted {
+            background: rgba(34, 197, 94, 0.15);
+            color: #2f7655;
+        }
+        .badge-confirm {
+            background: rgba(251, 191, 36, 0.2);
+            color: #9a5a00;
+        }
+        .permission-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 8px;
+            line-height: 1.5;
+        }
+        .permission-purpose {
+            font-size: 12px;
+            color: #b1b1c5;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .permission-action {
+            margin-top: 8px;
+        }
+        .action-btn {
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 11px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(149, 141, 188, 0.18);
+        }
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 15px 30px rgba(141, 130, 190, 0.25);
+        }
+        .action-btn:active {
+            transform: translateY(0);
+        }
+        .privacy-note {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 24px;
+        }
+        .privacy-note a {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+        nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        nav ul {
+            display: flex;
+            margin: 0;
+            padding: 8px 20px 12px;
+            list-style: none;
+            justify-content: space-around;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        nav li {
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        nav li.active {
+            color: #667eea;
+        }
+        nav li span {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <button class="back-btn" onclick="window.history.back()">←</button>
+        <header>权限设置</header>
+
+        <!-- 轻量说明 -->
+        <div class="tip-card">
+            <div class="tip-title">权限设置</div>
+            <p class="tip-text">
+                为保证快递取件码识别、短信标签功能正常运行，请开启必要权限。本应用仅在本地处理数据，不上传不分享。
+            </p>
+        </div>
+
+        <div class="section-title">核心权限（必需）</div>
+        <div class="card">
+            <!-- 读取短信权限 -->
+            <div class="permission-item">
+                <div class="permission-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+                        <polyline points="3 7.5 12 13 21 7.5"></polyline>
+                    </svg>
+                </div>
+                <div class="permission-content">
+                    <div class="permission-header">
+                        <div>
+                            <div class="permission-title">读取短信</div>
+                            <div class="permission-desc">允许应用读取手机短信内容</div>
+                        </div>
+                        <span class="permission-status badge-granted">✔ 已授予</span>
+                    </div>
+                    <div class="permission-purpose">
+                        <strong>用途：</strong>解析短信内容，提取快递取件码、验证码等信息
+                    </div>
+                    <div class="permission-action">
+                        <button class="action-btn" onclick="openSettings('sms')">⚙️ 打开系统设置</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知类短信说明 -->
+            <div class="permission-item">
+                <div class="permission-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 9a5 5 0 0 1 10 0v2.8a2 2 0 0 0 .4 1.2l1 1.3a1 1 0 0 1-.8 1.7H6.4a1 1 0 0 1-.8-1.7l1-1.3a2 2 0 0 0 .4-1.2V9"></path>
+                        <path d="M9 18h6"></path>
+                    </svg>
+                </div>
+                <div class="permission-content">
+                    <div class="permission-header">
+                        <div>
+                            <div class="permission-title">通知类短信（小米特有）</div>
+                            <div class="permission-desc">需在「其他权限」中手动开启通知类短信，用于识别快递取件码等通知</div>
+                        </div>
+                        <span class="permission-status badge-confirm">⚠ 需手动确认</span>
+                    </div>
+                    <div class="permission-purpose">
+                        <strong>用途：</strong>确保系统判定为通知类的短信也能被解析
+                    </div>
+                    <div class="permission-action">
+                        <button class="action-btn" onclick="openSettings('notification')">⚙️ 查看设置提示</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="privacy-note">
+            🔒 本应用所有数据仅在本地处理。详情请查看
+            <a href="#">《隐私政策》</a>。
+        </div>
+    </div>
+
+    <nav>
+        <ul>
+            <li>
+                <span>📦</span>
+                取件助手
+            </li>
+            <li>
+                <span>💬</span>
+                短信
+            </li>
+            <li class="active">
+                <span>⚙️</span>
+                设置
+            </li>
+        </ul>
+    </nav>
+
+    <script>
+        function openSettings(permissionType) {
+            // 模拟打开系统设置页面
+            alert('将打开系统设置页面，找到"权限"选项，然后授予相应权限。');
+        }
+
+        function requestPermission(permissionType) {
+            // 模拟请求权限
+            if (permissionType === 'contacts') {
+                alert('将显示系统权限请求对话框，请点击"允许"授予读取联系人权限。');
+            }
+        }
+
+        // 模拟权限状态检查（实际应该从系统API获取）
+        function checkPermissionStatus() {
+            // 这里可以根据实际权限状态更新UI
+            // 示例：如果某个权限未授予，可以改变状态显示和按钮文字
+        }
+
+        // 页面加载时检查权限状态
+        window.addEventListener('load', checkPermissionStatus);
+
+    </script>
+</body>
+</html>
+

@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
+import com.sms.tagger.BuildConfig
 
 /**
  * Handles offline activation storage/validation.
@@ -46,6 +47,9 @@ object ActivationManager {
     fun getDeviceIdForUser(context: Context): String = DeviceIdManager.getDeviceId(context)
 
     fun isActivated(context: Context): Boolean {
+        if (BuildConfig.IS_TRIAL) {
+            return false
+        }
         val data = readActivationData(context) ?: return false
         val deviceId = getDeviceIdForUser(context)
         if (data.deviceId != deviceId) return false
@@ -55,11 +59,17 @@ object ActivationManager {
     }
 
     fun getRemainingActivations(context: Context): Int {
+        if (BuildConfig.IS_TRIAL) {
+            return 0
+        }
         val data = readActivationData(context) ?: return 0
         return if (data.deviceId == getDeviceIdForUser(context)) data.remaining else 0
     }
 
     fun getActivationInfo(context: Context): ActivationInfo? {
+        if (BuildConfig.IS_TRIAL) {
+            return null
+        }
         val data = readActivationData(context) ?: return null
         val deviceId = getDeviceIdForUser(context)
         if (data.deviceId != deviceId) return null
@@ -73,6 +83,9 @@ object ActivationManager {
     }
 
     fun validateActivationCode(context: Context, rawCode: String): Result<String> {
+        if (BuildConfig.IS_TRIAL) {
+            return Result.failure(IllegalStateException("体验版不支持激活，请联系开发者获取帮助。"))
+        }
         val deviceId = getDeviceIdForUser(context)
         val payloadResult = decodeActivationCode(rawCode)
         val payload = payloadResult.getOrElse { return Result.failure(it) }

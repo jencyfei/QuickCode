@@ -33,7 +33,9 @@ import com.sms.tagger.util.LogFileWriter
 import com.sms.tagger.util.AppLogger
 import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.util.PrivacyPolicyManager
+import com.sms.tagger.util.TrialManager
 import com.sms.tagger.ui.components.PrivacyPolicyDialog
+import com.sms.tagger.ui.components.TrialExpiredDialog
 import com.sms.tagger.BuildConfig
 import kotlinx.coroutines.launch
 import android.os.Process
@@ -54,10 +56,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // ✅ 初始化日志系统
-        val logFileWriter = LogFileWriter(this)
-        AppLogger.init(logFileWriter)
-        android.util.Log.d("MainActivity", "✅ 日志系统已初始化，日志目录: ${logFileWriter.getLogDirPath()}")
+        // 设置全局未捕获异常处理器，防止闪退
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            android.util.Log.e("MainActivity", "未捕获的异常导致崩溃", throwable)
+            // 记录到系统日志
+            throwable.printStackTrace()
+            // 调用系统默认处理器
+            val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
+        
+        // ✅ 初始化日志系统（添加异常处理，避免崩溃）
+        try {
+            val logFileWriter = LogFileWriter(this)
+            AppLogger.init(logFileWriter)
+            android.util.Log.d("MainActivity", "✅ 日志系统已初始化，日志目录: ${logFileWriter.getLogDirPath()}")
+        } catch (e: Exception) {
+            // 日志初始化失败不应该导致应用崩溃
+            android.util.Log.e("MainActivity", "日志系统初始化失败，将继续运行: ${e.message}", e)
+            e.printStackTrace()
+        }
         
         // 请求权限
         requestSmsPermissions()
@@ -110,12 +128,12 @@ class MainActivity : ComponentActivity() {
                 }
             )
         } else {
-            // 直接显示主应用（无需登录）
-            MainAppScreen(
-                onLogout = {
-                    // 本地应用，无需登出
-                }
-            )
+        // 直接显示主应用（无需登录）
+        MainAppScreen(
+            onLogout = {
+                // 本地应用，无需登出
+            }
+        )
         }
     }
     
@@ -129,7 +147,7 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "短信助手",
+                text = "QuickCode",
                 style = MaterialTheme.typography.headlineLarge
             )
             
@@ -256,16 +274,40 @@ class MainActivity : ComponentActivity() {
             currentTime.after(expirationDate)
         }
         
-        // 激活状态
         val context = this
-        val isActivated by remember {
-            mutableStateOf(ActivationManager.isActivated(context))
+        val isTrial = BuildConfig.IS_TRIAL
+        val isActivated by remember { mutableStateOf(ActivationManager.isActivated(context)) }
+        var showActivationDialog by remember { mutableStateOf(!isTrial && isExpired && !isActivated) }
+        var trialRemainingDays by remember { mutableStateOf(if (isTrial) TrialManager.getRemainingDays(context) else 0) }
+        var trialExpired by remember { mutableStateOf(isTrial && TrialManager.isTrialExpired(context)) }
+        var showTrialExpiredDialog by remember { mutableStateOf(false) }
+
+        LaunchedEffect(isTrial) {
+            if (isTrial) {
+                TrialManager.ensureTrialStartTime(context)
+                trialRemainingDays = TrialManager.getRemainingDays(context)
+                trialExpired = TrialManager.isTrialExpired(context)
+                showTrialExpiredDialog = trialExpired
+            }
         }
-        var showActivationDialog by remember { mutableStateOf(isExpired && !isActivated) }
+
+        LaunchedEffect(trialExpired) {
+            if (isTrial) {
+                trialRemainingDays = TrialManager.getRemainingDays(context)
+                showTrialExpiredDialog = trialExpired
+            }
+        }
         
         Box(modifier = Modifier.fillMaxSize()) {
+            if (showTrialExpiredDialog) {
+                TrialExpiredDialog(
+                    remainingDays = trialRemainingDays,
+                    onConfirm = { showTrialExpiredDialog = false }
+                )
+            }
+
             // 到期且未激活时显示激活弹窗
-            if (showActivationDialog) {
+            if (!isTrial && showActivationDialog) {
                 ActivationDialog(
                     onActivated = {
                         showActivationDialog = false
@@ -278,10 +320,15 @@ class MainActivity : ComponentActivity() {
             }
             
             // 跳转到激活页面的回调
-            val navigateToActivation: () -> Unit = {
-                selectedTab = 2  // 切换到设置页
-                showActivationDialog = true  // 显示激活弹窗
-            }
+            val navigateToActivation: (() -> Unit)? =
+                if (!isTrial) {
+                    {
+                        selectedTab = 2
+                        showActivationDialog = true
+                    }
+                } else {
+                    null
+                }
             
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -360,25 +407,25 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier.clickable(onClick = onClick)
         ) {
             Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = if (isSelected) 
-                            androidx.compose.ui.graphics.Color(0x4D667EEA) 
-                        else 
-                            androidx.compose.ui.graphics.Color(0x4DFFFFFF),
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = androidx.compose.ui.graphics.Color(0x80FFFFFF),
-                        shape = CircleShape
-                    ),
+            modifier = Modifier
+                .size(48.dp)
+                .background(
+                    color = if (isSelected) 
+                        androidx.compose.ui.graphics.Color(0x4D667EEA) 
+                    else 
+                        androidx.compose.ui.graphics.Color(0x4DFFFFFF),
+                    shape = CircleShape
+                )
+                .border(
+                    width = 1.dp,
+                    color = androidx.compose.ui.graphics.Color(0x80FFFFFF),
+                    shape = CircleShape
+                ),
                 contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = emoji,
-                    style = MaterialTheme.typography.headlineSmall
+        ) {
+            Text(
+                text = emoji,
+                style = MaterialTheme.typography.headlineSmall
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))

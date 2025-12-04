@@ -172,7 +172,7 @@ When multiple valid approaches exist, prioritize:
 * Update stage plan as you progress (optional, internal notes only)
 * Learn from existing implementations
 * Stop after 3 failed attempts and reassess
-* Document thought process and results in English or Chinese
+* Document thought process and results in  Chinese
 
 ---
 
@@ -181,6 +181,7 @@ When multiple valid approaches exist, prioritize:
 * Removed automatic creation of `IMPLEMENTATION_PLAN.md`
 * Stage planning is optional and can be recorded internally
 * Core processes, standards, and quality gates remain unchanged
+
 
 
 ---
