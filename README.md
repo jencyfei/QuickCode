@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Android-lightgrey.svg)
 
@@ -367,12 +367,10 @@ npm run dev
 
 查看 [CHANGELOG.md](CHANGELOG.md) 了解详细更新历史
 
-**最新版本**: v1.4.0 (2025-12-03)
+**最新版本**: v1.3 (2025-11-20)
 - ✨ 修复已取页面快递卡片状态显示问题
 - ✨ 改进搜索输入框显示
 - ✨ 优化快递提取规则
-- ✨ 优化隐私政策显示
-- ✨ 改进使用限制管理
 
 ---
 
@@ -416,7 +414,7 @@ npm run dev
 
 - **问题反馈**: [GitHub Issues](https://github.com/jencyfei/sms_agent/issues)
 - **功能建议**: [GitHub Discussions](https://github.com/jencyfei/sms_agent/discussions)
-- **GitHub 仓库**: [https://github.com/jencyfei/sms_agent](https://github.com/jencyfei/sms_agent)
+- **Email**: your-email@example.com
 
 ---
 
