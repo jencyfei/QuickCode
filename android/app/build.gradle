@@ -13,12 +13,15 @@ android {
         minSdk 23
         targetSdk 34
         versionCode 5
-        versionName "1.4.0"
+        versionName "1.4.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
         }
+
+        // 开源版：不区分 trial，恒为 false
+        buildConfigField "boolean", "IS_TRIAL", "false"
     }
 
     // 签名配置
@@ -77,19 +80,6 @@ android {
         }
     }
 
-    flavorDimensions += "version"
-    productFlavors {
-        full {
-            dimension "version"
-            buildConfigField "boolean", "IS_TRIAL", "false"
-        }
-        trial {
-            dimension "version"
-            applicationIdSuffix ".trial"
-            versionNameSuffix "-trial"
-            buildConfigField "boolean", "IS_TRIAL", "true"
-        }
-    }
 }
 
 dependencies {

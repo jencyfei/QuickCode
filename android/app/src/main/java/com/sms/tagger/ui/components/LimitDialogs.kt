@@ -28,7 +28,7 @@ fun DailyLimitDialog(
     onDismiss: () -> Unit,
     onActivate: () -> Unit
 ) {
-    val isTrial = BuildConfig.IS_TRIAL
+    val isTrial = false
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -48,18 +48,14 @@ fun DailyLimitDialog(
                 modifier = Modifier.padding(24.dp)
             ) {
                 Text(
-                    text = if (isTrial) "体验版识别次数已用完" else "⏰ 今日识别次数已用完",
+                    text = "⏰ 今日识别次数已用完",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF111827)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (isTrial) {
-                        "体验版每天可识别 ${UsageLimitManager.TRIAL_DAILY_IDENTIFY_LIMIT} 次"
-                    } else {
-                        "免费版每天可识别 ${UsageLimitManager.FULL_FREE_DAILY_IDENTIFY_LIMIT} 次"
-                    },
+                    text = "本版本为开源版，识别次数无限制。",
                     fontSize = 13.sp,
                     color = Color(0xFF666666)
                 )
@@ -67,11 +63,7 @@ fun DailyLimitDialog(
                 Divider(color = Color(0xFFE5E7EB), thickness = 1.dp)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = if (isTrial) {
-                        "体验版仅供测试，识别次数受限。如需持续使用，请联系开发者获取技术支持。"
-                    } else {
-                        "激活专业版后，即可享受无限识别、无延迟、无限历史记录等特权。"
-                    },
+                    text = "开源版已移除所有限制，无需激活、无次数上限、无延迟。",
                     fontSize = 14.sp,
                     color = Color(0xFF374151),
                     lineHeight = 22.sp
@@ -139,7 +131,7 @@ fun HistoryLimitDialog(
     onDismiss: () -> Unit,
     onActivate: () -> Unit
 ) {
-    val isTrial = BuildConfig.IS_TRIAL
+    val isTrial = false
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -170,11 +162,7 @@ fun HistoryLimitDialog(
                 
                 // 副标题
                 Text(
-                    text = if (isTrial) {
-                        "体验版最多保留 ${UsageLimitManager.FREE_HISTORY_LIMIT} 条记录"
-                    } else {
-                        "免费版最多保留 ${UsageLimitManager.FREE_HISTORY_LIMIT} 条记录"
-                    },
+                    text = "开源版历史记录无限制。",
                     fontSize = 13.sp,
                     color = Color(0xFF666666)
                 )
@@ -186,11 +174,7 @@ fun HistoryLimitDialog(
                 
                 // 消息内容
                 Text(
-                    text = if (isTrial) {
-                        "新增快递将覆盖最早的记录。如需保留更多内容，请联系开发者获取帮助。"
-                    } else {
-                        "新增快递将覆盖最早的记录。\n激活专业版后，可保存全部历史记录。"
-                    },
+                    text = "开源版：历史记录保留无限制，不会覆盖旧记录。",
                     fontSize = 14.sp,
                     color = Color(0xFF374151),
                     lineHeight = 22.sp
@@ -255,7 +239,7 @@ fun HistoryLimitDialog(
                     }
                     
                     Button(
-                        onClick = onActivate,
+                        onClick = onDismiss,
                         modifier = Modifier
                             .weight(1f)
                             .height(44.dp),
@@ -265,7 +249,7 @@ fun HistoryLimitDialog(
                         )
                     ) {
                         Text(
-                            text = if (isTrial) "联系开发者" else "去激活",
+                            text = "好的",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White,

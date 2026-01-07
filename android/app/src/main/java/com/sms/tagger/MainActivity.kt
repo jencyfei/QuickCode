@@ -31,14 +31,13 @@ import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.util.PreferencesManager
 import com.sms.tagger.util.LogFileWriter
 import com.sms.tagger.util.AppLogger
-import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.util.PrivacyPolicyManager
-import com.sms.tagger.util.TrialManager
+import com.sms.tagger.util.SmsListSettings
 import com.sms.tagger.ui.components.PrivacyPolicyDialog
-import com.sms.tagger.ui.components.TrialExpiredDialog
 import com.sms.tagger.BuildConfig
 import kotlinx.coroutines.launch
 import android.os.Process
+import android.os.Build
 
 class MainActivity : ComponentActivity() {
     
@@ -77,7 +76,7 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
         }
         
-        // 请求权限
+        // 请求权限（含 Android 13+ 通知权限）
         requestSmsPermissions()
         
         setContent {
@@ -93,15 +92,20 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun requestSmsPermissions() {
-        val permissions = arrayOf(
+        val permList = mutableListOf(
             Manifest.permission.READ_SMS,
             Manifest.permission.RECEIVE_SMS
         )
-        
+        // Android 13+ 需要 POST_NOTIFICATIONS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permList.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val permissions = permList.toTypedArray()
         val needRequest = permissions.any {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
-        
+
         if (needRequest) {
             requestPermissionLauncher.launch(permissions)
         }
@@ -263,72 +267,33 @@ class MainActivity : ComponentActivity() {
     
     @Composable
     fun MainAppScreen(onLogout: () -> Unit) {
+        val context = this
         var selectedTab by remember { mutableStateOf(0) } // 默认显示快递页面
+        var smsListEnabled by remember { mutableStateOf(SmsListSettings.isSmsListEnabled(context)) }
         
         // 判断是否超过2026年1月1号（到期后再提示激活）
-        val isExpired = remember {
-            val currentTime = java.util.Calendar.getInstance()
-            val expirationDate = java.util.Calendar.getInstance().apply {
-                set(2026, java.util.Calendar.JANUARY, 1, 0, 0, 0)
+        val isExpired = false
+        
+        // 监听设置变化（当从设置页面返回时更新）
+        LaunchedEffect(selectedTab) {
+            val settingsTabIndex = if (smsListEnabled) 2 else 1
+            if (selectedTab == settingsTabIndex) {
+                // 在设置页面时，每次进入都重新读取设置
+                smsListEnabled = SmsListSettings.isSmsListEnabled(context)
             }
-            currentTime.after(expirationDate)
         }
         
-        val context = this
-        val isTrial = BuildConfig.IS_TRIAL
-        val isActivated by remember { mutableStateOf(ActivationManager.isActivated(context)) }
-        var showActivationDialog by remember { mutableStateOf(!isTrial && isExpired && !isActivated) }
-        var trialRemainingDays by remember { mutableStateOf(if (isTrial) TrialManager.getRemainingDays(context) else 0) }
-        var trialExpired by remember { mutableStateOf(isTrial && TrialManager.isTrialExpired(context)) }
-        var showTrialExpiredDialog by remember { mutableStateOf(false) }
-
-        LaunchedEffect(isTrial) {
-            if (isTrial) {
-                TrialManager.ensureTrialStartTime(context)
-                trialRemainingDays = TrialManager.getRemainingDays(context)
-                trialExpired = TrialManager.isTrialExpired(context)
-                showTrialExpiredDialog = trialExpired
+        // 如果当前选中的是"短信"页面但设置关闭了，跳转到快递页面
+        LaunchedEffect(smsListEnabled) {
+            if (!smsListEnabled && selectedTab == 1) {
+                selectedTab = 0
             }
         }
-
-        LaunchedEffect(trialExpired) {
-            if (isTrial) {
-                trialRemainingDays = TrialManager.getRemainingDays(context)
-                showTrialExpiredDialog = trialExpired
-            }
-        }
+        val isTrial = false
         
         Box(modifier = Modifier.fillMaxSize()) {
-            if (showTrialExpiredDialog) {
-                TrialExpiredDialog(
-                    remainingDays = trialRemainingDays,
-                    onConfirm = { showTrialExpiredDialog = false }
-                )
-            }
-
-            // 到期且未激活时显示激活弹窗
-            if (!isTrial && showActivationDialog) {
-                ActivationDialog(
-                    onActivated = {
-                        showActivationDialog = false
-                    },
-                    onCancel = {
-                        // 取消后继续使用基础功能，但高级功能后续通过 ActivationManager.isActivated() 再做限制
-                        showActivationDialog = false
-                    }
-                )
-            }
-            
-            // 跳转到激活页面的回调
-            val navigateToActivation: (() -> Unit)? =
-                if (!isTrial) {
-                    {
-                        selectedTab = 2
-                        showActivationDialog = true
-                    }
-                } else {
-                    null
-                }
+            // 不再需要激活流程
+            val navigateToActivation: (() -> Unit)? = null
             
             Scaffold(
                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -364,31 +329,32 @@ class MainActivity : ComponentActivity() {
                                 isSelected = selectedTab == 0,
                                 onClick = { selectedTab = 0 }
                             )
-                            // 短信 - 第2个
-                            GlassNavButton(
-                                emoji = "💬",
-                                label = "短信",
-                                isSelected = selectedTab == 1,
-                                onClick = { selectedTab = 1 }
-                            )
-                            // 设置 - 第3个
+                            // 短信 - 第2个（根据设置显示/隐藏）
+                            if (smsListEnabled) {
+                                GlassNavButton(
+                                    emoji = "💬",
+                                    label = "短信",
+                                    isSelected = selectedTab == 1,
+                                    onClick = { selectedTab = 1 }
+                                )
+                            }
+                            // 设置 - 第3个（如果短信隐藏了，索引变为2）
                             GlassNavButton(
                                 emoji = "⚙️",
                                 label = "设置",
-                                isSelected = selectedTab == 2,
-                                onClick = { selectedTab = 2 }
+                                isSelected = if (smsListEnabled) selectedTab == 2 else selectedTab == 1,
+                                onClick = { selectedTab = if (smsListEnabled) 2 else 1 }
                             )
                         }
                     }
                 }
             ) { paddingValues ->
                 Box(modifier = Modifier.padding(paddingValues)) {
-                    when (selectedTab) {
-                        0 -> ExpressScreen(
-                            onNavigateToActivation = navigateToActivation
-                        )
-                        1 -> SmsListScreen()
-                        2 -> SettingsScreen(onLogout = onLogout)
+                    when {
+                        selectedTab == 0 -> ExpressScreen()
+                        smsListEnabled && selectedTab == 1 -> SmsListScreen()
+                        (smsListEnabled && selectedTab == 2) || (!smsListEnabled && selectedTab == 1) -> SettingsScreen(onLogout = onLogout)
+                        else -> ExpressScreen()
                     }
                 }
             }

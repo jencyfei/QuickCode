@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.rotate
@@ -34,8 +33,6 @@ import com.sms.tagger.util.ExpressInfo
 import com.sms.tagger.util.PickupStatus
 import com.sms.tagger.util.SmsReader
 import com.sms.tagger.util.UsageLimitManager
-import com.sms.tagger.util.ActivationManager
-import com.sms.tagger.util.TrialManager
 import com.sms.tagger.util.AppLogger
 import com.sms.tagger.util.ExpressDataCache
 import com.sms.tagger.util.TimeWindowSettings
@@ -48,14 +45,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.BorderStroke
 import kotlinx.coroutines.delay
-import com.sms.tagger.BuildConfig
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 import java.util.regex.Pattern
 
-private const val SMS_READ_LIMIT_ACTIVATED = 5000
+private const val SMS_READ_LIMIT_ACTIVATED = 50000
 private const val SMS_READ_LIMIT_DEFAULT = 50000
 private const val SMS_INCREMENTAL_FETCH_LIMIT = 400
 private val EXPRESS_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
@@ -63,16 +59,13 @@ private val EXPRESS_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LO
 /**
  * 快递信息页面
  * 
- * @param onNavigateToActivation 跳转到激活页面的回调（可选）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpressScreen(
-    onNavigateToActivation: (() -> Unit)? = null
-) {
+fun ExpressScreen() {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-    val isTrial = BuildConfig.IS_TRIAL
+    val isTrial = false
     var expressList by remember { mutableStateOf<List<ExpressInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showRuleManager by remember { mutableStateOf(false) }
@@ -89,14 +82,13 @@ fun ExpressScreen(
     // 搜索和筛选状态
     var searchText by remember { mutableStateOf("") }
     var dateFilterType by remember { mutableStateOf("本月") }  // 本月、本周、本日、全部
-    var trialExpired by remember { mutableStateOf(isTrial && TrialManager.isTrialExpired(context)) }
+    var trialExpired by remember { mutableStateOf(false) }
     // 刷新key，用于强制刷新列表
     var refreshKey by remember { mutableStateOf(0) }
     
     // 限制策略相关状态
     var showDailyLimitDialog by remember { mutableStateOf(false) }
     var showHistoryLimitDialog by remember { mutableStateOf(false) }
-    val isActivated = remember { ActivationManager.isActivated(context) }
     
     // 如果显示规则管理，则显示规则管理页面
     if (showRuleManager) {
@@ -104,46 +96,16 @@ fun ExpressScreen(
         return
     }
 
-    LaunchedEffect(isTrial) {
-        if (isTrial) {
-            TrialManager.ensureTrialStartTime(context)
-            trialExpired = TrialManager.isTrialExpired(context)
-        }
-    }
+    // Trial 已废弃，无操作
     
-    // 每日识别次数限制对话框
+    // 不再限制每日识别，不展示对话框
     if (showDailyLimitDialog) {
-        DailyLimitDialog(
-            onDismiss = { showDailyLimitDialog = false },
-            onActivate = {
-                showDailyLimitDialog = false
-                if (isTrial) {
-                    showToast = "体验版功能受限，如需帮助请联系开发者"
-                } else {
-                    onNavigateToActivation?.invoke()
-                }
-            }
-        )
+        showDailyLimitDialog = false
     }
-    
-    // 历史记录限制对话框
     if (showHistoryLimitDialog) {
-        HistoryLimitDialog(
-            onDismiss = { 
-                showHistoryLimitDialog = false
-                UsageLimitManager.markHistoryLimitHintShown(context)
-            },
-            onActivate = {
-                showHistoryLimitDialog = false
-                UsageLimitManager.markHistoryLimitHintShown(context)
-                if (isTrial) {
-                    showToast = "体验版功能受限，如需帮助请联系开发者"
-                } else {
-                    onNavigateToActivation?.invoke()
-                }
-            }
-        )
+        showHistoryLimitDialog = false
     }
+    // 历史记录限制提示取消，不再弹窗
     
     val statusPrefs = remember {
         context.getSharedPreferences("express_status", android.content.Context.MODE_PRIVATE)
@@ -201,19 +163,7 @@ fun ExpressScreen(
             if (expressList.isEmpty()) {
                 isLoading = true
             }
-            if (isTrial && trialExpired) {
-                showToast = "体验版已到期"
-                expressList = emptyList()
-                isLoading = false
-                return@LaunchedEffect
-            }
-            // 【限制策略】检查每日识别次数限制
-            if (UsageLimitManager.isDailyLimitReached(context)) {
-                showDailyLimitDialog = true
-                isLoading = false
-                return@LaunchedEffect
-            }
-            
+            // 无 Trial / 限制逻辑
             val reader = SmsReader(context)
             val latestMeta = reader.getLatestSmsMeta()
             val latestTimestamp = latestMeta?.timestamp
@@ -258,7 +208,7 @@ fun ExpressScreen(
                 }
             }
 
-            val smsReadLimit = if (ActivationManager.isActivated(context)) SMS_READ_LIMIT_ACTIVATED else SMS_READ_LIMIT_DEFAULT
+            val smsReadLimit = SMS_READ_LIMIT_ACTIVATED
             val smsList = reader.readAllSms(smsReadLimit)
             rawSmsList = smsList
             
@@ -268,10 +218,7 @@ fun ExpressScreen(
             }
             
             // 【限制策略】免费版识别延迟
-            val delayMs = UsageLimitManager.getIdentifyDelayMs(context)
-            if (delayMs > 0) {
-                delay(delayMs)
-            }
+            // 不再延迟
             
             // 1. 从短信提取快递信息
             var extractedList = ExpressExtractor.extractAllExpressInfo(smsList)
@@ -290,14 +237,9 @@ fun ExpressScreen(
             }
             
             // 【限制策略】增加识别次数计数
-            UsageLimitManager.incrementIdentifyCount(context)
+            // 不再计数
             
             val processedList = applyStatusAndFilters(extractedList, expressRecentDays)
-
-            if (UsageLimitManager.shouldShowHistoryLimitHint(context, processedList.size)) {
-                showHistoryLimitDialog = true
-            }
-            
             expressList = processedList
             val newestTimestamp = smsList.firstOrNull()?.receivedAt ?: latestTimestamp
             ExpressDataCache.update(processedList, newestTimestamp, latestSmsId)
@@ -363,8 +305,8 @@ fun ExpressScreen(
                                                     isNotPicked
                                                 }
                                             }
-                                            // 2. 应用限制策略（免费版只显示3条）
-                                            val pendingList = UsageLimitManager.limitHistoryList(context, filteredList)
+                            // 2. 不再截断条数，直接使用过滤后的未取列表
+                            val pendingList = filteredList
                                             if (pendingList.isNotEmpty()) {
                                                 val codes = pendingList.map { it.pickupCode }.joinToString("\n")
                                                 clipboardManager.setText(AnnotatedString(codes))
@@ -505,9 +447,9 @@ fun ExpressScreen(
                         )
                     }.size
                     
-                    // 统计未取快递数量：
-                    // expressList 中未在 SharedPreferences 中标记为已取，且符合时间窗口过滤设置的快递
-                    val pendingCount = expressList.filter { express ->
+                    // 统计未取快递数量（显示逻辑需与免费版条数限制一致）
+                    // 1) 先按状态/时间窗口过滤
+                    val pendingFiltered = expressList.filter { express ->
                         val statusKey = "pickup_${express.pickupCode}"
                         val isPicked = statusPrefs.getBoolean(statusKey, express.status == PickupStatus.PICKED)
                         val isNotPicked = !isPicked
@@ -521,7 +463,9 @@ fun ExpressScreen(
                         } else {
                             isNotPicked
                         }
-                    }.size
+                    }
+                    // 2) 数量统计与显示一致：不截断条数
+                    val pendingCount = pendingFiltered.size
                     
                     Box(
                         modifier = Modifier
@@ -656,13 +600,6 @@ fun ExpressScreen(
                             }
                         }
                     }
-
-                    Text(
-                        text = "当前仅展示最近 ${expressRecentDays} 天的快递记录，可在设置中调整。",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
                 }
             },
             bottomBar = {}
@@ -777,50 +714,14 @@ fun ExpressScreen(
                     filteredList
                 }
                 
-                // 【限制策略】免费版限制未取快递历史记录条数
-                val limitedList = if (currentTab == "pending" && !isActivated) {
-                    UsageLimitManager.limitHistoryList(context, searchFilteredList)
-                } else {
-                    searchFilteredList
-                }
+                // 显示全部（不再按条数截断）
+                val limitedList = searchFilteredList
                 
-                // ---- Stage6：按「月份分段 + 可折叠」进行懒加载展示 ----
-                // 1. 先按月份分组，再在每个月内部按日期分组
-                val groupedByMonth: Map<String, Map<String, List<ExpressInfo>>> = limitedList
-                    .groupBy { express ->
-                        try {
-                            val d = LocalDate.parse(express.date, EXPRESS_DATE_FORMATTER)
-                            "${d.year}-${d.monthValue.toString().padStart(2, '0')}"
-                        } catch (e: Exception) {
-                            // 解析失败的归入「未知月份」
-                            "未知月份"
-                        }
-                    }
-                    .mapValues { (_, list) ->
-                        list.groupBy { it.date }
-                            .toSortedMap(compareBy<String> { it }.reversed()) // 月内按日期倒序
-                    }
-                
-                // 2. 按月份倒序排列（最近的月份在前）
-                val sortedMonths = groupedByMonth.keys
-                    .sortedWith(compareBy<String> {
-                        // "yyyy-MM" 转 LocalDate 用于排序；解析失败的放最后
-                        try {
-                            if (it == "未知月份") LocalDate.MIN else LocalDate.parse("$it-01")
-                        } catch (e: Exception) {
-                            LocalDate.MIN
-                        }
-                    }.reversed())
-                
-                // 3. 记录每个月是否展开：默认展开最近 1~2 个月，其余折叠
-                var expandedMonths by remember {
-                    mutableStateOf(
-                        sortedMonths.take(2).toSet()
-                    )
-                }
-                
-                // 地址追踪变量（按月份分别追踪，避免跨月串行）
-                val lastAddressPerMonth = remember { mutableStateMapOf<String, String?>() }
+                // 按日期分组，再在日期内按地址分组；同一天相同地址只显示一次地址头
+                val groupedByDate: Map<String, Map<String, List<ExpressInfo>>> = limitedList
+                    .groupBy { it.date }
+                    .mapValues { (_, list) -> list.groupBy { it.location ?: "未知地址" } }
+                    .toSortedMap(compareBy<String> { it }.reversed())
                 
                 LazyColumn(
                     modifier = Modifier
@@ -829,48 +730,20 @@ fun ExpressScreen(
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    sortedMonths.forEach { monthKey ->
-                        val dateGroups = groupedByMonth[monthKey] ?: return@forEach
-                        val monthTotalCount = dateGroups.values.sumOf { it.size }
-                        val isExpanded = expandedMonths.contains(monthKey)
-                        
-                        // 月份头部
-                        item(key = "month_header_$monthKey") {
-                            MonthHeader(
-                                monthLabel = if (monthKey == "未知月份") "其他时间" else monthKey,
-                                count = monthTotalCount,
-                                isExpanded = isExpanded,
-                                onToggle = {
-                                    expandedMonths = if (isExpanded) {
-                                        expandedMonths - monthKey
-                                    } else {
-                                        expandedMonths + monthKey
-                                    }
-                                }
-                            )
-                        }
-                        
-                        // 折叠时不渲染该月的内容（真正的懒加载）
-                        if (isExpanded) {
-                            val monthLastAddress = lastAddressPerMonth[monthKey]
-                            var currentLastAddress = monthLastAddress
-                            
-                            dateGroups.forEach { (date, expressItems) ->
-                                item(key = "date_group_${monthKey}_$date") {
-                            val sortedItems = expressItems.sortedBy { it.pickupCode }
-                            DateGroup(
-                                date = date,
+                    groupedByDate.forEach { (date, itemsInDate) ->
+                        val groupedByLocation = itemsInDate.values.flatten()
+                            .groupBy { it.location ?: "未知地址" }
+                        groupedByLocation.forEach { (location, items) ->
+                            val sortedItems = items.sortedBy { it.pickupCode }
+                            item(key = "date_${date}_loc_$location") {
+                                LocationGroup(
+                                    location = location,
                                 expressItems = sortedItems,
                                 isEditMode = false,
                                 selectedExpressIds = emptySet(),
-                                        lastAddress = currentLastAddress,
-                                onLastAddressChange = { newAddress ->
-                                            currentLastAddress = newAddress
-                                            lastAddressPerMonth[monthKey] = newAddress
-                                },
+                                    showHeader = true,
                                 onSelectionChange = { _, _ -> }
                             )
-                                }
                             }
                         }
                     }
@@ -1008,55 +881,6 @@ fun DateGroup(
                 currentLastAddress = it.location ?: "未知地址"
                 onLastAddressChange(currentLastAddress)
             }
-        }
-    }
-}
-
-@Composable
-private fun MonthHeader(
-    monthLabel: String,
-    count: Int,
-    isExpanded: Boolean,
-    onToggle: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
-        color = Color.White.copy(alpha = 0.8f),
-        shape = RoundedCornerShape(12.dp),
-        shadowElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = monthLabel,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF111827)
-                )
-                Text(
-                    text = "共 $count 条快递记录",
-                    fontSize = 12.sp,
-                    color = Color(0xFF6B7280)
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.ExpandMore,
-                contentDescription = if (isExpanded) "收起" else "展开",
-                tint = Color(0xFF6B7280),
-                modifier = Modifier
-                    .size(20.dp)
-                    .rotate(if (isExpanded) 180f else 0f)
-            )
         }
     }
 }
@@ -1302,6 +1126,7 @@ private fun courierIconRes(expressType: String): Int {
         "jd" -> R.drawable.jd
         "zto" -> R.drawable.zto
         "yto" -> R.drawable.yto
+        "yunda" -> R.drawable.yunda
         "sto" -> R.drawable.sto
         "cainiao" -> R.drawable.cainiao
         "fengchao" -> R.drawable.fengchao

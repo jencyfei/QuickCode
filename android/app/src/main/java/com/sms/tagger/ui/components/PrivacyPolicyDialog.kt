@@ -1,6 +1,5 @@
 package com.sms.tagger.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,23 +18,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,9 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 /**
- * 隐私政策对话框
- * 
- * 首次运行应用时显示，用户必须同意才能继续使用
+ * 隐私政策对话框（参照 privacy_policy_mock.html 布局）
  */
 @Composable
 fun PrivacyPolicyDialog(
@@ -60,11 +49,10 @@ fun PrivacyPolicyDialog(
             dismissOnClickOutside = false
         )
     ) {
-        var isExpanded by remember { mutableStateOf(false) }
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.65f)
+                .fillMaxHeight(0.75f)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
             color = Color(0xFFF5F6FA),
@@ -74,44 +62,38 @@ fun PrivacyPolicyDialog(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    Column(
+            ) {
+                Column(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "🔒 隐私政策",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = "🔒 隐私政策",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF111827),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    SummaryCard(
-                        isExpanded = isExpanded,
-                        onToggle = { isExpanded = !isExpanded }
-                    )
+                    IntroCard()
 
-                    if (isExpanded) {
-                        IntroCard()
-
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "一、我们如何处理您的个人信息",
-                            paragraphs = listOf(
-                                "本应用为纯本地运行的 离线工具，所有功能均在您的设备本地完成，我们不会收集、存储、上传或共享任何个人信息。",
+                        paragraphs = listOf(
+                            "本应用为离线工具，所有数据均在本地设备上运行，我们不会上传、收集、存储、分析或共享您的任何个人信息。",
                             "本应用不会建立服务器，不会向任何第三方发送数据，不集成任何第三方 SDK。"
                         )
                     )
 
-                        PermissionSection()
+                    PermissionSection()
 
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "三、我们不会收集的内容",
-                            paragraphs = listOf(
-                            "在您使用本应用期间，我们 不会收集或上传 以下信息：",
+                        paragraphs = listOf(
+                            "在您使用本应用期间，我们不会收集或上传以下信息：",
                             "• 短信内容",
                             "• 通讯录信息",
                             "• 设备信息（如 IMEI、Android ID、MAC 地址等）",
@@ -120,14 +102,13 @@ fun PrivacyPolicyDialog(
                             "• 支付信息",
                             "• 日志数据",
                             "• 任何可用于识别您身份的信息",
-                            "",
                             "所有数据均仅保存在您的设备中，由您自行管理。"
                         )
                     )
 
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "四、我们不会使用的技术或行为",
-                            paragraphs = listOf(
+                        paragraphs = listOf(
                             "本应用不包含以下任何可能涉及隐私风险的行为：",
                             "• 不联网（无上传、无同步、无远程访问）",
                             "• 不内置广告 SDK",
@@ -139,32 +120,32 @@ fun PrivacyPolicyDialog(
                         )
                     )
 
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "五、第三方 SDK 情况",
-                            paragraphs = listOf("本应用 未集成任何第三方 SDK，不存在由第三方收集数据的情况。")
+                        paragraphs = listOf("本应用未集成任何第三方 SDK，不存在由第三方收集数据的情况。")
                     )
 
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "六、未成年人保护",
-                            paragraphs = listOf(
+                        paragraphs = listOf(
                             "本应用面向一般用户，不专门向未成年人提供服务。",
                             "如您为未成年人，请在监护人指导下阅读并使用本应用。"
                         )
                     )
 
-                        PrivacySectionCardWithHighlight(
+                    PrivacySectionCardWithHighlight(
                         title = "七、权限管理与撤销",
-                            paragraphs = listOf(
+                        paragraphs = listOf(
                             "您可以随时通过系统设置管理或撤销相关权限。",
-                                "撤销权限后，部分功能可能无法正常使用，但不影响您关闭并卸载本应用。"
-                            ),
-                            highlightTitle = "路径示例：",
-                            highlightContent = "设置 → 应用管理 → 本应用 → 权限"
-                        )
+                            "撤销权限后，部分功能可能无法正常使用，但不影响您关闭并卸载本应用。"
+                        ),
+                        highlightTitle = "路径示例：",
+                        highlightContent = "设置 → 应用管理 → 本应用 → 权限"
+                    )
 
-                        PrivacySectionCard(
-                            title = "📝 八、免责声明",
-                            paragraphs = listOf(
+                    PrivacySectionCard(
+                        title = "📝 八、免责声明",
+                        paragraphs = listOf(
                             "1. 本应用仅作为短信辅助工具，不保证所有短信解析的 100% 准确性。",
                             "2. 使用本应用期间，如因短信格式变动、运营商变更或设备原因导致解析失败，本应用不承担任何责任。",
                             "3. 您应确保在使用本应用过程中遵守当地法律法规。",
@@ -172,30 +153,29 @@ fun PrivacyPolicyDialog(
                         )
                     )
 
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "九、政策更新",
-                            paragraphs = listOf(
+                        paragraphs = listOf(
                             "我们可能在必要时更新本隐私政策。更新后的政策将在本应用内展示，您再次确认后方可继续使用。"
                         )
                     )
 
-                        PrivacySectionCard(
+                    PrivacySectionCard(
                         title = "十、联系我们",
-                            paragraphs = listOf(
+                        paragraphs = listOf(
                             "如您在使用本应用过程中有任何疑问、建议或投诉，请通过应用内提供的联系方式与开发者联系。"
                         )
                     )
 
-                        Text(
-                            text = "更新日期：2025-11-19 | 生效日期：2025-11-19",
-                            fontSize = 12.sp,
-                            color = Color(0xFF999999),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp)
-                        )
-                    }
+                    Text(
+                        text = "更新日期：2025-11-19 | 生效日期：2025-11-19",
+                        fontSize = 12.sp,
+                        color = Color(0xFF999999),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                    )
                 }
 
                 ActionBar(
@@ -204,67 +184,6 @@ fun PrivacyPolicyDialog(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SummaryCard(
-    isExpanded: Boolean,
-    onToggle: () -> Unit
-) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
-        shape = RoundedCornerShape(16.dp),
-        shadowElevation = 2.dp
-                        ) {
-                            Column(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(
-                text = "🔒 《隐私政策》摘要",
-                fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF111827)
-                                )
-                                Text(
-                text = "本应用为纯本地运行工具，不联网、不上传、不收集任何个人信息。我们仅申请必要权限用于实现核心功能（如读取短信用于提取取件码）。",
-                fontSize = 14.sp,
-                color = Color(0xFF666666),
-                lineHeight = 21.sp
-            )
-            SummaryToggleButton(isExpanded = isExpanded, onToggle = onToggle)
-        }
-    }
-}
-
-@Composable
-private fun SummaryToggleButton(
-    isExpanded: Boolean,
-    onToggle: () -> Unit
-) {
-    val rotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "summaryToggleRotation")
-    OutlinedButton(
-        onClick = onToggle,
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = if (isExpanded) Color(0xFF4F46E5) else Color(0xFF666666)
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = if (isExpanded) "收起完整政策" else "展开查看完整政策",
-            fontSize = 13.sp
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            modifier = Modifier.graphicsLayer { rotationZ = rotation }
-        )
     }
 }
 
@@ -290,21 +209,21 @@ private fun PrivacySectionCardWithHighlight(
         SectionTitle(text = title)
         SectionParagraphs(paragraphs = paragraphs)
         Spacer(modifier = Modifier.height(12.dp))
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
             color = Color(0xFFF8F9FB),
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(1.dp, Color(0xFFF0F1F5))
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                                Text(
+                Text(
                     text = highlightTitle,
                     fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF4F46E5),
                     modifier = Modifier.padding(bottom = 6.dp)
-                                )
-                                Text(
+                )
+                Text(
                     text = highlightContent,
                     fontSize = 13.sp,
                     color = Color(0xFF666666)
@@ -336,7 +255,7 @@ private fun IntroCard() {
                     }
                 }
                 Spacer(modifier = Modifier.width(10.dp))
-                                Text(
+                Text(
                     text = "隐私保护承诺",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -344,7 +263,7 @@ private fun IntroCard() {
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-                                Text(
+            Text(
                 text = "本应用为纯本地运行的工具软件，所有功能均在您的设备本地完成，不会收集、存储、上传或共享任何个人信息。",
                 fontSize = 14.sp,
                 color = Color(0xFF666666),
@@ -386,7 +305,7 @@ private fun PermissionBox() {
                 color = Color(0xFF4F46E5)
             )
             Spacer(modifier = Modifier.height(6.dp))
-                    Text(
+            Text(
                 text = "用途：解析短信内容，从中提取快递取件码。",
                 fontSize = 13.sp,
                 color = Color(0xFF666666)
@@ -409,7 +328,7 @@ private fun ActionBar(
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
-                Surface(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp),
@@ -418,58 +337,58 @@ private fun ActionBar(
         shadowElevation = 2.dp
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "使用本应用前，请您仔细阅读并充分理解本隐私政策的全部内容。",
-                            fontSize = 12.sp,
-                            color = Color(0xFF666666),
-                            lineHeight = 18.sp,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
+            Text(
+                text = "使用本应用前，请您仔细阅读并充分理解本隐私政策的全部内容。",
+                fontSize = 12.sp,
+                color = Color(0xFF666666),
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 OutlinedButton(
-                                onClick = onReject,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
+                    onClick = onReject,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, Color(0xFFD1D5DB)),
-                                colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
                         contentColor = Color(0xFF6B7280)
-                                )
-                            ) {
-                                Text(
-                                    text = "拒绝",
-                                    fontSize = 15.sp,
+                    )
+                ) {
+                    Text(
+                        text = "拒绝",
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Medium
-                                )
-                            }
+                    )
+                }
 
-                            Button(
-                                onClick = onAccept,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
+                Button(
+                    onClick = onAccept,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF1F2937)
-                                )
-                            ) {
-                                Text(
-                                    text = "同意",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                    }
+                    )
+                ) {
+                    Text(
+                        text = "同意",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
                 }
             }
+        }
+    }
+}
 
 @Composable
 private fun GlassCard(content: @Composable ColumnScope.() -> Unit) {
@@ -488,13 +407,13 @@ private fun GlassCard(content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 private fun SectionTitle(text: String) {
-        Text(
+    Text(
         text = text,
         fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF111827),
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        fontWeight = FontWeight.SemiBold,
+        color = Color(0xFF111827),
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
 }
 
 @Composable
@@ -503,15 +422,14 @@ private fun SectionParagraphs(paragraphs: List<String>) {
         if (line.isEmpty()) {
             Spacer(modifier = Modifier.height(4.dp))
         } else {
-                Text(
-                    text = line,
+            Text(
+                text = line,
                 fontSize = 14.sp,
                 color = Color(0xFF666666),
                 lineHeight = 21.sp,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
         }
     }
 }
-
 

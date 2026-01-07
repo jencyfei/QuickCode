@@ -58,8 +58,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.em
@@ -69,10 +71,9 @@ import com.sms.tagger.ui.components.GradientBackground
 import com.sms.tagger.ui.theme.TextSecondary
 import com.sms.tagger.util.ActivationManager
 import com.sms.tagger.util.DeviceIdManager
-import com.sms.tagger.util.TimeWindowSettings
-import com.sms.tagger.util.LogControlSettings
-import com.sms.tagger.util.AppLogger
-import com.sms.tagger.util.TrialManager
+import com.sms.tagger.util.SmsListSettings
+import com.sms.tagger.util.NotificationHelper
+import com.sms.tagger.util.SmsReceiverDiagnostics
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -81,7 +82,6 @@ private enum class SettingsPage {
     Main,
     Feedback,
     SoftwareStatement,
-    PaidVsFree,
     PermissionSettings
 }
 
@@ -96,31 +96,12 @@ fun SettingsScreen(
 ) {
     var currentPage by remember { mutableStateOf(SettingsPage.Main) }
     val context = LocalContext.current
-    val isTrial = BuildConfig.IS_TRIAL
+    val isTrial = false
     val deviceId = remember { ActivationManager.getDeviceIdForUser(context) }
     val deviceIdShortCode = remember(deviceId) { DeviceIdManager.getDeviceIdShortCode(context) }
-    var activationInfo by remember { mutableStateOf(ActivationManager.getActivationInfo(context)) }
-    var isActivated by remember { mutableStateOf(ActivationManager.isActivated(context)) }
-    var showActivationDialog by remember { mutableStateOf(false) }
-    var trialRemainingDays by remember { mutableStateOf(if (isTrial) TrialManager.getRemainingDays(context) else 0) }
-
-    LaunchedEffect(isTrial) {
-        if (isTrial) {
-            TrialManager.ensureTrialStartTime(context)
-            trialRemainingDays = TrialManager.getRemainingDays(context)
-        }
-    }
-
-    if (!isTrial && showActivationDialog) {
-        ActivationDialog(
-            onActivated = {
-                activationInfo = ActivationManager.getActivationInfo(context)
-                isActivated = ActivationManager.isActivated(context)
-                showActivationDialog = false
-            },
-            onCancel = { showActivationDialog = false }
-        )
-    }
+    val activationInfo by remember { mutableStateOf<ActivationManager.ActivationInfo?>(null) }
+    val isActivated by remember { mutableStateOf(true) }
+    val trialRemainingDays by remember { mutableStateOf(0) }
 
     GradientBackground {
         Crossfade(targetState = currentPage, label = "settings_pages") { page ->
@@ -133,10 +114,10 @@ fun SettingsScreen(
                     deviceId = deviceId,
                     deviceIdShortCode = deviceIdShortCode,
                     activatedAt = activationInfo?.activatedAt,
-                    onActivateClick = { showActivationDialog = true },
+                    onActivateClick = { /* 开源版无需激活 */ },
                     onFeedbackClick = { currentPage = SettingsPage.Feedback },
                     onStatementClick = { currentPage = SettingsPage.SoftwareStatement },
-                    onPaidDiffClick = { currentPage = SettingsPage.PaidVsFree },
+                    onPaidDiffClick = { /* 开源版不区分免费/付费 */ },
                     onContactDeveloper = { currentPage = SettingsPage.Feedback },
                     onPermissionSettingsClick = { currentPage = SettingsPage.PermissionSettings }
                 )
@@ -146,30 +127,6 @@ fun SettingsScreen(
                 SettingsPage.SoftwareStatement -> SoftwareStatementScreen(
                     onBack = { currentPage = SettingsPage.Main }
                 )
-                SettingsPage.PaidVsFree -> {
-                    if (!isTrial) {
-                        PaidVsFreeScreen(
-                            onBack = { currentPage = SettingsPage.Main },
-                            onActivateClick = { showActivationDialog = true }
-                        )
-                    } else {
-                        SettingsHome(
-                            isTrial = true,
-                            trialRemainingDays = trialRemainingDays,
-                            isActivated = false,
-                            remainingActivations = 0,
-                            deviceId = deviceId,
-                            deviceIdShortCode = deviceIdShortCode,
-                            activatedAt = null,
-                            onActivateClick = {},
-                            onFeedbackClick = { currentPage = SettingsPage.Feedback },
-                            onStatementClick = { currentPage = SettingsPage.SoftwareStatement },
-                            onPaidDiffClick = {},
-                            onContactDeveloper = { currentPage = SettingsPage.Feedback },
-                            onPermissionSettingsClick = { currentPage = SettingsPage.PermissionSettings }
-                        )
-                    }
-                }
                 SettingsPage.PermissionSettings -> PermissionSettingsScreen(
                     onBack = { currentPage = SettingsPage.Main }
                 )
@@ -195,6 +152,8 @@ private fun SettingsHome(
     onContactDeveloper: () -> Unit,
     onPermissionSettingsClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -215,122 +174,14 @@ private fun SettingsHome(
         ) {
             // QuickCode 卡片
             item { AppInfoCard() }
-            if (isTrial) {
-                item {
-                    TrialInfoCard(
-                        remainingDays = trialRemainingDays,
-                        onContactDeveloper = onContactDeveloper
-                    )
-                }
-            } else {
-                item {
-                    BindDeviceCard(
-                        isActivated = isActivated,
-                        remainingActivations = remainingActivations,
-                        deviceId = deviceId,
-                        deviceIdShortCode = deviceIdShortCode,
-                        activatedAt = activatedAt,
-                        onActivateClick = onActivateClick,
-                        onPaidDiffClick = onPaidDiffClick
-                    )
-                }
-            }
             // 权限设置入口
             item { PermissionSettingsEntryCard(onPermissionSettingsClick) }
             // 反馈与支持卡片
             item { SupportCard(onSupportClick = onFeedbackClick) }
-            // 时间窗口 & 日志配置
-            item { TimeWindowDiagnosticsCard() }
+            // 短信列表开关
+            item { SmsListToggleCard() }
             // 隐私说明卡片
             item { PrivacyCard(onStatementClick = onStatementClick) }
-        }
-    }
-}
-
-@Composable
-private fun TrialInfoCard(
-    remainingDays: Int,
-    onContactDeveloper: () -> Unit
-) {
-    FrostedGlassCard {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "🧪 当前版本：体验版 Trial",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp
-            )
-            Text(
-                text = if (remainingDays > 0) "有效期剩余：${remainingDays} 天" else "有效期：已到期",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF9CA3AF),
-                fontSize = 13.sp
-            )
-            Surface(
-                color = Color(0xFFEEF2FF),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "体验版仅供测试，部分功能与高级能力已做限制。",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF4C1D95),
-                        lineHeight = 18.sp
-                    )
-                    Text(
-                        text = "如需续期或获取完整版，请联系开发者获取帮助。",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF4C1D95),
-                        lineHeight = 18.sp
-                    )
-                }
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "技术支持：",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF4F46E5),
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "QQ 709662224",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF374151)
-                )
-                Text(
-                    text = "邮箱 ChazRussel@outlook.com",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF374151)
-                )
-            }
-            Button(
-                onClick = onContactDeveloper,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1F2937)
-                )
-            ) {
-                Text(
-                    text = "联系开发者",
-                    fontSize = 14.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
         }
     }
 }
@@ -378,141 +229,6 @@ private fun AppInfoCard() {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun TimeWindowDiagnosticsCard() {
-    val context = LocalContext.current
-    var expressDays by remember { mutableStateOf(TimeWindowSettings.getExpressDays(context)) }
-    var smsDays by remember { mutableStateOf(TimeWindowSettings.getSmsDays(context)) }
-    var verboseLogging by remember { mutableStateOf(LogControlSettings.isVerboseLoggingEnabled(context)) }
-
-    LaunchedEffect(Unit) {
-        AppLogger.setVerboseOverride(verboseLogging)
-    }
-
-    FrostedGlassCard {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "⚙️ 数据时间窗口 & 日志",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "可调整快递/短信展示范围，并控制诊断日志输出",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "快递展示范围",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TimeWindowSettings.expressOptions().forEach { days ->
-                        TimeWindowOptionChip(
-                            label = "近${days}天",
-                            selected = expressDays == days
-                        ) {
-                            expressDays = days
-                            TimeWindowSettings.setExpressDays(context, days)
-                        }
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        Text(
-                            text = "短信展示范围",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "当前仅展示近 ${smsDays} 天，如需更早请手动扩展",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TimeWindowSettings.smsOptions().forEach { days ->
-                        TimeWindowOptionChip(
-                            label = "近${days}天",
-                            selected = smsDays == days
-                        ) {
-                            smsDays = days
-                            TimeWindowSettings.setSmsDays(context, days)
-                        }
-                    }
-                }
-            }
-
-            Divider(color = Color(0x1A000000))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "诊断日志开关",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "默认关闭，仅在排查问题时开启以捕获详细日志",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
-                Switch(
-                    checked = verboseLogging,
-                    onCheckedChange = { enabled ->
-                        verboseLogging = enabled
-                        LogControlSettings.setVerboseLoggingEnabled(context, enabled)
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TimeWindowOptionChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        border = BorderStroke(1.dp, if (selected) Color(0xFF4F46E5) else Color(0xFFE5E7EB)),
-        color = if (selected) Color(0x1A4F46E5) else Color.White,
-        modifier = Modifier
-            .clickable { onClick() }
-    ) {
-        Text(
-            text = label,
-            color = if (selected) Color(0xFF312E81) else Color(0xFF6B7280),
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-        )
     }
 }
 
@@ -564,111 +280,235 @@ private fun BindDeviceCard(
             Divider(color = Color(0xFFF0F1F5), thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 重点文案区
-            Text(
-                text = "🌟 一次授权 · 长期可用",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "为当前设备解锁完整功能",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF666666),
-                fontSize = 12.sp
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "🧋 请我喝一杯奶茶(¥10)·永久使用",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF4F46E5),
-                fontSize = 14.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 设备ID行 - 紧凑横向布局
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = Color(0xFFF8F9FB),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .height(44.dp)
-                    .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-            ) {
+            if (isActivated) {
+                // 已激活状态：显示设备ID和已解锁功能
+                
+                // 设备ID显示（只读，可复制）
                 Text(
-                    text = deviceIdShortCode,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "设备 ID",
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
-                    color = Color(0xFF374151),
-                    modifier = Modifier.weight(1f)
+                    color = Color(0xFF1F2937),
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-                // 复制按钮
-                OutlinedButton(
-                    onClick = { clipboardManager.setText(AnnotatedString(deviceId)) },
-                    modifier = Modifier.height(28.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                    shape = RoundedCornerShape(6.dp)
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFFF8F9FB),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .height(44.dp)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "复制",
+                        text = deviceIdShortCode,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Color(0xFF374151),
+                        modifier = Modifier.weight(1f),
+                        letterSpacing = 1.sp
+                    )
+                    // 复制按钮
+                    OutlinedButton(
+                        onClick = { clipboardManager.setText(AnnotatedString(deviceId)) },
+                        modifier = Modifier.height(28.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = "复制",
+                            fontSize = 12.sp,
+                            color = Color(0xFF4F46E5)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 已解锁功能列表
+                Text(
+                    text = "✨ 已解锁功能",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = Color(0xFF1F2937),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                val benefits = listOf(
+                    "无限制短信识别",
+                    "完整历史记录查看",
+                    "实时快递通知提醒",
+                    "所有高级功能"
+                )
+                
+                benefits.forEach { benefit ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "✓",
+                            fontSize = 16.sp,
+                            color = Color(0xFF10B981),
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(
+                            text = benefit,
+                            fontSize = 13.sp,
+                            color = Color(0xFF374151)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = Color(0xFFF0F1F5), thickness = 1.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 提示信息
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFFF0F9FF),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(style = androidx.compose.ui.text.SpanStyle(
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1F2937)
+                            )) {
+                                append("💡 提示：")
+                            }
+                            append("您的设备已成功激活，所有功能已解锁。")
+                            if (remainingActivations > 0) {
+                                append("激活码可在本设备上使用最多 ${remainingActivations + 1} 次，当前剩余 $remainingActivations 次。")
+                            }
+                        },
                         fontSize = 12.sp,
-                        color = Color(0xFF4F46E5)
+                        color = Color(0xFF374151),
+                        lineHeight = 18.sp
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                // 激活按钮
-                Button(
-                    onClick = onActivateClick,
-                    modifier = Modifier.height(28.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    shape = RoundedCornerShape(6.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1F2937)
+            } else {
+                // 未激活状态：显示原有的激活相关内容
+                
+                // 重点文案区
+                Text(
+                    text = "🌟 一次授权 · 长期可用",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "为当前设备解锁完整功能",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF666666),
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "🧋 请我喝一杯奶茶(¥10)·永久使用",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4F46E5),
+                    fontSize = 14.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 设备ID行 - 紧凑横向布局
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFFF8F9FB),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .height(44.dp)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = deviceIdShortCode,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Color(0xFF374151),
+                        modifier = Modifier.weight(1f)
+                    )
+                    // 复制按钮
+                    OutlinedButton(
+                        onClick = { clipboardManager.setText(AnnotatedString(deviceId)) },
+                        modifier = Modifier.height(28.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = "复制",
+                            fontSize = 12.sp,
+                            color = Color(0xFF4F46E5)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // 激活按钮
+                    Button(
+                        onClick = onActivateClick,
+                        modifier = Modifier.height(28.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1F2937)
+                        )
+                    ) {
+                        Text(
+                            text = "激活",
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "激活流程：\n点击复制设备ID -> 发送设备ID给开发者 (QQ/微信/邮箱) -> 获取激活码 -> 输入激活码 -> 激活成功 ✅",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF555555),
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedButton(
+                    onClick = onPaidDiffClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, Color(0xFFD1D5DB)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF4F46E5)
                     )
                 ) {
-                        Text(
-                        text = "激活",
-                        fontSize = 12.sp,
-                        color = Color.White
+                    Text(
+                        text = "查看免费 vs 付费差异 →",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "激活流程：\n点击复制设备ID -> 发送设备ID给开发者 (QQ/微信/邮箱) -> 获取激活码 -> 输入激活码 -> 激活成功 ✅",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF555555),
-                fontSize = 12.sp,
-                lineHeight = 18.sp
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            OutlinedButton(
-                onClick = onPaidDiffClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(1.dp, Color(0xFFD1D5DB)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF4F46E5)
-                )
-            ) {
-                Text(
-                    text = "查看免费 vs 付费差异 →",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
             }
         }
     }
@@ -720,40 +560,84 @@ private fun SupportCard(onSupportClick: () -> Unit) {
 }
 
 /**
- * 隐私说明卡片 - 对齐 settings_page_mock_v2.html
+ * 短信列表开关卡片
  */
 @Composable
-private fun PrivacyCard(onStatementClick: () -> Unit) {
-    FrostedGlassCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onStatementClick() }
-    ) {
+private fun SmsListToggleCard() {
+    val context = LocalContext.current
+    var smsListEnabled by remember { mutableStateOf(SmsListSettings.isSmsListEnabled(context)) }
+
+    FrostedGlassCard {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Text(
-                text = "📄",
-                fontSize = 24.sp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "隐私说明与免责声明",
+                    text = "💬 短信列表",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
                     Text(
-                    text = "了解我们如何保护你的数据",
+                    text = "开启后，底部导航栏将显示「短信」入口",
                         style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF666666),
+                    color = TextSecondary,
                     fontSize = 13.sp
                 )
             }
+            Switch(
+                checked = smsListEnabled,
+                onCheckedChange = { enabled ->
+                    smsListEnabled = enabled
+                    SmsListSettings.setSmsListEnabled(context, enabled)
+                }
+            )
+        }
+    }
+}
+
+/**
+ * 隐私说明卡片 - 对齐 settings_page_mock_v2.html
+ */
+@Composable
+private fun PrivacyCard(onStatementClick: () -> Unit) {
+    FrostedGlassCard(
+            modifier = Modifier
+                .fillMaxWidth()
+            .clickable { onStatementClick() }
+        ) {
+            Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+            Text(
+                text = "📄",
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                    text = "隐私说明与免责声明",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                    text = "了解我们如何保护你的数据",
+                        style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF666666),
+                        fontSize = 13.sp
+                    )
+                }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
@@ -813,6 +697,8 @@ private fun PermissionSettingsEntryCard(
 private fun SoftwareStatementScreen(
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -1002,6 +888,13 @@ private fun SoftwareStatementScreen(
                 )
             }
 
+            // 十一、通知权限引导
+            item {
+                NotificationPermissionCard(
+                    onOpenSettings = { NotificationHelper.openNotificationSettings(context) }
+                )
+            }
+
             // 更新日期
             item {
                     Text(
@@ -1113,6 +1006,235 @@ private fun PrivacySectionCard(
     }
 }
 
+@Composable
+private fun NotificationPermissionCard(
+    onOpenSettings: () -> Unit
+) {
+    FrostedGlassCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "🔔 通知与横幅",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+            Text(
+                text = "为保证新快递短信以横幅方式及时提醒，请确认已开启通知权限与横幅显示。",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF6B7280),
+                lineHeight = 18.sp
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.height(40.dp)
+                ) {
+                    Text("前往通知设置")
+                }
+                Text(
+                    text = "如未弹出横幅，请在系统通知中开启“允许横幅/悬浮通知”，并保持通知声音/震动开启。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF9CA3AF),
+                    modifier = Modifier.weight(1f),
+                    lineHeight = 16.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SmsReceiverDiagnosticsCard() {
+    val context = LocalContext.current
+    var diagnosisResult by remember { 
+        mutableStateOf<SmsReceiverDiagnostics.DiagnosisResult?>(null) 
+    }
+    var isExpanded by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        diagnosisResult = SmsReceiverDiagnostics.diagnose(context)
+    }
+    
+    FrostedGlassCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🔍 短信接收诊断",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                TextButton(onClick = { isExpanded = !isExpanded }) {
+                    Text(if (isExpanded) "收起" else "展开", fontSize = 12.sp)
+                }
+            }
+            
+            if (diagnosisResult != null) {
+                val result = diagnosisResult!!
+                val allOk = result.issues.isEmpty()
+                
+                // 状态指示
+                Surface(
+                    color = if (allOk) Color(0xFFECFDF5) else Color(0xFFFEF3C7),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = if (allOk) "✅ 所有检查通过" else "⚠️ 发现问题",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (allOk) Color(0xFF065F46) else Color(0xFF92400E)
+                        )
+                        if (!allOk) {
+                            result.issues.forEach { issue ->
+                                Text(
+                                    text = "• $issue",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF92400E),
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                if (isExpanded) {
+                    // 详细诊断信息
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Divider(color = Color(0xFFE5E7EB))
+                        
+                        // 权限状态
+                        Text(
+                            text = "权限状态：",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "  RECEIVE_SMS: ${if (result.hasReceiveSmsPermission) "✅" else "❌"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = "  READ_SMS: ${if (result.hasReadSmsPermission) "✅" else "❌"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = "  POST_NOTIFICATIONS: ${if (result.hasPostNotificationPermission) "✅" else "❌"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp
+                        )
+                        
+                        Text(
+                            text = "Receiver 状态: ${if (result.isReceiverRegistered) "✅ 已注册" else "❌ 未注册"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 12.sp
+                        )
+                        
+                        Divider(color = Color(0xFFE5E7EB))
+                        
+                        // 建议
+                        if (result.suggestions.isNotEmpty()) {
+                            Text(
+                                text = "建议：",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                            result.suggestions.forEach { suggestion ->
+                                Text(
+                                    text = "• $suggestion",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF6B7280),
+                                    fontSize = 12.sp,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // 操作按钮
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                diagnosisResult = SmsReceiverDiagnostics.diagnose(context)
+                                Toast.makeText(context, "已重新诊断", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.weight(1f).height(40.dp)
+                        ) {
+                            Text("重新诊断", fontSize = 13.sp)
+                        }
+                        if (result.canTestNotification) {
+                            Button(
+                                onClick = {
+                                    SmsReceiverDiagnostics.testNotification(context)
+                                    Toast.makeText(context, "已发送测试通知", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF4F46E5)
+                                )
+                            ) {
+                                Text("测试通知", fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    // 测试短信处理按钮
+                    Button(
+                        onClick = {
+                            SmsReceiverDiagnostics.testSmsProcessing(context)
+                            Toast.makeText(context, "已测试短信处理，请查看通知和日志", Toast.LENGTH_LONG).show()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(40.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF10B981)
+                        )
+                    ) {
+                        Text("测试短信处理", fontSize = 13.sp)
+                    }
+                }
+            } else {
+                Text(
+                    text = "正在诊断...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF9CA3AF)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeedbackSuggestionsScreen(
@@ -1207,245 +1329,6 @@ private fun FeedbackSuggestionsScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PaidVsFreeScreen(
-    onBack: () -> Unit,
-    onActivateClick: () -> Unit
-) {
-    val flowSteps = listOf("免费体验", "激活设备", "完整功能")
-    val diffRows = listOf(
-        Triple("⏱️ 每日识别次数", "5 次/天", "不限"),
-        Triple("🗂️ 历史记录", "最近 3 条", "全部记录"),
-        Triple("📋 批量操作", "部分记录", "全部记录"),
-        Triple("🎛️ UI 提示", "显示限制横幅", "UI 更简洁")
-    )
-
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("免费 vs 付费（激活后）", fontSize = 18.sp) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
-            )
-        },
-        bottomBar = {
-            Surface(
-                color = Color.White.copy(alpha = 0.95f),
-                tonalElevation = 2.dp,
-                shadowElevation = 4.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    Button(
-                        onClick = onActivateClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF111827)
-                        )
-                    ) {
-                        Text(
-                            text = "立即激活 🔐",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "¥10 · 永久使用",
-                            fontSize = 13.sp,
-                            color = Color(0xFF9CA3AF)
-                        )
-                    }
-                }
-            }
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
-                    shadowElevation = 2.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "流程示意",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF111827)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            flowSteps.forEachIndexed { index, step ->
-                                Surface(
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = Color(0xFFF8F9FB)
-                                ) {
-                                    Text(
-                                        text = step,
-                                        textAlign = TextAlign.Center,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                                if (index != flowSteps.lastIndex) {
-                                    Text(
-                                        text = "➜",
-                                        color = Color(0xFF9CA3AF),
-                                        fontSize = 16.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
-                    shadowElevation = 2.dp
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "核心差异",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF111827),
-                            modifier = Modifier.padding(bottom = 10.dp)
-                        )
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "功能",
-                                    color = Color(0xFF6B7280),
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1.2f)
-                                )
-                                Text(
-                                    text = "免费版",
-                                    color = Color(0xFF6B7280),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.weight(0.9f)
-                                )
-                                Text(
-                                    text = "付费版",
-                                    color = Color(0xFF6B7280),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.weight(0.9f)
-                                )
-                            }
-                            diffRows.forEachIndexed { index, row ->
-                                PaidVsFreeRow(
-                                    feature = row.first,
-                                    freeValue = row.second,
-                                    paidValue = row.third,
-                                    showDivider = index != diffRows.lastIndex
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun PaidVsFreeRow(
-    feature: String,
-    freeValue: String,
-    paidValue: String,
-    showDivider: Boolean
-) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = feature,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF374151),
-                modifier = Modifier.weight(1.2f)
-            )
-            Surface(
-                modifier = Modifier
-                    .weight(0.9f)
-                    .padding(horizontal = 4.dp),
-                color = Color(0xFFF4F4F5),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = freeValue,
-                    fontSize = 13.sp,
-                    color = Color(0xFF4B5563),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
-                )
-            }
-            Surface(
-                modifier = Modifier
-                    .weight(0.9f)
-                    .padding(horizontal = 4.dp),
-                color = Color(0xFFECFDF5),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = paidValue,
-                    fontSize = 13.sp,
-                    color = Color(0xFF047857),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
-                )
-            }
-        }
-        if (showDivider) {
-            Divider(color = Color(0xFFF1F2F6))
         }
     }
 }
