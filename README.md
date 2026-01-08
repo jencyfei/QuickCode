@@ -333,11 +333,18 @@ npm run dev
 
 ## 📱 应用截图
 
-### 快递管理界面
-<img src="C:/Users/Administrator/Downloads/Camera_1040g3k831qa3fhnu7g005n2nldnkckh7fvvgta0.jpg" alt="Camera_1040g3k831qa3fhnu7g005n2nldnkckh7fvvgta0" style="zoom:25%;" /><img src="C:/Users/Administrator/Downloads/Camera_1040g3k831qa3fhpe7o005n2nldnkckh72q1ig1g.jpg" alt="Camera_1040g3k831qa3fhpe7o005n2nldnkckh72q1ig1g" style="zoom:25%;" />
+<div align="center">
+
+### 快递管理界面（未取快递）
+![快递管理界面（未取快递）](screenshots/screenshot1.jpg)
+
+### 快递管理界面（已取快递）
+![快递管理界面（已取快递）](screenshots/screenshot2.jpg)
 
 ### 设置界面
-<img src="C:/Users/Administrator/Downloads/Screenshot_2026-01-08-09-37-37-264_com.sms.tagger.jpg" alt="Screenshot_2026-01-08-09-37-37-264_com.sms.tagger" style="zoom:25%;" />
+![设置界面](screenshots/screenshot3.jpg)
+
+</div>
 
 
 
@@ -519,7 +526,7 @@ npm run dev
 
 ### 支付宝捐赠
 
-<img src="C:/Users/Administrator/AppData/Roaming/Typora/typora-user-images/image-20260108101925055.png" alt="image-20260108101925055" style="zoom:25%;" />
+![支付宝收款码](assets/alipay_donate.png)
 
 **感谢您的支持！您的捐赠将用于项目的持续开发和维护。**
 
