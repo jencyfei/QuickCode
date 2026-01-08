@@ -336,13 +336,13 @@ npm run dev
 <div align="center">
 
 ### 快递管理界面（未取快递）
-![快递管理界面（未取快递）](screenshots/screenshot1.jpg)
+<img src="screenshots/screenshot1.jpg" alt="快递管理界面（未取快递）" width="300" />
 
 ### 快递管理界面（已取快递）
-![快递管理界面（已取快递）](screenshots/screenshot2.jpg)
+<img src="screenshots/screenshot2.jpg" alt="快递管理界面（已取快递）" width="300" />
 
 ### 设置界面
-![设置界面](screenshots/screenshot3.jpg)
+<img src="screenshots/screenshot3.jpg" alt="设置界面" width="300" />
 
 </div>
 
@@ -510,7 +510,7 @@ npm run dev
 
 <div align="center">
 
-![微信小程序二维码](assets/wechat_miniprogram.png)
+<img src="assets/wechat_miniprogram.png" alt="微信小程序二维码" width="200" />
 
 **扫码体验小程序版本**
 
@@ -526,7 +526,7 @@ npm run dev
 
 ### 支付宝捐赠
 
-![支付宝收款码](assets/alipay_donate.png)
+<img src="assets/alipay_donate.png" alt="支付宝收款码" width="200" />
 
 **感谢您的支持！您的捐赠将用于项目的持续开发和维护。**
 
