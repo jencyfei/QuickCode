@@ -333,13 +333,11 @@ npm run dev
 
 ## 📱 应用截图
 
-<div align="center">
+<div align="left">
 
-<p>
-  <img src="screenshots/screenshot1.jpg" alt="快递管理界面（未取快递）" width="280" style="margin: 5px;" />
-  <img src="screenshots/screenshot2.jpg" alt="快递管理界面（已取快递）" width="280" style="margin: 5px;" />
-  <img src="screenshots/screenshot3.jpg" alt="设置界面" width="280" style="margin: 5px;" />
-</p>
+<img src="screenshots/screenshot1.jpg" alt="快递管理界面（未取快递）" width="30%" style="margin-right: 1%;" />
+<img src="screenshots/screenshot2.jpg" alt="快递管理界面（已取快递）" width="30%" style="margin-right: 1%;" />
+<img src="screenshots/screenshot3.jpg" alt="设置界面" width="30%" />
 
 </div>
 
