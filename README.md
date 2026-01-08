@@ -333,12 +333,13 @@ npm run dev
 
 ## 📱 应用截图
 
-> **注意**: 这里可以添加应用截图
+### 快递管理界面
+<img src="C:/Users/Administrator/Downloads/Camera_1040g3k831qa3fhnu7g005n2nldnkckh7fvvgta0.jpg" alt="Camera_1040g3k831qa3fhnu7g005n2nldnkckh7fvvgta0" style="zoom:25%;" /><img src="C:/Users/Administrator/Downloads/Camera_1040g3k831qa3fhpe7o005n2nldnkckh72q1ig1g.jpg" alt="Camera_1040g3k831qa3fhpe7o005n2nldnkckh72q1ig1g" style="zoom:25%;" />
 
-- 快递管理界面（未取快递）
-- 快递管理界面（已取快递）
-- 短信列表界面
-- 设置界面
+### 设置界面
+<img src="C:/Users/Administrator/Downloads/Screenshot_2026-01-08-09-37-37-264_com.sms.tagger.jpg" alt="Screenshot_2026-01-08-09-37-37-264_com.sms.tagger" style="zoom:25%;" />
+
+
 
 ---
 
@@ -438,7 +439,7 @@ npm run dev
 
 ### Q: 应用会联网吗？
 
-**A**: 应用完全离线运行，不会上传任何数据到服务器。
+**A**: 应用完全离线运行，不会上传任何数据到服务器。只有在使用可选的 Web 前端或后端 API 功能时才会联网。
 
 ---
 
@@ -496,11 +497,42 @@ npm run dev
 
 ---
 
+## 🎁 微信小程序
+
+我们同时提供微信小程序版本，方便您随时查看快递信息！
+
+<div align="center">
+
+![微信小程序二维码](assets/wechat_miniprogram.png)
+
+**扫码体验小程序版本**
+
+</div>
+
+---
+
+## 💝 支持项目
+
+如果您觉得这个项目对您有帮助，欢迎通过以下方式支持项目发展：
+
+<div align="center">
+
+### 支付宝捐赠
+
+<img src="C:/Users/Administrator/AppData/Roaming/Typora/typora-user-images/image-20260108101925055.png" alt="image-20260108101925055" style="zoom:25%;" />
+
+**感谢您的支持！您的捐赠将用于项目的持续开发和维护。**
+
+</div>
+
+---
+
 ## 📞 联系方式与支持
 
 - **问题反馈**: [GitHub Issues](https://github.com/jencyfei/QuickCode/issues)
 - **功能建议**: [GitHub Discussions](https://github.com/jencyfei/QuickCode/discussions)
 - **项目地址**: https://github.com/jencyfei/QuickCode
+- **微信小程序**: 扫码上方二维码体验
 
 ---
 
