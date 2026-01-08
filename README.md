@@ -335,14 +335,17 @@ npm run dev
 
 <div align="center">
 
-### 快递管理界面（未取快递）
-<img src="screenshots/screenshot1.jpg" alt="快递管理界面（未取快递）" width="300" />
+<p>
+  <img src="screenshots/screenshot1.jpg" alt="快递管理界面（未取快递）" width="280" style="margin: 5px;" />
+  <img src="screenshots/screenshot2.jpg" alt="快递管理界面（已取快递）" width="280" style="margin: 5px;" />
+  <img src="screenshots/screenshot3.jpg" alt="设置界面" width="280" style="margin: 5px;" />
+</p>
 
-### 快递管理界面（已取快递）
-<img src="screenshots/screenshot2.jpg" alt="快递管理界面（已取快递）" width="300" />
-
-### 设置界面
-<img src="screenshots/screenshot3.jpg" alt="设置界面" width="300" />
+<p>
+  <small>快递管理界面（未取快递）</small> &nbsp;&nbsp;
+  <small>快递管理界面（已取快递）</small> &nbsp;&nbsp;
+  <small>设置界面</small>
+</p>
 
 </div>
 
