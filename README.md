@@ -507,7 +507,7 @@ npm run dev
 
 <img src="assets/wechat_miniprogram.png" alt="微信小程序二维码" width="200" />
 
-**扫码体验小程序版本**
+**扫码体验小程序**
 
 </div>
 
