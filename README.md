@@ -501,13 +501,15 @@ npm run dev
 
 ## 🎁 微信小程序
 
-我们同时提供微信小程序版本，方便您随时查看快递信息！
+开发者的另一个项目：**智能选礼物助手**，帮助您轻松为他人挑选合适的礼物！
+
+> 💡 **提示**：当前开源项目（QuickCode）是为微信小程序引流的，如果您觉得 QuickCode 对您有帮助，欢迎扫码体验我们的微信小程序！
 
 <div align="center">
 
 <img src="assets/wechat_miniprogram.png" alt="微信小程序二维码" width="200" />
 
-**扫码体验小程序**
+**扫码体验智能选礼物助手小程序**
 
 </div>
 
@@ -534,7 +536,7 @@ npm run dev
 - **问题反馈**: [GitHub Issues](https://github.com/jencyfei/QuickCode/issues)
 - **功能建议**: [GitHub Discussions](https://github.com/jencyfei/QuickCode/discussions)
 - **项目地址**: https://github.com/jencyfei/QuickCode
-- **微信小程序**: 扫码上方二维码体验
+- **微信小程序**: 扫码上方二维码体验智能选礼物助手（开发者的另一个项目）
 
 ---
 
